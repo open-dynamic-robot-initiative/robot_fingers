@@ -83,11 +83,28 @@ public:
                        N_MOTOR_BOARDS>
         MotorBoards;
 
+
+    /**
+     * @brief True if the joints have mechanical end stops, false if not.
+     *
+     * If set to true, it is assumed that all joints of the robot have
+     * end stops that mechanically prevent them from moving out of the valid
+     * range.
+     *
+     * If present, the end stops are used for a fully automated homing procedure
+     * in which the joints first move until they hit the end stop before
+     * starting the encoder index search.  This way it is ensured that the
+     * correct index is used for homing without any need for manual set up.
+     */
+    const bool has_endstop_;
+
+
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
                           const Motors &motors,
                           const MotorParameters &motor_parameters,
                           const CalibrationParameters &calibration_parameters,
-                          const Vector &safety_kd)
+                          const Vector &safety_kd,
+                          const bool has_endstop)
         : robot_interfaces::RobotDriver<Action, Observation>(),
           joint_modules_(motors,
                          motor_parameters.torque_constant_NmpA * Vector::Ones(),
@@ -98,7 +115,8 @@ public:
                          motor_parameters.torque_constant_NmpA *
                          motor_parameters.gear_ratio),
           calibration_parameters_(calibration_parameters),
-          safety_kd_(safety_kd)
+          safety_kd_(safety_kd),
+          has_endstop_(has_endstop)
     {
         pause_motors();
     }
@@ -220,46 +238,49 @@ protected:
     bool home_on_index_after_negative_end_stop(
         double torque_ratio, Vector home_offset_rad = Vector::Zero())
     {
-        // TODO this can be dangerous in generic NJointBlmcRobotDriver as not
-        // all robots have end stops!
-
-        //! Min. number of steps when moving to the end stop.
-        constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
-        //! Size of the window when computing average velocity.
-        constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
-        //! Velocity limit at which the joints are considered to be stopped.
-        constexpr double STOP_VELOCITY = 0.001;
         //! Distance after which encoder index search is aborted.
         constexpr double SEARCH_DISTANCE_LIMIT_RAD = 2.0;
+        // TODO distance limit could be set based on gear ratio to be 1.5 motor
+        // revolutions
 
-        static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
-                      "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
-                      " SIZE_VELOCITY_WINDOW to ensure correct computation"
-                      " of average velocity.");
-
-        // Move until velocity drops to almost zero (= joints hit the end stops)
-        // but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
-        // TODO: add timeout to this loop?
-        std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
-        Vector summed_velocities = Vector::Zero();
-        int step_count = 0;
-        while (step_count < MIN_STEPS_MOVE_TO_END_STOP ||
-               (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
-                STOP_VELOCITY))
+        if (has_endstop_)
         {
-            Vector torques = -1 * torque_ratio * get_max_torques();
-            apply_action_uninitialized(torques);
-            Vector abs_velocities =
-                get_latest_observation().velocity.cwiseAbs();
+            //! Min. number of steps when moving to the end stop.
+            constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
+            //! Size of the window when computing average velocity.
+            constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
+            //! Velocity limit at which the joints are considered to be stopped
+            constexpr double STOP_VELOCITY = 0.001;
 
-            uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
-            if (step_count >= SIZE_VELOCITY_WINDOW)
+            static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
+                          "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
+                          " SIZE_VELOCITY_WINDOW to ensure correct computation"
+                          " of average velocity.");
+
+            // Move until velocity drops to almost zero (= joints hit the end
+            // stops) but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
+            // TODO: add timeout to this loop?
+            std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
+            Vector summed_velocities = Vector::Zero();
+            int step_count = 0;
+            while (step_count < MIN_STEPS_MOVE_TO_END_STOP ||
+                   (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
+                    STOP_VELOCITY))
             {
-                summed_velocities -= running_velocities[running_index];
+                Vector torques = -1 * torque_ratio * get_max_torques();
+                apply_action_uninitialized(torques);
+                Vector abs_velocities =
+                    get_latest_observation().velocity.cwiseAbs();
+
+                uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
+                if (step_count >= SIZE_VELOCITY_WINDOW)
+                {
+                    summed_velocities -= running_velocities[running_index];
+                }
+                running_velocities[running_index] = abs_velocities;
+                summed_velocities += abs_velocities;
+                step_count++;
             }
-            running_velocities[running_index] = abs_velocities;
-            summed_velocities += abs_velocities;
-            step_count++;
         }
 
         // Home on encoder index
