@@ -103,6 +103,7 @@ public:
                           const Vector &position_kd,
                           const bool has_endstop)
         : robot_interfaces::RobotDriver<Action, Observation>(),
+          has_endstop_(has_endstop),
           joint_modules_(motors,
                          motor_parameters.torque_constant_NmpA * Vector::Ones(),
                          motor_parameters.gear_ratio * Vector::Ones(),
@@ -114,8 +115,7 @@ public:
           calibration_parameters_(calibration_parameters),
           safety_kd_(safety_kd),
           default_position_kp_(position_kp),
-          default_position_kd_(position_kd),
-          has_endstop_(has_endstop)
+          default_position_kd_(position_kd)
     {
         pause_motors();
     }
@@ -320,7 +320,7 @@ protected:
             // TODO: add timeout to this loop?
             std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
             Vector summed_velocities = Vector::Zero();
-            int step_count = 0;
+            uint32_t step_count = 0;
             while (step_count < MIN_STEPS_MOVE_TO_END_STOP ||
                    (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
                     STOP_VELOCITY))
@@ -366,7 +366,7 @@ protected:
                           const uint32_t timeout_cycles)
     {
         bool reached_goal = false;
-        int cycle_count = 0;
+        uint32_t cycle_count = 0;
 
         while (!reached_goal && cycle_count < timeout_cycles)
         {
@@ -420,6 +420,18 @@ protected:
     }
 
 protected:
+
+    BlmcJointModules<N_JOINTS> joint_modules_;
+    MotorBoards motor_boards_;
+
+    // TODO: this should probably go away
+    double max_torque_Nm_;
+
+    CalibrationParameters calibration_parameters_;
+
+    //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
+    Vector safety_kd_;
+
     /**
      * \brief Offset between home position and zero.
      *
@@ -431,21 +443,10 @@ protected:
     //! \brief Start position to which the robot moves after homing.
     Vector initial_position_rad_ = Vector::Zero();
 
-    //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
-    Vector safety_kd_;
-
     //! \brief default P-gain for position controller.
     Vector default_position_kp_;
     //! \brief default D-gain for position controller.
     Vector default_position_kd_;
-
-    /// todo: this should probably go away
-    double max_torque_Nm_;
-
-    BlmcJointModules<N_JOINTS> joint_modules_;
-    MotorBoards motor_boards_;
-
-    CalibrationParameters calibration_parameters_;
 
     bool is_initialized_ = false;
 
