@@ -165,7 +165,7 @@ public:
     Observation get_latest_observation() override
     {
         Observation observation;
-        observation.angle = joint_modules_.get_measured_angles();
+        observation.position = joint_modules_.get_measured_angles();
         observation.velocity = joint_modules_.get_measured_velocities();
         observation.torque = joint_modules_.get_measured_torques();
         return observation;
@@ -223,7 +223,8 @@ protected:
                     .unaryExpr([](double x) { return std::isnan(x); })
                     .select(default_position_kd_, desired_action.position_kd);
 
-            Vector position_error = applied_action.position - observation.angle;
+            Vector position_error =
+                applied_action.position - observation.position;
 
             // simple PD controller
             Vector position_control_torque =
@@ -372,7 +373,7 @@ protected:
             apply_action(Action::Position(goal_pos));
 
             const Vector position_error =
-                goal_pos - get_latest_observation().angle;
+                goal_pos - get_latest_observation().position;
             const Vector velocity = get_latest_observation().velocity;
 
             // Check if the goal is reached (position error below tolerance and
