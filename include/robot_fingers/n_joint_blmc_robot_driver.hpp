@@ -107,7 +107,8 @@ public:
           joint_modules_(motors,
                          motor_parameters.torque_constant_NmpA * Vector::Ones(),
                          motor_parameters.gear_ratio * Vector::Ones(),
-                         Vector::Zero()),
+                         Vector::Zero(),
+                         motor_parameters.max_current_A * Vector::Ones()),
           motor_boards_(motor_boards),
           max_torque_Nm_(motor_parameters.max_current_A *
                          motor_parameters.torque_constant_NmpA *
