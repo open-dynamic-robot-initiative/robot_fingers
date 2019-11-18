@@ -7,10 +7,15 @@
 
 #pragma once
 
+#include <array>
 #include <cmath>
+#include <iterator>
+#include <string>
 
+#include <yaml-cpp/yaml.h>
 #include <Eigen/Eigen>
 
+#include <yaml_cpp_catkin/yaml_eigen.h>
 #include <mpi_cpp_tools/math.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
@@ -25,9 +30,6 @@ namespace blmc_robots
  */
 struct MotorParameters
 {
-    //! @brief Maximum current that can be sent to the motor [A].
-    double max_current_A;
-
     //! @brief Torque constant K_t of the motor [Nm/A].
     double torque_constant_NmpA;
 
@@ -81,6 +83,224 @@ public:
         MotorBoards;
 
     /**
+     * @brief Configuration of the robot that can be changed by the user.
+     */
+    struct Config
+    {
+        typedef std::array<std::string, N_MOTOR_BOARDS> CanPortArray;
+
+        // All parameters should have default values that should not result in
+        // dangerous behaviour in case someone forgets to specify them.
+
+        /**
+         * @brief List of CAN port names used by the robot.
+         *
+         * For each motor control board used by the robot, this specifies the
+         * CAN port through which it is connected.
+         *
+         * Example: `{"can0", "can1"}`
+         */
+        CanPortArray can_ports;
+
+        //! @brief Maximum current that can be sent to the motor [A].
+        double max_current_A = 0.0;
+
+        /**
+         * @brief Whether the joints have physical end stops or not.
+         *
+         * This is for example relevant for homing, where (in case this value
+         * is set to true) all joints move until they hit the end stop to
+         * determine their absolute position.
+         *
+         * Note that not having end stops does not mean that the joint can
+         * rotate freely in general.
+         */
+        bool has_endstop = false;
+
+        //! @brief Parameters related to calibration.
+        CalibrationParameters calibration = {
+            .torque_ratio = 0.0,
+            .position_tolerance_rad = 0.0,
+            .move_timeout = 0,
+        };
+
+        //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
+        // set some rather high damping by default
+        Vector safety_kd = Vector::Constant(0.1);
+
+        //! @brief Default control gains for the position PD controller.
+        struct
+        {
+            Vector kp = Vector::Zero();
+            Vector kd = Vector::Zero();
+        } position_control_gains;
+
+        //! \brief Offset between home position and zero.
+        Vector home_offset_rad = Vector::Zero();
+
+        /**
+         * @brief Initial position to which the robot moves after
+         *        initialization.
+         */
+        Vector initial_position_rad = Vector::Zero();
+
+        /**
+         * @brief Print the given configuration in a human-readable way.
+         */
+        void print() const
+        {
+            std::cout << "Configuration:\n"
+                      << "\t can_ports:";
+            for (const auto &port : can_ports)
+            {
+                std::cout << " " << port;
+            }
+            std::cout << "\n"
+                      << "\t max_current_A: " << max_current_A << "\n"
+                      << "\t has_endstop: " << has_endstop << "\n"
+                      << "\t calibration: "
+                      << "\n"
+                      << "\t\t torque_ratio: " << calibration.torque_ratio
+                      << "\n"
+                      << "\t\t position_tolerance_rad: "
+                      << calibration.position_tolerance_rad << "\n"
+                      << "\t\t move_timeout: " << calibration.move_timeout
+                      << "\n"
+                      << "\t safety_kd: " << safety_kd.transpose() << "\n"
+                      << "\t position_control_gains: "
+                      << "\n"
+                      << "\t\t kp: " << position_control_gains.kp.transpose()
+                      << "\n"
+                      << "\t\t kd: " << position_control_gains.kd.transpose()
+                      << "\n"
+                      << "\t home_offset_rad: " << home_offset_rad.transpose()
+                      << "\n"
+                      << "\t initial_position_rad: "
+                      << initial_position_rad.transpose() << "\n"
+                      << std::endl;
+        }
+
+        /**
+         * @brief Load driver configuration from file.
+         *
+         * Load the configuration from the specified YAML file.  The file is
+         * expected to have the same structure/key naming as the Config struct.
+         * If a value can not be read from the file, the application exists
+         * with an error message.
+         *
+         * @param config_file_name  Path/name of the configuration YAML file.
+         *
+         * @return Configuration
+         */
+        static Config load_config(const std::string &config_file_name)
+        {
+            Config config;
+            YAML::Node user_config;
+
+            try
+            {
+                user_config = YAML::LoadFile(config_file_name);
+            }
+            catch (...)
+            {
+                std::cout << "FATAL: Failed to load configuration from '"
+                          << config_file_name << "'." << std::endl;
+                std::exit(1);
+            }
+
+            // replace values from the default config with the ones given in the
+            // users config file
+
+            // TODO: for some reason direct conversion is not working (despite
+            // yaml-cpp implementing a generic conversion for std::array)
+            // set_config_value<CanPortArray>(user_config, "can_ports",
+            // &config.can_ports);
+            try
+            {
+                for (size_t i = 0; i < config.can_ports.size(); i++)
+                {
+                    config.can_ports[i] =
+                        user_config["can_ports"][i].as<std::string>();
+                }
+            }
+            catch (...)
+            {
+                std::cerr << "FATAL: Failed to load parameter 'can_ports' from "
+                             "configuration file"
+                          << std::endl;
+                std::exit(1);
+            }
+
+            set_config_value(
+                user_config, "max_current_A", &config.max_current_A);
+            set_config_value(user_config, "has_endstop", &config.has_endstop);
+
+            if (user_config["calibration"])
+            {
+                YAML::Node calib = user_config["calibration"];
+
+                set_config_value(
+                    calib, "torque_ratio", &config.calibration.torque_ratio);
+                set_config_value(calib,
+                                 "position_tolerance_rad",
+                                 &config.calibration.position_tolerance_rad);
+                set_config_value(
+                    calib, "move_timeout", &config.calibration.move_timeout);
+            }
+
+            set_config_value(user_config, "safety_kd", &config.safety_kd);
+
+            if (user_config["position_control_gains"])
+            {
+                YAML::Node pos_ctrl = user_config["position_control_gains"];
+
+                set_config_value(
+                    pos_ctrl, "kp", &config.position_control_gains.kp);
+                set_config_value(
+                    pos_ctrl, "kd", &config.position_control_gains.kd);
+            }
+
+            set_config_value(
+                user_config, "home_offset_rad", &config.home_offset_rad);
+            set_config_value(user_config,
+                             "initial_position_rad",
+                             &config.initial_position_rad);
+
+            return config;
+        }
+
+    private:
+        /**
+         * \brief Set value from user configuration to var if specified.
+         *
+         * Checks if a field `name` exists in `user_config`.  If yes, its value
+         * is written to `var`, otherwise `var` is unchanged.
+         *
+         * \param[in] user_config  YAML node containing the user configuration.
+         * \param[in] name  Name of the configuration entry.
+         * \param[out] var  Variable to which configuration is written.  Value
+         * is unchanged if the specified field name does not exist in
+         * user_config, i.e.  it can be initialized with a default value.
+         */
+        template <typename T>
+        static void set_config_value(const YAML::Node &user_config,
+                                     const std::string &name,
+                                     T *var)
+        {
+            try
+            {
+                *var = user_config[name].as<T>();
+            }
+            catch (const YAML::Exception &e)
+            {
+                std::cerr << "FATAL: Failed to load parameter '" << name
+                          << "' from configuration file" << std::endl;
+                std::exit(1);
+            };
+        }
+    };
+
+    /**
      * @brief True if the joints have mechanical end stops, false if not.
      *
      * If set to true, it is assumed that all joints of the robot have
@@ -97,26 +317,19 @@ public:
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
                           const Motors &motors,
                           const MotorParameters &motor_parameters,
-                          const CalibrationParameters &calibration_parameters,
-                          const Vector &safety_kd,
-                          const Vector &position_kp,
-                          const Vector &position_kd,
-                          const bool has_endstop)
+                          const Config &config)
         : robot_interfaces::RobotDriver<Action, Observation>(),
-          has_endstop_(has_endstop),
+          has_endstop_(config.has_endstop),
           joint_modules_(motors,
                          motor_parameters.torque_constant_NmpA * Vector::Ones(),
                          motor_parameters.gear_ratio * Vector::Ones(),
                          Vector::Zero(),
-                         motor_parameters.max_current_A * Vector::Ones()),
+                         config.max_current_A * Vector::Ones()),
           motor_boards_(motor_boards),
-          max_torque_Nm_(motor_parameters.max_current_A *
+          max_torque_Nm_(config.max_current_A *
                          motor_parameters.torque_constant_NmpA *
                          motor_parameters.gear_ratio),
-          calibration_parameters_(calibration_parameters),
-          safety_kd_(safety_kd),
-          default_position_kp_(position_kp),
-          default_position_kd_(position_kd)
+          config_(config)
     {
         pause_motors();
     }
@@ -218,11 +431,13 @@ protected:
             applied_action.position_kp =
                 applied_action.position_kp
                     .unaryExpr([](double x) { return std::isnan(x); })
-                    .select(default_position_kp_, desired_action.position_kp);
+                    .select(config_.position_control_gains.kp,
+                            desired_action.position_kp);
             applied_action.position_kd =
                 applied_action.position_kd
                     .unaryExpr([](double x) { return std::isnan(x); })
-                    .select(default_position_kd_, desired_action.position_kd);
+                    .select(config_.position_control_gains.kd,
+                            desired_action.position_kd);
 
             Vector position_error =
                 applied_action.position - observation.position;
@@ -250,7 +465,8 @@ protected:
         applied_action.torque =
             mct::clamp(applied_action.torque, -max_torque_Nm_, max_torque_Nm_);
         // velocity damping to prevent too fast movements
-        applied_action.torque -= safety_kd_.cwiseProduct(observation.velocity);
+        applied_action.torque -=
+            config_.safety_kd.cwiseProduct(observation.velocity);
         // after applying checks, make sure we are still below the max. torque
         applied_action.torque =
             mct::clamp(applied_action.torque, -max_torque_Nm_, max_torque_Nm_);
@@ -394,23 +610,24 @@ protected:
      *
      * Homes all joints using home_on_index_after_negative_end_stop.  When
      * finished, move the joint to the starting position (defined in
-     * `initial_position_rad_`).
+     * `config_.initial_position_rad`).
      *
      */
     void initialize() override
     {
-        joint_modules_.set_position_control_gains(default_position_kp_,
-                                                  default_position_kd_);
+        joint_modules_.set_position_control_gains(
+            config_.position_control_gains.kp,
+            config_.position_control_gains.kd);
 
         is_initialized_ = home_on_index_after_negative_end_stop(
-            calibration_parameters_.torque_ratio, home_offset_rad_);
+            config_.calibration.torque_ratio, config_.home_offset_rad);
 
         if (is_initialized_)
         {
             bool reached_goal =
-                move_to_position(initial_position_rad_,
-                                 calibration_parameters_.position_tolerance_rad,
-                                 calibration_parameters_.move_timeout);
+                move_to_position(config_.initial_position_rad,
+                                 config_.calibration.position_tolerance_rad,
+                                 config_.calibration.move_timeout);
             if (!reached_goal)
             {
                 rt_printf("Failed to reach goal, timeout exceeded.\n");
@@ -421,33 +638,19 @@ protected:
     }
 
 protected:
-
     BlmcJointModules<N_JOINTS> joint_modules_;
     MotorBoards motor_boards_;
 
     // TODO: this should probably go away
     double max_torque_Nm_;
 
-    CalibrationParameters calibration_parameters_;
-
-    //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
-    Vector safety_kd_;
-
     /**
-     * \brief Offset between home position and zero.
+     * \brief User-defined configuration of the driver
      *
-     * Defined such that the zero position is at the negative end stop (for
-     * compatibility with old homing method).
+     * Contains all configuration values that can be modified by the user (via
+     * the configuration file).
      */
-    Vector home_offset_rad_ = Vector::Zero();
-
-    //! \brief Start position to which the robot moves after homing.
-    Vector initial_position_rad_ = Vector::Zero();
-
-    //! \brief default P-gain for position controller.
-    Vector default_position_kp_;
-    //! \brief default D-gain for position controller.
-    Vector default_position_kd_;
+    Config config_;
 
     bool is_initialized_ = false;
 
@@ -457,5 +660,27 @@ public:
         return max_torque_Nm_ * Vector::Ones();
     }
 };
+
+template <typename Driver>
+typename Driver::Types::BackendPtr create_backend(
+    typename Driver::Types::DataPtr robot_data,
+    const std::string &config_file_path)
+{
+    constexpr double MAX_ACTION_DURATION_S = 0.003;
+    constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
+
+    std::cout << "Load robot driver configuration from file '"
+              << config_file_path << "'" << std::endl;
+    auto config = Driver::Config::load_config(config_file_path);
+    config.print();
+
+    auto robot = std::make_shared<Driver>(config);
+
+    auto backend = std::make_shared<typename Driver::Types::Backend>(
+        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
+    backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
+
+    return backend;
+}
 
 }  // namespace blmc_robots
