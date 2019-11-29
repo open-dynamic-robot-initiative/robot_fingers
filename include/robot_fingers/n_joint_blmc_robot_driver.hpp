@@ -47,8 +47,8 @@ struct MotorParameters
  */
 struct CalibrationParameters
 {
-    //! @brief Ratio of the max. torque that is used to find the end stop.
-    double torque_ratio;  // TODO better used fixed torque
+    //! @brief Torque that is used to find the end stop.
+    double endstop_search_torque_Nm;
     //! @brief Tolerance for reaching the starting position.
     double position_tolerance_rad;
     //! @brief Timeout for reaching the starting position.
@@ -119,7 +119,7 @@ public:
 
         //! @brief Parameters related to calibration.
         CalibrationParameters calibration = {
-            .torque_ratio = 0.0,
+            .endstop_search_torque_Nm = 0.0,
             .position_tolerance_rad = 0.0,
             .move_timeout = 0,
         };
@@ -160,8 +160,8 @@ public:
                       << "\t has_endstop: " << has_endstop << "\n"
                       << "\t calibration: "
                       << "\n"
-                      << "\t\t torque_ratio: " << calibration.torque_ratio
-                      << "\n"
+                      << "\t\t endstop_search_torque_Nm: "
+                      << calibration.endstop_search_torque_Nm << "\n"
                       << "\t\t position_tolerance_rad: "
                       << calibration.position_tolerance_rad << "\n"
                       << "\t\t move_timeout: " << calibration.move_timeout
@@ -239,8 +239,9 @@ public:
             {
                 YAML::Node calib = user_config["calibration"];
 
-                set_config_value(
-                    calib, "torque_ratio", &config.calibration.torque_ratio);
+                set_config_value(calib,
+                                 "endstop_search_torque_Nm",
+                                 &config.calibration.endstop_search_torque_Nm);
                 set_config_value(calib,
                                  "position_tolerance_rad",
                                  &config.calibration.position_tolerance_rad);
@@ -326,6 +327,7 @@ public:
                          Vector::Zero(),
                          config.max_current_A * Vector::Ones()),
           motor_boards_(motor_boards),
+          motor_parameters_(motor_parameters),
           max_torque_Nm_(config.max_current_A *
                          motor_parameters.torque_constant_NmpA *
                          motor_parameters.gear_ratio),
@@ -490,10 +492,11 @@ protected:
      * Procedure for finding an absolute zero position (or "home" position) when
      * using relative encoders.
      *
-     * All joints first move in positive direction until the index of each
-     * encoder is found.  Then all joints move in negative direction until they
-     * hit the end stop.  Home position is set to the positions of encoder
-     * indices closest to the end stop.
+     * If the robot has end stops (according to configuration), all joints first
+     * move in negative direction until they hit the end stop.
+     * Then an encoder index search is started where each joint moves slowly in
+     * positive direction until the next encoder index.  The position of this
+     * encoder index is the "home position".
      *
      * By default, the zero position is the same as the home position.  The
      * optional argument home_offset_rad provides a means to move the zero
@@ -502,21 +505,20 @@ protected:
      *
      *     zero position = encoder index position + home offset
      *
-     * Movement is done by simply applying a constant torque to the joints.  The
-     * amount of torque is a ratio of the configured maximum torque defined by
-     * `torque_ratio`.
      *
-     * @param torque_ratio Ratio of max. torque that is used to move the joints.
+     * @param endstop_search_torque_Nm Torque that is used to move the joints
+     *     while searching the end stop.
      * @param home_offset_rad Offset between the home position and the desired
      *     zero position.
      */
     bool home_on_index_after_negative_end_stop(
-        double torque_ratio, Vector home_offset_rad = Vector::Zero())
+        double endstop_search_torque_Nm,
+        Vector home_offset_rad = Vector::Zero())
     {
         //! Distance after which encoder index search is aborted.
-        constexpr double SEARCH_DISTANCE_LIMIT_RAD = 2.0;
-        // TODO distance limit could be set based on gear ratio to be 1.5 motor
-        // revolutions
+        //! Computed based on gear ratio to be 1.5 motor revolutions.
+        const double SEARCH_DISTANCE_LIMIT_RAD =
+            (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
 
         rt_printf("Start homing.\n");
         if (has_endstop_)
@@ -543,7 +545,7 @@ protected:
                    (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
                     STOP_VELOCITY))
             {
-                Vector torques = -1 * torque_ratio * get_max_torques();
+                Vector torques = Vector::Constant(-endstop_search_torque_Nm);
                 apply_action_uninitialized(torques);
                 Vector abs_velocities =
                     get_latest_observation().velocity.cwiseAbs();
@@ -631,7 +633,8 @@ protected:
             config_.position_control_gains.kd);
 
         is_initialized_ = home_on_index_after_negative_end_stop(
-            config_.calibration.torque_ratio, config_.home_offset_rad);
+            config_.calibration.endstop_search_torque_Nm,
+            config_.home_offset_rad);
 
         if (is_initialized_)
         {
@@ -652,7 +655,10 @@ protected:
     BlmcJointModules<N_JOINTS> joint_modules_;
     MotorBoards motor_boards_;
 
-    // TODO: this should probably go away
+    //! \brief Fixed motor parameters (assuming all joints use same setup).
+    MotorParameters motor_parameters_;
+
+    //! \brief Maximum torque allowed on each joint.
     double max_torque_Nm_;
 
     /**
