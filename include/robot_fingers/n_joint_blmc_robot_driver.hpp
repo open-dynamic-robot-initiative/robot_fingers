@@ -518,6 +518,7 @@ protected:
         // TODO distance limit could be set based on gear ratio to be 1.5 motor
         // revolutions
 
+        rt_printf("Start homing.\n");
         if (has_endstop_)
         {
             //! Min. number of steps when moving to the end stop.
@@ -525,7 +526,7 @@ protected:
             //! Size of the window when computing average velocity.
             constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
             //! Velocity limit at which the joints are considered to be stopped
-            constexpr double STOP_VELOCITY = 0.001;
+            constexpr double STOP_VELOCITY = 0.005;
 
             static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
                           "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
@@ -555,7 +556,17 @@ protected:
                 running_velocities[running_index] = abs_velocities;
                 summed_velocities += abs_velocities;
                 step_count++;
+
+#ifdef VERBOSE
+                Eigen::IOFormat commainitfmt(
+                    4, Eigen::DontAlignCols, " ", " ", "", "", "", "");
+                std::cout << ((summed_velocities / SIZE_VELOCITY_WINDOW)
+                                  .array() > STOP_VELOCITY)
+                                 .format(commainitfmt)
+                          << std::endl;
+#endif
             }
+            rt_printf("Reached end stop.\n");
         }
 
         // Home on encoder index
