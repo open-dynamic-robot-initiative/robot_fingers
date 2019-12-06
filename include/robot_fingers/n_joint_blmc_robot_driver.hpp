@@ -628,6 +628,50 @@ protected:
      */
     void initialize() override
     {
+        // Initialization is moving the robot and thus needs to be executed in
+        // a real-time thread.  This method only starts the thread and waits
+        // for it to finish.  Actual implementation of initialization is in
+        // `_initialize()`.
+
+        real_time_tools::RealTimeThread realtime_thread;
+        realtime_thread.create_realtime_thread(
+            [](void *instance_pointer) {
+                // instance_pointer = this, cast to correct type and call the
+                // _initialize() method.
+                ((NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>
+                      *)(instance_pointer))
+                    ->_initialize();
+                return (void *)nullptr;
+            },
+            this);
+        realtime_thread.join();
+    }
+
+protected:
+    BlmcJointModules<N_JOINTS> joint_modules_;
+    MotorBoards motor_boards_;
+
+    //! \brief Fixed motor parameters (assuming all joints use same setup).
+    MotorParameters motor_parameters_;
+
+    //! \brief Maximum torque allowed on each joint.
+    double max_torque_Nm_;
+
+    /**
+     * \brief User-defined configuration of the driver
+     *
+     * Contains all configuration values that can be modified by the user (via
+     * the configuration file).
+     */
+    Config config_;
+
+    bool is_initialized_ = false;
+
+
+    //! \brief Actual initialization that is called in a real-time thread in
+    //!        initialize().
+    void _initialize()
+    {
         joint_modules_.set_position_control_gains(
             config_.position_control_gains.kp,
             config_.position_control_gains.kd);
@@ -650,26 +694,6 @@ protected:
 
         pause_motors();
     }
-
-protected:
-    BlmcJointModules<N_JOINTS> joint_modules_;
-    MotorBoards motor_boards_;
-
-    //! \brief Fixed motor parameters (assuming all joints use same setup).
-    MotorParameters motor_parameters_;
-
-    //! \brief Maximum torque allowed on each joint.
-    double max_torque_Nm_;
-
-    /**
-     * \brief User-defined configuration of the driver
-     *
-     * Contains all configuration values that can be modified by the user (via
-     * the configuration file).
-     */
-    Config config_;
-
-    bool is_initialized_ = false;
 
 public:
     Vector get_max_torques() const
