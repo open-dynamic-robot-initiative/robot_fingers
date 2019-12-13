@@ -528,7 +528,7 @@ protected:
             //! Size of the window when computing average velocity.
             constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
             //! Velocity limit at which the joints are considered to be stopped
-            constexpr double STOP_VELOCITY = 0.005;
+            constexpr double STOP_VELOCITY = 0.01;
 
             static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
                           "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
