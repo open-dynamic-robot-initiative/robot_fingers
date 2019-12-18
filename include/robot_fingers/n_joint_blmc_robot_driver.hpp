@@ -17,6 +17,7 @@
 
 #include <yaml_cpp_catkin/yaml_eigen.h>
 #include <mpi_cpp_tools/math.hpp>
+#include <robot_interfaces/n_joint_robot_functions.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
 
@@ -406,72 +407,14 @@ protected:
 
         Observation observation = get_latest_observation();
 
-        Action applied_action;
-
-        applied_action.torque = desired_action.torque;
-        applied_action.position = desired_action.position;
-
-        // Position controller
-        // -------------------
-        // TODO: add position limits
-        //
-        // NOTE: in the following lines, the Eigen function `unaryExpr` is
-        // used to determine which elements of the vectors are NaN.  This is
-        // because `isNaN()` was only added in Eigen 3.3 but we have to be
-        // compatible with 3.2.
-        // The std::isnan call needs to be wrapped in a lambda because it is
-        // overloaded and unaryExpr cannot resolve which version to use when
-        // passed directly.
-
-        // Run the position controller only if a target position is set for at
-        // least one joint.
-        if (!applied_action.position
-                 .unaryExpr([](double x) { return std::isnan(x); })
-                 .all())
-        {
-            // Replace NaN-values with default gains
-            applied_action.position_kp =
-                applied_action.position_kp
-                    .unaryExpr([](double x) { return std::isnan(x); })
-                    .select(config_.position_control_gains.kp,
-                            desired_action.position_kp);
-            applied_action.position_kd =
-                applied_action.position_kd
-                    .unaryExpr([](double x) { return std::isnan(x); })
-                    .select(config_.position_control_gains.kd,
-                            desired_action.position_kd);
-
-            Vector position_error =
-                applied_action.position - observation.position;
-
-            // simple PD controller
-            Vector position_control_torque =
-                applied_action.position_kp.cwiseProduct(position_error) +
-                applied_action.position_kd.cwiseProduct(observation.velocity);
-
-            // position_control_torque contains NaN for joints where target
-            // position is set to NaN!  Filter those out and set the torque to
-            // zero instead.
-            position_control_torque =
-                position_control_torque
-                    .unaryExpr([](double x) { return std::isnan(x); })
-                    .select(0, position_control_torque);
-
-            // Add result of position controller to the torque command
-            applied_action.torque += position_control_torque;
-        }
-
-        // Safety Checks
-        // -------------
-        // limit to configured maximum torque
-        applied_action.torque =
-            mct::clamp(applied_action.torque, -max_torque_Nm_, max_torque_Nm_);
-        // velocity damping to prevent too fast movements
-        applied_action.torque -=
-            config_.safety_kd.cwiseProduct(observation.velocity);
-        // after applying checks, make sure we are still below the max. torque
-        applied_action.torque =
-            mct::clamp(applied_action.torque, -max_torque_Nm_, max_torque_Nm_);
+        Action applied_action =
+            robot_interfaces::NJointRobotFunctions<N_JOINTS>::
+                process_desired_action(desired_action,
+                                       observation,
+                                       max_torque_Nm_,
+                                       config_.safety_kd,
+                                       config_.position_control_gains.kp,
+                                       config_.position_control_gains.kd);
 
         joint_modules_.set_torques(applied_action.torque);
         joint_modules_.send_torques();
@@ -666,7 +609,6 @@ protected:
     Config config_;
 
     bool is_initialized_ = false;
-
 
     //! \brief Actual initialization that is called in a real-time thread in
     //!        initialize().
