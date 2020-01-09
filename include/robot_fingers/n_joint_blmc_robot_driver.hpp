@@ -388,6 +388,68 @@ public:
         return observation;
     }
 
+    std::string get_error() override
+    {
+        // Checks each board for errors and translates the error codes into
+        // human-readable strings.  If multiple boards have errors, the messages
+        // are concatenated.  Each message is prepended with the index of the
+        // corresponding board.
+
+        std::string error_msg = "";
+
+        for (size_t i = 0; i < motor_boards_.size(); i++)
+        {
+            auto status_timeseries = motor_boards_[i]->get_status();
+            if (status_timeseries->length() > 0)
+            {
+                std::string board_error_msg = "";
+                using ErrorCodes = blmc_drivers::MotorBoardStatus::ErrorCodes;
+                switch (status_timeseries->newest_element().error_code)
+                {
+                    case ErrorCodes::NONE:
+                        break;
+                    case ErrorCodes::ENCODER:
+                        board_error_msg = "Encoder Error";
+                        break;
+                    case ErrorCodes::CAN_RECV_TIMEOUT:
+                        board_error_msg = "CAN Receive Timeout";
+                        break;
+                    case ErrorCodes::CRIT_TEMP:
+                        board_error_msg = "Critical Temperature";
+                        break;
+                    case ErrorCodes::POSCONV:
+                        board_error_msg =
+                            "Error in SpinTAC Position Convert module";
+                        break;
+                    case ErrorCodes::POS_ROLLOVER:
+                        board_error_msg = "Position Rollover";
+                        break;
+                    case ErrorCodes::OTHER:
+                        board_error_msg = "Other Error";
+                        break;
+                    default:
+                        board_error_msg = "Unknown Error";
+                        break;
+                }
+
+                if (!board_error_msg.empty())
+                {
+                    if (!error_msg.empty())
+                    {
+                        error_msg += "  ";
+                    }
+
+                    // error of the board with board index to the error message
+                    // string
+                    error_msg +=
+                        "[Board " + std::to_string(i) + "] " + board_error_msg;
+                }
+            }
+        }
+
+        return error_msg;
+    }
+
 protected:
     Action apply_action(const Action &desired_action) override
     {
