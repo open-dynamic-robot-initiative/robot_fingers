@@ -17,5 +17,7 @@
 
   <depend>blmc_robots</depend>
 
+  <build_depend>mpi_cmake_modules</build_depend>
+
   <export></export>
 </package>

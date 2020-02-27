@@ -3,6 +3,7 @@ project(robot_fingers)
 
 find_package(catkin REQUIRED COMPONENTS
   blmc_robots
+  mpi_cmake_modules
 )
 
 ## System dependencies are found with CMake's conventions
@@ -22,7 +23,9 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
 #  LIBRARIES robot_fingers
-#  CATKIN_DEPENDS blmc_robots
+  CATKIN_DEPENDS
+    blmc_robots
+    mpi_cmake_modules
 #  DEPENDS system_lib
 )
 
@@ -36,3 +39,11 @@ include_directories(
 #  include
   ${catkin_INCLUDE_DIRS}
 )
+
+
+# building documentation
+build_doxygen_documentation()
+
+# automatic code formatting (set FORMAT_CODE=ON to reformat on build)
+format_code()
+
