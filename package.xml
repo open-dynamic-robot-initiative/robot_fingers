@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>robot_fingers</name>
+  <version>0.1.0</version>
+  <description>
+      Drivers, examples and basic scripts for the Finger robots.
+  </description>
+
+  <maintainer email="felixwidmaier@tue.mpg.de">Felix Widmaier</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">https://open-dynamic-robot-initiative.github.io/code_documentation/robot_fingers</url>
+  <url type="repository">https://github.com/open-dynamic-robot-initiative/robot_fingers</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>blmc_robots</depend>
+
+  <export></export>
+</package>
