@@ -38,9 +38,27 @@ include_directories(
 )
 
 
-# building documentation
+# Python Bindings
+
+# TODO move this macro to mpi_cmake_modules?  The exact same block is
+# copy-pasted all over our workspace.
+macro(add_python_bindings module_name)
+    pybind11_add_module(${module_name} ${module_name}.cpp)
+    target_link_libraries(${module_name} PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
+    set_target_properties(${module_name} PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
+    install(TARGETS ${module_name} DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
+endmacro()
+
+add_python_bindings(py_one_joint)
+add_python_bindings(py_two_joint)
+add_python_bindings(py_real_finger)
+add_python_bindings(py_trifinger)
+
+
+# Building documentation
 build_doxygen_documentation()
 
-# automatic code formatting (set FORMAT_CODE=ON to reformat on build)
+# Automatic code formatting (set FORMAT_CODE=ON to reformat on build)
 format_code()
 
