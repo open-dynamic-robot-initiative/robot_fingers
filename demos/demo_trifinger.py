@@ -8,7 +8,7 @@ import time
 import numpy as np
 
 import robot_interfaces
-import blmc_robots
+import robot_fingers
 
 
 N_JOINTS = 9
@@ -60,8 +60,8 @@ def run_choreography(robot):
 
 
 def main():
-    robot = blmc_robots.Robot(robot_interfaces.trifinger,
-                              blmc_robots.create_trifinger_backend,
+    robot = robot_fingers.Robot(robot_interfaces.trifinger,
+                              robot_fingers.create_trifinger_backend,
                               "trifinger.yml")
     robot.initialize()
 

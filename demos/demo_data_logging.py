@@ -5,12 +5,12 @@ import time
 import numpy as np
 
 from robot_interfaces import finger
-import blmc_robots
+import robot_fingers
 
 def main():
 
     finger_data = finger.Data()
-    finger_backend = blmc_robots.create_fake_finger_backend(finger_data)
+    finger_backend = robot_fingers.create_fake_finger_backend(finger_data)
     finger_frontend = finger.Frontend(finger_data)
 
     desired_torque = np.zeros(3)

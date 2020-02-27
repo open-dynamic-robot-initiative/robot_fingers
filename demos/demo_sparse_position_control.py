@@ -9,20 +9,20 @@ import numpy as np
 import rospkg
 
 import robot_interfaces
-import blmc_robots
+import robot_fingers
 
 
 def main():
     # load the default config file
     config_file_path = os.path.join(
-        rospkg.RosPack().get_path("blmc_robots"), "config", "finger.yml")
+        rospkg.RosPack().get_path("robot_fingers"), "config", "finger.yml")
 
     # Storage for all observations, actions, etc.
     finger_data = robot_interfaces.finger.Data()
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.
-    real_finger_backend = blmc_robots.create_real_finger_backend(
+    real_finger_backend = robot_fingers.create_real_finger_backend(
         finger_data, config_file_path)
 
     # The frontend is used by the user to get observations and send actions

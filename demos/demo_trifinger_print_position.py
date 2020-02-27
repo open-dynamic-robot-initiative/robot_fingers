@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Send zero-torque commands to the robot and print joint positions."""
 import robot_interfaces
-import blmc_robots
+import robot_fingers
 
 if __name__ == "__main__":
-    robot = blmc_robots.Robot(robot_interfaces.trifinger,
-                              blmc_robots.create_trifinger_backend,
+    robot = robot_fingers.Robot(robot_interfaces.trifinger,
+                              robot_fingers.create_trifinger_backend,
                               "trifinger.yml")
     robot.initialize()
 
-    blmc_robots.demo_print_position(robot)
+    robot_fingers.demo_print_position(robot)

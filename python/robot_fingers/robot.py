@@ -12,14 +12,14 @@ class Robot:
             `Data`, `Frontend`, `Backend`, ...)
         :param create_backend_function: Function to create the robot backend.
         :param config_file_name: Name of the config file (expected to be
-            located in blmc_robots/config).
+            located in robot_fingers/config).
         """
         # convenience mapping of the Action type
         self.Action = robot_module.Action
 
-        # Use the default config file from the blmc_robots package
+        # Use the default config file from the robot_fingers package
         config_file_path = os.path.join(
-            rospkg.RosPack().get_path("blmc_robots"), "config",
+            rospkg.RosPack().get_path("robot_fingers"), "config",
             config_file_name)
 
         # Storage for all observations, actions, etc.
