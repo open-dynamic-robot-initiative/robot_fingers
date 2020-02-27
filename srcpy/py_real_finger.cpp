@@ -20,10 +20,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
-#include <blmc_robots/fake_finger_driver.hpp>
-#include <blmc_robots/real_finger_driver.hpp>
+#include <robot_fingers/fake_finger_driver.hpp>
+#include <robot_fingers/real_finger_driver.hpp>
 
-using namespace blmc_robots;
+using namespace robot_fingers;
 
 PYBIND11_MODULE(py_real_finger, m)
 {

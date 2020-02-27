@@ -8,6 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen3 REQUIRED)
+
 
 catkin_python_setup()
 
@@ -18,11 +20,10 @@ catkin_python_setup()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS include ${EIGEN3_INCLUDE_DIR}
 #  LIBRARIES robot_fingers
   CATKIN_DEPENDS
     blmc_robots
-    mpi_cmake_modules
 #  DEPENDS system_lib
 )
 
@@ -35,6 +36,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
 )
 
 
@@ -43,7 +45,7 @@ include_directories(
 # TODO move this macro to mpi_cmake_modules?  The exact same block is
 # copy-pasted all over our workspace.
 macro(add_python_bindings module_name)
-    pybind11_add_module(${module_name} ${module_name}.cpp)
+    pybind11_add_module(${module_name} srcpy/${module_name}.cpp)
     target_link_libraries(${module_name} PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
     set_target_properties(${module_name} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})

@@ -9,7 +9,7 @@
 
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
 
-namespace blmc_robots
+namespace robot_fingers
 {
 /**
  * @brief Driver for a single joint.
@@ -47,4 +47,4 @@ private:
     }
 };
 
-}  // namespace blmc_robots
+}  // namespace robot_fingers

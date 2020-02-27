@@ -20,9 +20,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
-#include <blmc_robots/trifinger_driver.hpp>
+#include <robot_fingers/trifinger_driver.hpp>
 
-using namespace blmc_robots;
+using namespace robot_fingers;
 
 PYBIND11_MODULE(py_trifinger, m)
 {

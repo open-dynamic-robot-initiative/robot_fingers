@@ -20,9 +20,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 
-#include <blmc_robots/two_joint_driver.hpp>
+#include <robot_fingers/two_joint_driver.hpp>
 
-using namespace blmc_robots;
+using namespace robot_fingers;
 
 PYBIND11_MODULE(py_two_joint, m)
 {

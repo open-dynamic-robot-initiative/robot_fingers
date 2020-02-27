@@ -10,7 +10,7 @@
 #include <robot_interfaces/trifinger_types.hpp>
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
 
-namespace blmc_robots
+namespace robot_fingers
 {
 class TriFingerDriver : public NJointBlmcRobotDriver<9, 6>
 {
@@ -55,5 +55,5 @@ private:
     }
 };
 
-}  // namespace blmc_robots
+}  // namespace robot_fingers
 

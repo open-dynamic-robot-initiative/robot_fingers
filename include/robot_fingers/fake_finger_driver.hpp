@@ -11,7 +11,7 @@
 #include "real_time_tools/spinner.hpp"
 #include "real_time_tools/timer.hpp"
 
-namespace blmc_robots
+namespace robot_fingers
 {
 class FakeFingerDriver : public robot_interfaces::RobotDriver<
                              robot_interfaces::FingerTypes::Action,
@@ -95,4 +95,4 @@ robot_interfaces::FingerTypes::BackendPtr create_fake_finger_backend(
     return backend;
 }
 
-}  // namespace blmc_robots
+}  // namespace robot_fingers
