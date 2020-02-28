@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include <robot_interfaces/finger_types.hpp>
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
+#include <robot_interfaces/finger_types.hpp>
 
 namespace robot_fingers
 {
@@ -24,14 +24,15 @@ public:
 
 private:
     RealFingerDriver(const MotorBoards &motor_boards, const Config &config)
-        : blmc_robots::NJointBlmcRobotDriver<3, 2>(motor_boards,
-                                      create_motors(motor_boards),
-                                      {
-                                          // MotorParameters
-                                          .torque_constant_NmpA = 0.02,
-                                          .gear_ratio = 9.0,
-                                      },
-                                      config)
+        : blmc_robots::NJointBlmcRobotDriver<3, 2>(
+              motor_boards,
+              create_motors(motor_boards),
+              {
+                  // MotorParameters
+                  .torque_constant_NmpA = 0.02,
+                  .gear_ratio = 9.0,
+              },
+              config)
     {
     }
 

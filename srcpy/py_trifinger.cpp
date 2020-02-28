@@ -29,4 +29,3 @@ PYBIND11_MODULE(py_trifinger, m)
 {
     m.def("create_trifinger_backend", &create_backend<TriFingerDriver>);
 }
-

@@ -16,9 +16,9 @@
  */
 
 #include <pybind11/eigen.h>
-#include <pybind11/stl_bind.h>
-#include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl_bind.h>
 
 #include <robot_fingers/one_joint_driver.hpp>
 
@@ -29,4 +29,3 @@ PYBIND11_MODULE(py_one_joint, m)
 {
     m.def("create_one_joint_backend", &create_backend<OneJointDriver>);
 }
-

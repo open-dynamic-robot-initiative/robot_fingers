@@ -31,6 +31,4 @@ PYBIND11_MODULE(py_real_finger, m)
     m.def("create_real_finger_backend", &create_backend<RealFingerDriver>);
 
     m.def("create_fake_finger_backend", &create_fake_finger_backend);
-
 }
-

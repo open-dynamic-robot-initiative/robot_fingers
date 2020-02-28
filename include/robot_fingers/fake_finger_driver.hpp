@@ -4,12 +4,12 @@
 #include <Eigen/Eigen>
 #include <tuple>
 
-#include <blmc_robots/common_header.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_robots/common_header.hpp>
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
-#include <robot_interfaces/finger_types.hpp>
 #include <real_time_tools/spinner.hpp>
 #include <real_time_tools/timer.hpp>
+#include <robot_interfaces/finger_types.hpp>
 
 namespace robot_fingers
 {
