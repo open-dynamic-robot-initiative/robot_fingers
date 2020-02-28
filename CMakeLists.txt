@@ -1,15 +1,14 @@
 cmake_minimum_required(VERSION 3.1)
 project(robot_fingers)
 
-# Use C++11
-set(CMAKE_CXX_STANDARD 11)
+# Specify C++ Standard
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 
 find_package(catkin REQUIRED COMPONENTS
   blmc_robots
   robot_interfaces
-  real_time_tools
   mpi_cmake_modules
   pybind11_catkin
 )
@@ -33,7 +32,6 @@ catkin_package(
   CATKIN_DEPENDS
     blmc_robots
     robot_interfaces
-    real_time_tools
 #  DEPENDS system_lib
 )
 

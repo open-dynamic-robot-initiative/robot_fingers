@@ -17,7 +17,6 @@
 
   <depend>blmc_robots</depend>
   <depend>robot_interfaces</depend>
-  <depend>real_time_tools</depend>
 
   <build_depend>mpi_cmake_modules</build_depend>
   <build_depend>pybind11_catkin</build_depend>
