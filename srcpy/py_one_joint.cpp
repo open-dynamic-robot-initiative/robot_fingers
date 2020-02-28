@@ -23,6 +23,7 @@
 #include <robot_fingers/one_joint_driver.hpp>
 
 using namespace robot_fingers;
+using namespace blmc_robots;
 
 PYBIND11_MODULE(py_one_joint, m)
 {

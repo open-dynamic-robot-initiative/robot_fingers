@@ -42,11 +42,11 @@ include_directories(
 
 # Python Bindings
 
-# TODO move this macro to mpi_cmake_modules?  The exact same block is
-# copy-pasted all over our workspace.
+# TODO move this macro to mpi_cmake_modules?  More or less the same block is
+# copy-pasted all over our workspace (link libraries may differ).
 macro(add_python_bindings module_name)
     pybind11_add_module(${module_name} srcpy/${module_name}.cpp)
-    target_link_libraries(${module_name} PRIVATE ${catkin_LIBRARIES} ${PROJECT_NAME} ${YAML_CPP_LIBRARIES})
+    target_link_libraries(${module_name} PRIVATE ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES})
     set_target_properties(${module_name} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
     install(TARGETS ${module_name} DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})

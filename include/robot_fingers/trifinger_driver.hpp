@@ -12,7 +12,7 @@
 
 namespace robot_fingers
 {
-class TriFingerDriver : public NJointBlmcRobotDriver<9, 6>
+class TriFingerDriver : public blmc_robots::NJointBlmcRobotDriver<9, 6>
 {
 public:
     TriFingerDriver(const Config &config)
@@ -22,7 +22,7 @@ public:
 
 private:
     TriFingerDriver(const MotorBoards &motor_boards, const Config &config)
-        : NJointBlmcRobotDriver<9, 6>(motor_boards,
+        : blmc_robots::NJointBlmcRobotDriver<9, 6>(motor_boards,
                                       create_motors(motor_boards),
                                       {
                                           // MotorParameters

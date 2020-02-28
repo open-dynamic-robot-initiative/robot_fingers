@@ -24,6 +24,7 @@
 #include <robot_fingers/real_finger_driver.hpp>
 
 using namespace robot_fingers;
+using namespace blmc_robots;
 
 PYBIND11_MODULE(py_real_finger, m)
 {
