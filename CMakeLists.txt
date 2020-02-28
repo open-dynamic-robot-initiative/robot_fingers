@@ -3,7 +3,10 @@ project(robot_fingers)
 
 find_package(catkin REQUIRED COMPONENTS
   blmc_robots
+  robot_interfaces
+  real_time_tools
   mpi_cmake_modules
+  pybind11_catkin
 )
 
 ## System dependencies are found with CMake's conventions
@@ -24,6 +27,8 @@ catkin_package(
 #  LIBRARIES robot_fingers
   CATKIN_DEPENDS
     blmc_robots
+    robot_interfaces
+    real_time_tools
 #  DEPENDS system_lib
 )
 
@@ -46,7 +51,7 @@ include_directories(
 # copy-pasted all over our workspace (link libraries may differ).
 macro(add_python_bindings module_name)
     pybind11_add_module(${module_name} srcpy/${module_name}.cpp)
-    target_link_libraries(${module_name} PRIVATE ${catkin_LIBRARIES} ${YAML_CPP_LIBRARIES})
+    target_link_libraries(${module_name} PRIVATE ${catkin_LIBRARIES})
     set_target_properties(${module_name} PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
     install(TARGETS ${module_name} DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})

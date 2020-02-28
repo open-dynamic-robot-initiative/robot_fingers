@@ -2,14 +2,14 @@
 
 #include <math.h>
 #include <Eigen/Eigen>
-#include <blmc_robots/common_header.hpp>
 #include <tuple>
 
+#include <blmc_robots/common_header.hpp>
 #include <blmc_robots/blmc_joint_module.hpp>
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
 #include <robot_interfaces/finger_types.hpp>
-#include "real_time_tools/spinner.hpp"
-#include "real_time_tools/timer.hpp"
+#include <real_time_tools/spinner.hpp>
+#include <real_time_tools/timer.hpp>
 
 namespace robot_fingers
 {
@@ -53,6 +53,9 @@ public:
 
     Action apply_action(const Action &desired_action) override
     {
+        // FIXME Do we really need real_time_tools for this sleep here?  It is
+        // the only place it is used in this package, so we could easily get rid
+        // of that dependeny!
         double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
         real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
