@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 """Curses-based application to aid calibrating joint friction.
 
-Rotates the joints of the TwoJoint robot with constant velocity using the
-position controller (remove endstops of the robot to enable rotation!).
+Rotates the joints of the OneJoint robot with constant velocity using the
+position controller (remove end stops of the robot to enable rotation!).
 Prints averaged torque/current and velocity measurements from which the
 friction can be estimated.
 
@@ -17,11 +17,11 @@ import time
 import numpy as np
 import rospkg
 
-from robot_interfaces import two_joint
+from robot_interfaces import one_joint
 import robot_fingers
 
 
-N_JOINTS = 2
+N_JOINTS = 1
 
 CURRENT_TO_TORQUE_FACTOR = 0.02 * 9
 
@@ -59,13 +59,12 @@ def run_application(stdscr, robot, velocity_radps, buffer_size):
     applied_torque_buffer = AverageBuffer(buffer_size)
 
     # start by sending a zero torque command
-    t = robot.append_desired_action(two_joint.Action())
+    t = robot.append_desired_action(one_joint.Action())
     obs = robot.get_observation(t)
     # start position profile at current position
     desired_position = copy.copy(obs.position)
 
-    desired_torque = np.zeros(N_JOINTS)
-    action = two_joint.Action(position=desired_position)
+    action = one_joint.Action(position=desired_position)
     last_update = 0
     while True:
         t = robot.append_desired_action(action)
@@ -83,9 +82,9 @@ def run_application(stdscr, robot, velocity_radps, buffer_size):
                 raise RuntimeError("Following error too high: %s" %
                                    following_error)
 
-            action = two_joint.Action(position=desired_position)
+            action = one_joint.Action(position=desired_position)
         else:
-            action = two_joint.Action()
+            action = one_joint.Action()
             # set desired position to current one to avoid jumps when enabling
             desired_position = obs.position
 
@@ -151,7 +150,7 @@ def main():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--velocity", type=float, default=np.pi/2,
                            help="Velocity at which joints are moving [rad/s].")
-    argparser.add_argument("--average-window", type=int, default=50,
+    argparser.add_argument("--average-window", type=int, default=1000,
                            help="Number of values used for averaging.")
     args = argparser.parse_args()
 
@@ -159,12 +158,12 @@ def main():
     # load the default config file
     config_file_path = os.path.join(
         rospkg.RosPack().get_path("robot_fingers"), "config",
-        "twojoint_friction_calibration.yml")
+        "onejoint_friction_calibration.yml")
 
-    robot_data = two_joint.Data()
-    robot_backend = robot_fingers.create_two_joint_backend(robot_data,
-                                                         config_file_path)
-    robot_frontend = two_joint.Frontend(robot_data)
+    robot_data = one_joint.Data()
+    robot_backend = robot_fingers.create_one_joint_backend(robot_data,
+                                                           config_file_path)
+    robot_frontend = one_joint.Frontend(robot_data)
 
     robot_backend.initialize()
 
