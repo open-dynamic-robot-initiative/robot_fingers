@@ -1,0 +1,17 @@
+# Old configuration of the finger robot
+# With this config, the zero position is at the negative end stop.
+# Use this in case you need the old config for compatibility reasons.
+
+can_ports: ["can0", "can1"]
+max_current_A: 2
+has_endstop: true
+calibration:
+    endstop_search_torque_Nm: 0.22
+    position_tolerance_rad: 0.05
+    move_timeout: 2000
+safety_kd: [0.08, 0.08, 0.04]
+position_control_gains:
+    kp: [3, 3, 3]
+    kd: [0.03, 0.03, 0.03]
+home_offset_rad: [-0.54, -0.17, 0.0]
+initial_position_rad: [1.5, 1.5, 3.0]

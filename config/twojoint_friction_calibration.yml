@@ -1,0 +1,20 @@
+# Configuration for the 2-Joint Setup used for friction calibration.
+# In this mode, the joints are expected to spin freely.
+
+# can6: MPI board
+# can7: TI Launchpad
+can_ports: ["can6"]
+
+max_current_A: 2
+has_endstop: false
+calibration:
+    torque_ratio: 0.6
+    position_tolerance_rad: 0.05
+    move_timeout: 2000
+safety_kd: [0.02, 0.02]
+position_control_gains:
+    kp: [3, 3]
+    kd: [0.01, 0.01]
+
+home_offset_rad: [0, 0]
+initial_position_rad: [0, 0]
