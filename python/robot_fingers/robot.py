@@ -23,7 +23,7 @@ class Robot:
             config_file_name)
 
         # Storage for all observations, actions, etc.
-        self.robot_data = robot_module.Data()
+        self.robot_data = robot_module.SingleProcessData()
 
         # The backend sends actions from the data to the robot and writes
         # observations from the robot to the data.

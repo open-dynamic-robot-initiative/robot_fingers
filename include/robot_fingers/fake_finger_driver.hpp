@@ -75,7 +75,7 @@ public:
 };
 
 robot_interfaces::FingerTypes::BackendPtr create_fake_finger_backend(
-    robot_interfaces::FingerTypes::DataPtr robot_data)
+    robot_interfaces::FingerTypes::BaseDataPtr robot_data)
 {
     // adjusted values
     constexpr double MAX_ACTION_DURATION_S = 0.03;

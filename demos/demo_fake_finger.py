@@ -14,7 +14,8 @@ import robot_fingers
 
 def main():
     # Storage for all observations, actions, etc.
-    finger_data = robot_interfaces.finger.Data()
+    #finger_data = robot_interfaces.finger.MultiProcessData("foo", True)
+    finger_data = robot_interfaces.finger.SingleProcessData()
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.  Here we use a backend using the
