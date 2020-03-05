@@ -77,7 +77,6 @@ def demo_position_commands(finger):
         print("Position: %s" % finger.get_observation(t).position)
 
 
-
 def main():
     # Use the default config file from the robot_fingers package
     config_file_path = os.path.join(
@@ -96,7 +95,6 @@ def main():
 
     # Initializes the robot (e.g. performs homing).
     real_finger_backend.initialize()
-
 
     #demo_torque_commands(finger)
     demo_position_commands(finger)
