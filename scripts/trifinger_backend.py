@@ -18,11 +18,15 @@ def main():
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.
-    real_finger_backend = robot_fingers.create_real_finger_backend(
-        robot_data, config_file_path)
+    backend = robot_fingers.create_trifinger_backend(robot_data,
+                                                     config_file_path)
 
     # Initializes the robot (e.g. performs homing).
-    real_finger_backend.initialize()
+    backend.initialize()
+
+    # FIXME add function to check if back-end is still running
+    while True:
+        pass
 
 
 if __name__ == "__main__":
