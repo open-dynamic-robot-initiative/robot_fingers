@@ -160,7 +160,7 @@ def main():
         rospkg.RosPack().get_path("robot_fingers"), "config",
         "onejoint_friction_calibration.yml")
 
-    robot_data = one_joint.Data()
+    robot_data = one_joint.SingleProcessData()
     robot_backend = robot_fingers.create_one_joint_backend(robot_data,
                                                            config_file_path)
     robot_frontend = one_joint.Frontend(robot_data)

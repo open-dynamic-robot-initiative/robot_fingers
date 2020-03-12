@@ -18,7 +18,7 @@ def main():
         rospkg.RosPack().get_path("robot_fingers"), "config", "finger.yml")
 
     # Storage for all observations, actions, etc.
-    finger_data = robot_interfaces.finger.Data()
+    finger_data = robot_interfaces.finger.SingleProcessData()
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.

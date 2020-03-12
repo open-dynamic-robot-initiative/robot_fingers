@@ -256,7 +256,7 @@ def main():
     config_file_path = path.join(
         rospkg.RosPack().get_path("robot_fingers"), "config", "onejoint.yml")
 
-    robot_data = one_joint.Data()
+    robot_data = one_joint.SingleProcessData()
     finger_backend = robot_fingers.create_one_joint_backend(robot_data,
                                                           config_file_path)
     robot = one_joint.Frontend(robot_data)
