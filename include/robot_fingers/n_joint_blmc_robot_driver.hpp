@@ -708,7 +708,7 @@ public:
 
 template <typename Driver>
 typename Driver::Types::BackendPtr create_backend(
-    typename Driver::Types::DataPtr robot_data,
+    typename Driver::Types::BaseDataPtr robot_data,
     const std::string &config_file_path)
 {
     constexpr double MAX_ACTION_DURATION_S = 0.003;
