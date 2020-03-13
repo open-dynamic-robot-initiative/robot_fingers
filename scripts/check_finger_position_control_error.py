@@ -36,7 +36,7 @@ def forward_kinematics(joint_positions):
 
 
 if __name__ == "__main__":
-    urdf_pkg_path = rospkg.RosPack().get_path("robot_properties_manipulator")
+    urdf_pkg_path = rospkg.RosPack().get_path("robot_properties_fingers")
     urdf_path = os.path.join(urdf_pkg_path, "urdf", "finger.urdf")
 
     model = pinocchio.buildModelFromUrdf(urdf_path)
