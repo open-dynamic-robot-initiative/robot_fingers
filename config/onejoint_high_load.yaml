@@ -1,0 +1,19 @@
+can_ports: ["can1"]
+
+max_current_A: 17
+has_endstop: true
+calibration:
+    endstop_search_torque_Nm: 0.22
+    position_tolerance_rad: 0.05
+    move_timeout: 2000
+safety_kd: [0.05]
+position_control_gains:
+    kp: [6]
+    kd: [0.04]
+
+# Offset between encoder index and zero-position (in radian).
+# Set this such that the zero position is in the center between left and
+# right end stop.
+home_offset_rad: [2.241742]
+initial_position_rad: [-2.241742]
+
