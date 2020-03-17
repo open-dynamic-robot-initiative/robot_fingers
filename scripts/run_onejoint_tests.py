@@ -24,11 +24,6 @@ Action = one_joint.Action
 # bit before hitting the end stop).
 POSITION_LIMIT = 2.7
 
-# Gains for the position controller
-KP = 5
-KD = 0.04
-
-
 # Number of times the motor hits the endstop in each "hit end stop" phase
 NUM_ENDSTOP_HITS = 10
 
@@ -55,9 +50,10 @@ def zero_torque_ctrl(robot, duration, print_position=False):
     while step < duration:
         step += 1
         t = robot.append_desired_action(action)
+        robot.wait_until_time_index(t)
         if print_position:
             print("\rPosition: %10.4f" %
-                  robot.get_observation(t).angle[0], end="")
+                  robot.get_observation(t).position[0], end="")
 
 def go_to(robot, goal_position, steps, hold):
     """Go to the goal position with linear profile and hold there.
@@ -70,17 +66,19 @@ def go_to(robot, goal_position, steps, hold):
         once it is reached.
     """
     t = robot.append_desired_action(Action())
-    desired_step_position = copy.copy(robot.get_observation(t).angle)
+    desired_step_position = copy.copy(robot.get_observation(t).position)
 
     stepsize = (goal_position - desired_step_position) / steps
 
     for step in range(steps):
         desired_step_position += stepsize
         t = robot.append_desired_action(Action(position=desired_step_position))
+        robot.wait_until_time_index(t)
 
-    action = Action(position=goal_position)
+    action = Action(position=np.ones(N_JOINTS) * goal_position)
     for step in range(hold):
         t = robot.append_desired_action(action)
+        robot.wait_until_time_index(t)
 
 def go_to_zero(robot, steps, hold):
     """Go to zero position.  See go_to for description of parameters."""
@@ -111,7 +109,7 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000):
 
     for step in range(hold):
         t = robot.append_desired_action(action)
-        robot.get_observation(t)
+        robot.wait_until_time_index(t)
 
 def test_if_moves(robot, desired_torque, timeout):
     for i in range(timeout):
@@ -119,7 +117,7 @@ def test_if_moves(robot, desired_torque, timeout):
         # This is a bit hacky: It is assumed that the joints move if they reach
         # a position > 0 within the given time.  Note that this assumes that
         # they start somewhere in the negative range!
-        if np.all(robot.get_observation(t).angle > 0):
+        if np.all(robot.get_observation(t).position > 0):
             return True
     return False
 
@@ -151,16 +149,16 @@ def validate_position(robot):
     position match.
     """
     tolerance = 0.1
-    desired_torque = np.ones(N_JOINTS) * 0.15  # 0.3
+    desired_torque = np.ones(N_JOINTS) * 0.22
 
-    angle = [None, None]
+    position = [None, None]
 
     for i, sign in enumerate((+1, -1)):
         hit_endstop(robot, sign * desired_torque)
         t = robot.get_current_time_index()
-        angle[i] = robot.get_observation(t).angle
+        position[i] = robot.get_observation(t).position
 
-    center = (angle[0] + angle[1]) / 2
+    center = (position[0] + position[1]) / 2
 
     if np.abs(center) > tolerance:
         raise RuntimeError("Unexpected center position."
@@ -183,17 +181,17 @@ def hard_direction_change(robot, num_repetitions, torque):
     progress = progressbar.ProgressBar()
     for i in progress(range(num_repetitions)):
         step = 0
-        while np.all(robot.get_observation(t).angle < position_limit):
+        while np.all(robot.get_observation(t).position < position_limit):
             t = robot.append_desired_action(Action(desired_torque))
             step += 1
-            if step > 1000:
+            if step > 2000:
                 raise RuntimeError("timeout hard_direction_change")
 
         step = 0
-        while np.all(robot.get_observation(t).angle > -position_limit):
+        while np.all(robot.get_observation(t).position > -position_limit):
             t = robot.append_desired_action(Action(-desired_torque))
             step += 1
-            if step > 1000:
+            if step > 2000:
                 raise RuntimeError("timeout -hard_direction_change")
 
     # dampen movement to not hit end stop
@@ -221,27 +219,21 @@ def main():
                                                             config_file_path)
     robot = one_joint.Frontend(robot_data)
 
-
     # rotate without end stop
     #goal_position = 60
     ## move to goal position within 2000 ms and wait there for 100 ms
     #go_to(robot, goal_position, 20000, 100)
-
-    #return
-
 
     finger_backend.initialize()
     print("initialization finished")
     go_to_zero(robot, 1000, 2000)
 
     #zero_torque_ctrl(robot, 99999999, print_position=True)
-    #return
 
     print("initial position validation")
     validate_position(robot)
 
     go_to_zero(robot, 1000, 2000)
-
 
     #[(0, 0.0),
     #  (1, 0.18),
@@ -262,7 +254,6 @@ def main():
     #hit_endstop(robot, hit_torque, hold=100)
     #hit_endstop(robot, -hit_torque, hold=100)
 
-
     for iteration in range (NUM_ITERATIONS):
         print("START TEST ITERATION %d" % iteration)
 
@@ -270,9 +261,7 @@ def main():
         #determine_start_torque(robot)
 
         print("Switch directions with high torque")
-        #low_trq = 0.36
         low_trq = 0.2
-        #currents = range(5, 19)
         currents = range(5, 15)
         for current in currents:
             trq = current * (0.02 * 9)
@@ -281,7 +270,7 @@ def main():
             hard_direction_change(robot, 2, trq)
 
             t = robot.get_current_time_index()
-            if np.any(np.abs(robot.get_observation(t).angle) >
+            if np.any(np.abs(robot.get_observation(t).position) >
                       POSITION_LIMIT):
                 print("ERROR: Position limit exceeded!")
                 return
