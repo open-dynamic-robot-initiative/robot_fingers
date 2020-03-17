@@ -219,6 +219,8 @@ def main():
                                                             config_file_path)
     robot = one_joint.Frontend(robot_data)
 
+    logger = one_joint.Logger(robot_data, 100)
+
     # rotate without end stop
     #goal_position = 60
     ## move to goal position within 2000 ms and wait there for 100 ms
@@ -263,6 +265,7 @@ def main():
         print("Switch directions with high torque")
         low_trq = 0.2
         currents = range(5, 15)
+        logger.start(log_path("one_joint_test_data.csv"))
         for current in currents:
             trq = current * (0.02 * 9)
             print("A = %d (trq = %f)" % (current, trq))
@@ -280,6 +283,7 @@ def main():
             # Determine torque to start movement
             #determine_start_torque(robot)
 
+        logger.stop()
 
         print("position validation after switch directions")
         validate_position(robot)
