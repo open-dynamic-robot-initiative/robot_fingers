@@ -15,6 +15,7 @@ import robot_fingers
 
 N_JOINTS = 1
 
+Action = one_joint.Action
 
 # Configuration
 # ========================================
@@ -48,17 +49,17 @@ NUM_ITERATIONS = 1
 
 def zero_torque_ctrl(robot, duration, print_position=False):
     """Send zero-torque commands for the specified duration."""
-    desired_torque = np.zeros(N_JOINTS)
+    action = Action()
     step = 0
 
     while step < duration:
         step += 1
-        t = robot.append_desired_action(desired_torque)
+        t = robot.append_desired_action(action)
         if print_position:
             print("\rPosition: %10.4f" %
                   robot.get_observation(t).angle[0], end="")
 
-def go_to(robot, goal_position, steps, hold:
+def go_to(robot, goal_position, steps, hold):
     """Go to the goal position with linear profile and hold there.
 
     :param robot: Robot frontend used to control the robot.
@@ -68,32 +69,24 @@ def go_to(robot, goal_position, steps, hold:
     :param hold: Number of time steps to hold the motor at the goal position
         once it is reached.
     """
-    desired_torque = np.zeros(N_JOINTS)
-
-    t = robot.append_desired_action(desired_torque)
+    t = robot.append_desired_action(Action())
     desired_step_position = copy.copy(robot.get_observation(t).angle)
 
     stepsize = (goal_position - desired_step_position) / steps
 
     for step in range(steps):
         desired_step_position += stepsize
-        t = robot.append_desired_action(desired_torque)
-        position_error = (desired_step_position -
-                          robot.get_observation(t).angle)
-        desired_torque = (KP * position_error -
-                          KD * robot.get_observation(t).velocity)
+        t = robot.append_desired_action(Action(position=desired_step_position))
 
+    action = Action(position=goal_position)
     for step in range(hold):
-        t = robot.append_desired_action(desired_torque)
-        position_error = goal_position - robot.get_observation(t).angle
-        desired_torque = (KP * position_error -
-                          KD * robot.get_observation(t).velocity)
+        t = robot.append_desired_action(action)
 
-def go_to_zero(robot, steps, hold:
+def go_to_zero(robot, steps, hold):
     """Go to zero position.  See go_to for description of parameters."""
-    go_to(robot, np.zeros(N_JOINTS), steps, hold
+    go_to(robot, np.zeros(N_JOINTS), steps, hold)
 
-def hit_endstop(robot, desired_torque, hold=0, timeout=5000:
+def hit_endstop(robot, desired_torque, hold=0, timeout=5000):
     """Hit the end stop with the given torque.
 
     Applies a constant torque on the joints until velocity drops to near-zero
@@ -107,21 +100,22 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000:
     """
     zero_velocity = 0.001
     step = 0
-    t = robot.append_desired_action(desired_torque)
+    action = Action(torque=desired_torque)
+    t = robot.append_desired_action(action)
 
     while ((np.any(np.abs(robot.get_observation(t).velocity) > zero_velocity) or
            step < 100) and step < timeout):
-        t = robot.append_desired_action(desired_torque)
+        t = robot.append_desired_action(action)
 
         step += 1
 
     for step in range(hold):
-        t = robot.append_desired_action(desired_torque)
+        t = robot.append_desired_action(action)
         robot.get_observation(t)
 
 def test_if_moves(robot, desired_torque, timeout):
     for i in range(timeout):
-        t = robot.append_desired_action(desired_torque)
+        t = robot.append_desired_action(Action(torque=desired_torque))
         # This is a bit hacky: It is assumed that the joints move if they reach
         # a position > 0 within the given time.  Note that this assumes that
         # they start somewhere in the negative range!
@@ -138,8 +132,7 @@ def determine_start_torque(robot):
     within a given time frame.  If not, the whole procedure is repeated with a
     increasing torque until the joint moves.
     """
-    desired_torque = np.zeros(N_JOINTS)
-    t = robot.append_desired_action(desired_torque)
+    t = robot.append_desired_action(Action())
 
     max_torque = 0.4
     stepsize = 0.025
@@ -185,20 +178,20 @@ def hard_direction_change(robot, num_repetitions, torque):
     direction = +1
     desired_torque = np.ones(N_JOINTS) * torque
 
-    t = robot.append_desired_action(np.zeros(N_JOINTS))
+    t = robot.append_desired_action(Action())
 
     progress = progressbar.ProgressBar()
     for i in progress(range(num_repetitions)):
         step = 0
         while np.all(robot.get_observation(t).angle < position_limit):
-            t = robot.append_desired_action(desired_torque)
+            t = robot.append_desired_action(Action(desired_torque))
             step += 1
             if step > 1000:
                 raise RuntimeError("timeout hard_direction_change")
 
         step = 0
         while np.all(robot.get_observation(t).angle > -position_limit):
-            t = robot.append_desired_action(-desired_torque)
+            t = robot.append_desired_action(Action(-desired_torque))
             step += 1
             if step > 1000:
                 raise RuntimeError("timeout -hard_direction_change")
@@ -221,7 +214,7 @@ def main():
     config_file_path = path.join(
         rospkg.RosPack().get_path("robot_fingers"),
         "config",
-        "onejoint_high_load.yml")
+        "onejoint_high_load.yaml")
 
     robot_data = one_joint.SingleProcessData()
     finger_backend = robot_fingers.create_one_joint_backend(robot_data,
