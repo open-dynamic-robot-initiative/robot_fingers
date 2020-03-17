@@ -12,8 +12,6 @@ import rospkg
 from robot_interfaces import one_joint
 import robot_fingers
 
-from robot_fingers.logger import Logger
-
 
 N_JOINTS = 1
 
@@ -48,14 +46,10 @@ NUM_ITERATIONS = 1
 
 
 
-def zero_torque_ctrl(robot, duration, logger=None, print_position=False):
+def zero_torque_ctrl(robot, duration, print_position=False):
     """Send zero-torque commands for the specified duration."""
     desired_torque = np.zeros(N_JOINTS)
     step = 0
-
-    if logger:
-        t = robot.get_current_time_index()
-        logger.set_time(t)
 
     while step < duration:
         step += 1
@@ -64,10 +58,7 @@ def zero_torque_ctrl(robot, duration, logger=None, print_position=False):
             print("\rPosition: %10.4f" %
                   robot.get_observation(t).angle[0], end="")
 
-        if logger:
-            logger.record(robot)
-
-def go_to(robot, goal_position, steps, hold, logger=None):
+def go_to(robot, goal_position, steps, hold:
     """Go to the goal position with linear profile and hold there.
 
     :param robot: Robot frontend used to control the robot.
@@ -76,15 +67,11 @@ def go_to(robot, goal_position, steps, hold, logger=None):
         depends on the number of steps and the actual distance it has to move.
     :param hold: Number of time steps to hold the motor at the goal position
         once it is reached.
-    :param logger: Logger instance to log the data (optional).
     """
     desired_torque = np.zeros(N_JOINTS)
 
     t = robot.append_desired_action(desired_torque)
     desired_step_position = copy.copy(robot.get_observation(t).angle)
-
-    if logger:
-        logger.set_time(t)
 
     stepsize = (goal_position - desired_step_position) / steps
 
@@ -96,23 +83,17 @@ def go_to(robot, goal_position, steps, hold, logger=None):
         desired_torque = (KP * position_error -
                           KD * robot.get_observation(t).velocity)
 
-        if logger:
-            logger.record(robot)
-
     for step in range(hold):
         t = robot.append_desired_action(desired_torque)
         position_error = goal_position - robot.get_observation(t).angle
         desired_torque = (KP * position_error -
                           KD * robot.get_observation(t).velocity)
 
-        if logger:
-            logger.record(robot)
-
-def go_to_zero(robot, steps, hold, logger=None):
+def go_to_zero(robot, steps, hold:
     """Go to zero position.  See go_to for description of parameters."""
-    go_to(robot, np.zeros(N_JOINTS), steps, hold, logger)
+    go_to(robot, np.zeros(N_JOINTS), steps, hold
 
-def hit_endstop(robot, desired_torque, hold=0, timeout=5000, logger=None):
+def hit_endstop(robot, desired_torque, hold=0, timeout=5000:
     """Hit the end stop with the given torque.
 
     Applies a constant torque on the joints until velocity drops to near-zero
@@ -123,21 +104,14 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000, logger=None):
     :param hold: Duration for which the torque is held up after hitting the end
         stop.
     :param timeout: Stop if joint is still moving after this time.
-    :param logger: Logger instance to log the data (optional).
     """
     zero_velocity = 0.001
     step = 0
     t = robot.append_desired_action(desired_torque)
 
-    if logger:
-        logger.set_time(t)
-
     while ((np.any(np.abs(robot.get_observation(t).velocity) > zero_velocity) or
            step < 100) and step < timeout):
         t = robot.append_desired_action(desired_torque)
-
-        if logger:
-            logger.record(robot)
 
         step += 1
 
@@ -145,14 +119,9 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000, logger=None):
         t = robot.append_desired_action(desired_torque)
         robot.get_observation(t)
 
-        if logger:
-            logger.record(robot)
-
-def test_if_moves(robot, desired_torque, timeout, logger=None):
+def test_if_moves(robot, desired_torque, timeout):
     for i in range(timeout):
         t = robot.append_desired_action(desired_torque)
-        if logger:
-            logger.record(robot)
         # This is a bit hacky: It is assumed that the joints move if they reach
         # a position > 0 within the given time.  Note that this assumes that
         # they start somewhere in the negative range!
@@ -161,7 +130,7 @@ def test_if_moves(robot, desired_torque, timeout, logger=None):
     return False
 
 
-def determine_start_torque(robot, logger):
+def determine_start_torque(robot):
     """Determine minimum torque to make the joints move.
 
     Moves the joint to negative position limit and applies a constant torque.
@@ -171,7 +140,6 @@ def determine_start_torque(robot, logger):
     """
     desired_torque = np.zeros(N_JOINTS)
     t = robot.append_desired_action(desired_torque)
-    logger.set_time(t)
 
     max_torque = 0.4
     stepsize = 0.025
@@ -179,7 +147,7 @@ def determine_start_torque(robot, logger):
         print("test %f Nm" % trq)
         go_to(robot, -POSITION_LIMIT, 1000, 100)
         desired_torque = np.ones(N_JOINTS) * trq
-        if test_if_moves(robot, desired_torque, 3000, logger):
+        if test_if_moves(robot, desired_torque, 3000):
             break
 
 
@@ -208,7 +176,7 @@ def validate_position(robot):
         print("Position is okay.")
 
 
-def hard_direction_change(robot, num_repetitions, torque, logger):
+def hard_direction_change(robot, num_repetitions, torque):
     """Move back and forth by toggling sign of the torque command."""
     # set position limit far enough from the end stop to ensure we don't hit it
     # even when overshooting (we don't want to break the end stop).
@@ -218,14 +186,12 @@ def hard_direction_change(robot, num_repetitions, torque, logger):
     desired_torque = np.ones(N_JOINTS) * torque
 
     t = robot.append_desired_action(np.zeros(N_JOINTS))
-    logger.set_time(t)
 
     progress = progressbar.ProgressBar()
     for i in progress(range(num_repetitions)):
         step = 0
         while np.all(robot.get_observation(t).angle < position_limit):
             t = robot.append_desired_action(desired_torque)
-            logger.record(robot)
             step += 1
             if step > 1000:
                 raise RuntimeError("timeout hard_direction_change")
@@ -233,13 +199,12 @@ def hard_direction_change(robot, num_repetitions, torque, logger):
         step = 0
         while np.all(robot.get_observation(t).angle > -position_limit):
             t = robot.append_desired_action(-desired_torque)
-            logger.record(robot)
             step += 1
             if step > 1000:
                 raise RuntimeError("timeout -hard_direction_change")
 
     # dampen movement to not hit end stop
-    go_to(robot, -position_limit, 10, 100, logger=logger)
+    go_to(robot, -position_limit, 10, 100)
 
 
 def main():
@@ -254,33 +219,20 @@ def main():
 
     # load the default config file
     config_file_path = path.join(
-        rospkg.RosPack().get_path("robot_fingers"), "config", "onejoint.yml")
+        rospkg.RosPack().get_path("robot_fingers"),
+        "config",
+        "onejoint_high_load.yml")
 
     robot_data = one_joint.SingleProcessData()
     finger_backend = robot_fingers.create_one_joint_backend(robot_data,
-                                                          config_file_path)
+                                                            config_file_path)
     robot = one_joint.Frontend(robot_data)
-    logger = Logger()
-
-
-    # dump logger data in case the script is killed with SIGINT or SIGQUIT
-    def signal_handler(signum, stack):
-        if logger.data:
-            logger.name += "_aborted"
-            logger.dump()
-        sys.exit(1)
-        #raise RuntimeError("Killed by signal %d" % signum)
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGQUIT, signal_handler)
 
 
     # rotate without end stop
-    #logger.start_new_recording(log_path("move_fixed_velocity_rotate"))
     #goal_position = 60
     ## move to goal position within 2000 ms and wait there for 100 ms
-    #go_to(robot, goal_position, 20000, 100, logger)
-    #logger.dump()
+    #go_to(robot, goal_position, 20000, 100)
 
     #return
 
@@ -312,21 +264,17 @@ def main():
 
 
     # Careful, dangerous!
-    #logger.start_new_recording(log_path("hit_endstop"))
     #hit_torque = np.ones(N_JOINTS) * 1.26
     #print("Start to push")
-    #hit_endstop(robot, hit_torque, hold=100, logger=logger)
-    #hit_endstop(robot, -hit_torque, hold=100, logger=logger)
-    #logger.dump()
+    #hit_endstop(robot, hit_torque, hold=100)
+    #hit_endstop(robot, -hit_torque, hold=100)
 
 
     for iteration in range (NUM_ITERATIONS):
         print("START TEST ITERATION %d" % iteration)
 
         #print("Determine torque to start movement.")
-        #logger.start_new_recording(log_path("start_torque_%d" % iteration))
-        #determine_start_torque(robot, logger)
-        #logger.dump()
+        #determine_start_torque(robot)
 
         print("Switch directions with high torque")
         #low_trq = 0.36
@@ -336,10 +284,8 @@ def main():
         for current in currents:
             trq = current * (0.02 * 9)
             print("A = %d (trq = %f)" % (current, trq))
-            go_to(robot, -POSITION_LIMIT, 500, 10, logger)
-            logger.start_new_recording(log_path("hard_switch_directions_%dA_%d"
-                                                % (current, iteration)))
-            hard_direction_change(robot, 2, trq, logger)
+            go_to(robot, -POSITION_LIMIT, 500, 10)
+            hard_direction_change(robot, 2, trq)
 
             t = robot.get_current_time_index()
             if np.any(np.abs(robot.get_observation(t).angle) >
@@ -347,14 +293,10 @@ def main():
                 print("ERROR: Position limit exceeded!")
                 return
 
-            hard_direction_change(robot, 10, low_trq, logger)
-            logger.dump()
+            hard_direction_change(robot, 10, low_trq)
 
             # Determine torque to start movement
-            #logger.start_new_recording(log_path("start_torque_after_switch_direction_%dA_%d"
-            #                                    % (current, iteration)))
-            #determine_start_torque(robot, logger)
-            #logger.dump()
+            #determine_start_torque(robot)
 
 
         print("position validation after switch directions")
@@ -371,31 +313,25 @@ def main():
         print("Hit the end stop...")
 
         trq = 1.8
-        logger.start_new_recording(log_path("hit_endstop_%.3f_%d" % (trq, iteration)))
         hit_torque = np.ones(N_JOINTS) * trq
         progress = progressbar.ProgressBar()
         for i in progress(range(NUM_ENDSTOP_HITS)):
             hit_torque *= -1
-            hit_endstop(robot, hit_torque, hold=10, logger=logger)
-            #hit_endstop(robot, hit_torque, logger=logger)
-            #zero_torque_ctrl(robot, 10, logger)
-        logger.dump()
+            hit_endstop(robot, hit_torque, hold=10)
+            #hit_endstop(robot, hit_torque)
+            #zero_torque_ctrl(robot, 10)
 
-        #logger.start_new_recording(log_path("hit_endstop_0.2_%d" % iteration))
         #hit_torque = np.ones(N_JOINTS) * 0.2
         #for i in range(NUM_ENDSTOP_HITS):
         #    hit_torque *= -1
-        #    hit_endstop(robot, hit_torque, logger=logger)
-        #    zero_torque_ctrl(robot, 10, logger)
-        #logger.dump()
+        #    hit_endstop(robot, hit_torque)
+        #    zero_torque_ctrl(robot, 10)
 
-        #logger.start_new_recording(log_path("hit_endstop_0.4_%d" % iteration))
         #hit_torque = np.ones(N_JOINTS) * 0.4
         #for i in range(NUM_ENDSTOP_HITS):
         #    hit_torque *= -1
-        #    hit_endstop(robot, hit_torque, logger=logger)
-        #    zero_torque_ctrl(robot, 10, logger)
-        #logger.dump()
+        #    hit_endstop(robot, hit_torque)
+        #    zero_torque_ctrl(robot, 10)
 
         print("position validation after hitting")
         validate_position(robot)
@@ -405,31 +341,25 @@ def main():
 
         goal_position = POSITION_LIMIT
 
-        logger.start_new_recording(log_path("move_fixed_velocity_2000_%d" % iteration))
         progress = progressbar.ProgressBar()
         for i in progress(range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS)):
             goal_position *= -1
             # move to goal position within 2000 ms and wait there for 100 ms
-            go_to(robot, goal_position, 2000, 100, logger)
-        logger.dump()
+            go_to(robot, goal_position, 2000, 100)
 
         #print("validate position")
         #validate_position(robot)
 
-        #logger.start_new_recording(log_path("move_fixed_velocity_1000_%d" % iteration))
         #for i in range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS):
         #    goal_position *= -1
-        #    go_to(robot, goal_position, 1000, 100, logger)
-        #logger.dump()
+        #    go_to(robot, goal_position, 1000, 100)
 
         #print("validate position")
         #validate_position(robot)
 
-        #logger.start_new_recording(log_path("move_fixed_velocity_500_%d" % iteration))
         #for i in range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS):
         #    goal_position *= -1
-        #    go_to(robot, goal_position, 500, 100, logger)
-        #logger.dump()
+        #    go_to(robot, goal_position, 500, 100)
 
 
         print("final position validation")
