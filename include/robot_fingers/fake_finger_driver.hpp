@@ -77,17 +77,9 @@ public:
 robot_interfaces::FingerTypes::BackendPtr create_fake_finger_backend(
     robot_interfaces::FingerTypes::BaseDataPtr robot_data)
 {
-    // adjusted values
-    constexpr double MAX_ACTION_DURATION_S = 0.03;
-    constexpr double MAX_INTER_ACTION_DURATION_S = 0.05;
-
-    std::shared_ptr<robot_interfaces::RobotDriver<
-        robot_interfaces::FingerTypes::Action,
-        robot_interfaces::FingerTypes::Observation>>
-        robot = std::make_shared<FakeFingerDriver>();
-
+    auto robot = std::make_shared<FakeFingerDriver>();
     auto backend = std::make_shared<robot_interfaces::FingerTypes::Backend>(
-        robot, robot_data, MAX_ACTION_DURATION_S, MAX_INTER_ACTION_DURATION_S);
+        robot, robot_data);
     backend->set_max_action_repetitions(-1);
 
     return backend;
