@@ -22,10 +22,15 @@
 
 #include <robot_fingers/trifinger_driver.hpp>
 
+using namespace pybind11::literals;
 using namespace robot_fingers;
 using namespace blmc_robots;
 
 PYBIND11_MODULE(py_trifinger, m)
 {
-    m.def("create_trifinger_backend", &create_backend<TriFingerDriver>);
+    m.def("create_trifinger_backend",
+          &create_backend<TriFingerDriver>,
+          "robot_data"_a,
+          "config_file"_a,
+          "first_action_timeout"_a = std::numeric_limits<double>::infinity());
 }
