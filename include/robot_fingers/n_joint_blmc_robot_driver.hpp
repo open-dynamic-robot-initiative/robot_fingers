@@ -320,10 +320,24 @@ private:
                                  T *var);
 };
 
+/**
+ * @brief Create backend using the specified driver.
+ *
+ * @tparam Driver  Type of the driver.  Expected to inherit from
+ *     NJointBlmcRobotDriver.
+ *
+ * @param robot_data  Instance of RobotData used for communication.
+ * @param config_file_path  Path to the driver configuration file.
+ * @param first_action_timeout  Duration for which the backend waits for the
+ *     first action to arrive.  If exceeded, the backend shuts down.
+ *
+ * @return A RobotBackend instances with a driver of the specified type.
+ */
 template <typename Driver>
 typename Driver::Types::BackendPtr create_backend(
     typename Driver::Types::BaseDataPtr robot_data,
-    const std::string &config_file_path)
+    const std::string &config_file_path,
+    const double first_action_timeout = std::numeric_limits<double>::infinity())
 {
     constexpr double MAX_ACTION_DURATION_S = 0.003;
     constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
@@ -340,8 +354,9 @@ typename Driver::Types::BackendPtr create_backend(
             MAX_ACTION_DURATION_S,
             MAX_INTER_ACTION_DURATION_S);
 
+    constexpr bool real_time_mode = true;
     auto backend = std::make_shared<typename Driver::Types::Backend>(
-        monitored_driver, robot_data);
+        monitored_driver, robot_data, real_time_mode, first_action_timeout);
     backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
