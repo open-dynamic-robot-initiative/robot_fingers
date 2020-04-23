@@ -16,14 +16,16 @@ class CursesGUI:
         self.stdscr = stdscr
         self.stdscr.nodelay(True)
 
-    def update(self, observation, desired_action, applied_action):
-        observation_data = np.vstack([
-            observation.position, observation.velocity, observation.torque
-        ]).T
-        desired_action_data = np.vstack([desired_action.torque,
-                                         desired_action.position]).T
-        applied_action_data = np.vstack([applied_action.torque,
-                                         applied_action.position]).T
+    def update(self, observation, desired_action, applied_action, status):
+        observation_data = np.vstack(
+            [observation.position, observation.velocity, observation.torque]
+        ).T
+        desired_action_data = np.vstack(
+            [desired_action.torque, desired_action.position]
+        ).T
+        applied_action_data = np.vstack(
+            [applied_action.torque, applied_action.position]
+        ).T
 
         joint_names = ["Joint %d" % i for i in range(len(observation.torque))]
 
@@ -32,14 +34,18 @@ class CursesGUI:
         # status line
         status_line = " Press 'q' to quit."
         max_rows, max_cols = self.stdscr.getmaxyx()
-        self.stdscr.addstr(max_rows - 1, 0,
-                           status_line.ljust(max_cols - 1, " "),
-                           curses.A_STANDOUT)
+        self.stdscr.insstr(
+            max_rows - 1,
+            0,
+            status_line.ljust(max_cols, " "),
+            curses.A_STANDOUT,
+        )
 
         # header line
         line = 0
-        self.stdscr.addstr(line, 0, "Single Finger Test Application",
-                           curses.A_BOLD)
+        self.stdscr.addstr(
+            line, 0, "Single Finger Test Application", curses.A_BOLD
+        )
         line += 3
 
         line = self.draw_data_table(
@@ -70,12 +76,38 @@ class CursesGUI:
             ["Torque [Nm]", "Position [rad]"],
             applied_action_data,
         )
+        line += 2
+
+        self.stdscr.addstr(line, 0, "STATUS", curses.A_BOLD)
+        line += 1
+        self.stdscr.addstr(line, 0, "━" * 40)
+        line += 1
+        self.stdscr.addstr(
+            line, 0, "Action Repetitions: {}".format(status.action_repetitions)
+        )
+        line += 1
+        self.stdscr.addstr(
+            line, 0, "Error Status: {}".format(status.error_status)
+        )
+        line += 1
+        self.stdscr.addstr(line, 0, "━" * 40)
 
         self.stdscr.refresh()
 
         # quit if user presses "q"
         c = self.stdscr.getch()
         return c != ord("q")
+
+    def display_error(self, message):
+        self.stdscr.nodelay(False)
+        self.stdscr.clear()
+
+        self.stdscr.addstr(1, 0, "ERROR:", curses.A_BOLD)
+        self.stdscr.addstr(3, 4, message)
+        self.stdscr.addstr(5, 0, "Press any key to exit.")
+        self.stdscr.refresh()
+
+        self.stdscr.getch()
 
     def draw_data_table(
         self,
@@ -136,16 +168,25 @@ def loop(stdscr, frontend):
     gui = CursesGUI(stdscr)
     okay = True
 
-    # get current position
-    t = frontend.append_desired_action(finger.Action())
-    target_position = frontend.get_observation(t).position
+    try:
+        # get current position
+        t = frontend.append_desired_action(finger.Action())
+        target_position = frontend.get_observation(t).position
 
-    while okay:
-        desired_action = finger.Action(position=target_position)
-        t = frontend.append_desired_action(desired_action)
-        obs = frontend.get_observation(t)
-        applied_action = frontend.get_applied_action(t)
-        okay = gui.update(obs, desired_action, applied_action)
+        while okay:
+            desired_action = finger.Action(position=target_position)
+            t = frontend.append_desired_action(desired_action)
+            obs = frontend.get_observation(t)
+
+            if obs.position[0] < -1:
+                raise RuntimeError("This is an error message!")
+
+            applied_action = frontend.get_applied_action(t)
+            status = frontend.get_status(t)
+
+            okay = gui.update(obs, desired_action, applied_action, status)
+    except Exception as e:
+        gui.display_error(str(e))
 
 
 def main():
