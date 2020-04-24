@@ -8,7 +8,6 @@ import rospkg
 
 from robot_interfaces import finger
 import robot_fingers
-import pybullet_fingers.drivers
 
 
 class CursesGUI:
@@ -222,10 +221,11 @@ def loop(win, frontend):
 
 
 def main():
-    USE_SIMULATION = True
+    USE_SIMULATION = False
 
     robot_data = finger.SingleProcessData()
     if USE_SIMULATION:
+        import pybullet_fingers.drivers
         backend = pybullet_fingers.drivers.create_single_finger_backend(
             robot_data, real_time_mode=True, visualize=True
         )
@@ -236,7 +236,7 @@ def main():
             "config",
             "single_finger_assembly_test.yml",
         )
-        backend = robot_fingers.create_one_joint_backend(
+        backend = robot_fingers.create_real_finger_backend(
             robot_data, config_file_path
         )
 
