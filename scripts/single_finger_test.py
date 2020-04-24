@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""Run single finger in "spring mode" for testing after assembly."""
+"""Run single finger in position control mode and print all robot data."""
 import os
 import curses
 import numpy as np
@@ -234,7 +234,7 @@ def main():
         config_file_path = os.path.join(
             rospkg.RosPack().get_path("robot_fingers"),
             "config",
-            "single_finger_assembly_test.yml",
+            "single_finger_test.yml",
         )
         backend = robot_fingers.create_real_finger_backend(
             robot_data, config_file_path
