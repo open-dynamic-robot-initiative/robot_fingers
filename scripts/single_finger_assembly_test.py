@@ -37,7 +37,7 @@ class CursesGUI:
 
         joint_names = ["Joint %d" % i for i in range(len(observation.torque))]
 
-        self.win.clear()
+        self.win.erase()
 
         # status line
         status_line = " Press 'q' to quit."
