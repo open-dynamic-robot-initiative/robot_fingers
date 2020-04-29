@@ -24,8 +24,8 @@ void NJBRD::Config::print() const
               << "\t has_endstop: " << has_endstop << "\n"
               << "\t calibration: "
               << "\n"
-              << "\t\t endstop_search_torque_Nm: "
-              << calibration.endstop_search_torque_Nm << "\n"
+              << "\t\t endstop_search_torques_Nm: "
+              << calibration.endstop_search_torques_Nm.transpose() << "\n"
               << "\t\t position_tolerance_rad: "
               << calibration.position_tolerance_rad << "\n"
               << "\t\t move_timeout: " << calibration.move_timeout << "\n"
@@ -88,8 +88,8 @@ typename NJBRD::Config NJBRD::Config::load_config(
         YAML::Node calib = user_config["calibration"];
 
         set_config_value(calib,
-                         "endstop_search_torque_Nm",
-                         &config.calibration.endstop_search_torque_Nm);
+                         "endstop_search_torques_Nm",
+                         &config.calibration.endstop_search_torques_Nm);
         set_config_value(calib,
                          "position_tolerance_rad",
                          &config.calibration.position_tolerance_rad);
@@ -319,8 +319,8 @@ void NJBRD::_initialize()
     joint_modules_.set_position_control_gains(
         config_.position_control_gains.kp, config_.position_control_gains.kd);
 
-    is_initialized_ = home_on_index_after_negative_end_stop(
-        config_.calibration.endstop_search_torque_Nm, config_.home_offset_rad);
+    is_initialized_ = homing(config_.calibration.endstop_search_torques_Nm,
+                             config_.home_offset_rad);
 
     if (is_initialized_)
     {
@@ -338,13 +338,15 @@ void NJBRD::_initialize()
 }
 
 TPL_NJBRD
-bool NJBRD::home_on_index_after_negative_end_stop(
-    double endstop_search_torque_Nm, NJBRD::Vector home_offset_rad)
+bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
+                   NJBRD::Vector home_offset_rad)
 {
     //! Distance after which encoder index search is aborted.
     //! Computed based on gear ratio to be 1.5 motor revolutions.
-    const double SEARCH_DISTANCE_LIMIT_RAD =
+    const double INDEX_SEARCH_DISTANCE_LIMIT_RAD =
         (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
+    //! Absolute step size when moving for encoder index search.
+    constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.001;
 
     rt_printf("Start homing.\n");
     if (has_endstop_)
@@ -353,7 +355,7 @@ bool NJBRD::home_on_index_after_negative_end_stop(
         constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
         //! Size of the window when computing average velocity.
         constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
-        //! Velocity limit at which the joints are considered to be stopped
+        //! Velocity limit at which the joints are considered to be stopped.
         constexpr double STOP_VELOCITY = 0.01;
 
         static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
@@ -371,8 +373,7 @@ bool NJBRD::home_on_index_after_negative_end_stop(
                (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
                 STOP_VELOCITY))
         {
-            Vector torques = Vector::Constant(-endstop_search_torque_Nm);
-            apply_action_uninitialized(torques);
+            apply_action_uninitialized(endstop_search_torques_Nm);
             Vector abs_velocities =
                 get_latest_observation().velocity.cwiseAbs();
 
@@ -398,8 +399,23 @@ bool NJBRD::home_on_index_after_negative_end_stop(
     }
 
     // Home on encoder index
-    HomingReturnCode homing_status = joint_modules_.execute_homing(
-        SEARCH_DISTANCE_LIMIT_RAD, home_offset_rad);
+
+    // Set the search direction for each joint opposite to the end-stop search
+    // direction.
+    Vector index_search_step_sizes;
+    for (unsigned int i = 0; i < N_JOINTS; i++)
+    {
+        index_search_step_sizes[i] = INDEX_SEARCH_STEP_SIZE_RAD;
+        if (endstop_search_torques_Nm[i] > 0)
+        {
+            index_search_step_sizes[i] *= -1;
+        }
+    }
+
+    HomingReturnCode homing_status =
+        joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
+                                      home_offset_rad,
+                                      index_search_step_sizes);
 
     rt_printf("Finished homing.\n");
 

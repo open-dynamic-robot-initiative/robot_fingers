@@ -45,19 +45,6 @@ struct MotorParameters
 };
 
 /**
- * @brief Parameters for the joint calibration (homing and go to initial pose).
- */
-struct CalibrationParameters
-{
-    //! @brief Torque that is used to find the end stop.
-    double endstop_search_torque_Nm;
-    //! @brief Tolerance for reaching the starting position.
-    double position_tolerance_rad;
-    //! @brief Timeout for reaching the starting position.
-    double move_timeout;
-};
-
-/**
  * @brief Base class for simple n-joint BLMC robots.
  *
  * This is a generic base class to easily implement drivers for simple BLMC
@@ -175,7 +162,7 @@ protected:
     void _initialize();
 
     /**
-     * @brief Homing on negative end stop and encoder index.
+     * @brief Homing using end stops (optional) and encoder indices.
      *
      * Procedure for finding an absolute zero position (or "home" position) when
      * using relative encoders.
@@ -194,14 +181,13 @@ protected:
      *     zero position = encoder index position + home offset
      *
      *
-     * @param endstop_search_torque_Nm Torque that is used to move the joints
+     * @param endstop_search_torques_Nm Torques that are used to move the joints
      *     while searching the end stop.
      * @param home_offset_rad Offset between the home position and the desired
      *     zero position.
      */
-    bool home_on_index_after_negative_end_stop(
-        double endstop_search_torque_Nm,
-        Vector home_offset_rad = Vector::Zero());
+    bool homing(Vector endstop_search_torques_Nm,
+                Vector home_offset_rad = Vector::Zero());
 
     /**
      * @brief Move to given goal position using PD control.
@@ -256,11 +242,15 @@ struct NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>::Config
     bool has_endstop = false;
 
     //! @brief Parameters related to calibration.
-    CalibrationParameters calibration = {
-        .endstop_search_torque_Nm = 0.0,
-        .position_tolerance_rad = 0.0,
-        .move_timeout = 0,
-    };
+    struct
+    {
+        //! @brief Torque that is used to find the end stop.
+        Vector endstop_search_torques_Nm = Vector::Zero();
+        //! @brief Tolerance for reaching the starting position.
+        double position_tolerance_rad = 0.0;
+        //! @brief Timeout for reaching the starting position.
+        double move_timeout = 0.0;
+    } calibration;
 
     //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
     // set some rather high damping by default
