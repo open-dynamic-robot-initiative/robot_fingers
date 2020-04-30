@@ -1,0 +1,54 @@
+can_ports: ["can0", "can1", "can2", "can3", "can4", "can5"]
+max_current_A: 2.0
+has_endstop: true
+calibration:
+    endstop_search_torques_Nm: 
+        - 0.22
+        - 0.22
+        - -0.18
+        - 0.22
+        - 0.22
+        - -0.18
+        - 0.22
+        - 0.22
+        - -0.18
+    position_tolerance_rad: 0.05
+    move_timeout: 2000
+safety_kd:
+    - 0.09
+    - 0.09
+    - 0.05
+    - 0.09
+    - 0.09
+    - 0.05
+    - 0.09
+    - 0.09
+    - 0.05
+position_control_gains:
+    kp: [5, 5, 5, 5, 5, 5, 5, 5, 5]
+    kd: [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03]
+
+# Set zero-position according to URDF (finger pointing straight down).
+home_offset_rad:
+    - -1.543
+    - -0.987
+    - 3.0
+    - -1.278
+    - -1.179
+    - 2.93
+    - -1.464
+    - -1.229
+    - 2.88
+
+# Set the initial position such that it is still save when the stage is at the
+# highest level.
+initial_position_rad:
+    - 0
+    - 0.9
+    - -1.7
+    - 0
+    - 0.9
+    - -1.7
+    - 0
+    - 0.9
+    - -1.7
