@@ -2,7 +2,7 @@ can_ports: ["can2", "can3"]
 max_current_A: 2
 has_endstop: true
 calibration:
-    endstop_search_torque_Nm: 0.22
+    endstop_search_torques_Nm: [-0.22, -0.22, -0.22]
     position_tolerance_rad: 0.05
     move_timeout: 2000
 safety_kd: [0.08, 0.08, 0.04]
