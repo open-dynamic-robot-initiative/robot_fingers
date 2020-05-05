@@ -19,7 +19,7 @@ class FakeFingerDriver : public robot_interfaces::RobotDriver<
 public:
     typedef robot_interfaces::FingerTypes::Action Action;
     typedef robot_interfaces::FingerTypes::Observation Observation;
-    typedef robot_interfaces::FingerTypes::Vector Vector;
+    typedef robot_interfaces::FingerTypes::Action::Vector Vector;
 
     int data_generating_index_ = 0;
 
