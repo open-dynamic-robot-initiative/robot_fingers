@@ -16,7 +16,7 @@ import robot_fingers
 def get_random_position():
     """Generate a random position within a save range."""
     position_min = np.array([-0.6, -1.5, -2])
-    position_max = np.array([1, 1.5, 2])
+    position_max = np.array([1, 0.6, 2])
 
     position_range = position_max - position_min
 
