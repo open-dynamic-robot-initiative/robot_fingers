@@ -36,11 +36,13 @@ def main():
 
     robot = robot_fingers.Robot(*robot_type[args.robot_type])
 
+    print("")
+    print("")
     input("Manually move robot to zero position.  Then press Enter.")
     robot.initialize()
 
     print("")
-    print("Finished. The 'travelled distance' corresponds to the home offset.")
+    print("Finished. The 'Offset' corresponds to the home offset.")
 
 
 if __name__ == "__main__":
