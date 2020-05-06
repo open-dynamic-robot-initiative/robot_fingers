@@ -46,6 +46,7 @@ def demo_print_position(robot):
     :type robot: Robot
     """
     action = robot.Action()
+    print("\nPosition:")
     while True:
         t = robot.frontend.append_desired_action(action)
         pos = robot.frontend.get_observation(t).position
