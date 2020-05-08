@@ -417,7 +417,13 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                                       home_offset_rad,
                                       index_search_step_sizes);
 
-    rt_printf("Finished homing.\n");
+    rt_printf("Finished homing.  Offset: ");
+    Vector travelled_distance = joint_modules_.get_distance_travelled_during_homing();
+    for (size_t i = 0; i < N_JOINTS; i++)
+    {
+        rt_printf("%.3f, ", -travelled_distance[i]);
+    }
+    rt_printf("\n");
 
     return homing_status == HomingReturnCode::SUCCEEDED;
 }
