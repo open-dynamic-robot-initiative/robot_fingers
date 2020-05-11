@@ -36,9 +36,9 @@ home_offset_rad:
     - 0.983
     - 1.344
     - 2.221
-    - 1.049
-    - 1.297
-    - 2.782
+    - 1.399
+    - 0.882
+    - 2.695
 
 # Set the initial position such that it is still save when the stage is at the
 # highest level.
