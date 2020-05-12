@@ -348,6 +348,9 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
     //! Absolute step size when moving for encoder index search.
     constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.001;
 
+    //! Distance travelled during homing (useful for home offset calibration)
+    Vector travelled_distance = Vector::Zero();
+
     rt_printf("Start homing.\n");
     if (has_endstop_)
     {
@@ -368,6 +371,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
         // TODO: add timeout to this loop?
         std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
         Vector summed_velocities = Vector::Zero();
+        Vector start_position = get_latest_observation().position;
         uint32_t step_count = 0;
         while (step_count < MIN_STEPS_MOVE_TO_END_STOP ||
                (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
@@ -396,6 +400,10 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
 #endif
         }
         rt_printf("Reached end stop.\n");
+
+        // compute distance travelled during end-stop search
+        travelled_distance +=
+            get_latest_observation().position - start_position;
     }
 
     // Home on encoder index
@@ -417,10 +425,12 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                                       home_offset_rad,
                                       index_search_step_sizes);
 
-    rt_printf("Finished homing.  Offset: ");
-    Vector travelled_distance = joint_modules_.get_distance_travelled_during_homing();
+    rt_printf("Finished homing.  Offset between end and start position: ");
+    travelled_distance += joint_modules_.get_distance_travelled_during_homing();
     for (size_t i = 0; i < N_JOINTS; i++)
     {
+        // negate the travelled distance so the output can directly be used as
+        // home offset
         rt_printf("%.3f, ", -travelled_distance[i]);
     }
     rt_printf("\n");
