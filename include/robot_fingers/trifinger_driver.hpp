@@ -8,7 +8,6 @@
 #pragma once
 
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
-#include <robot_interfaces/trifinger_types.hpp>
 
 namespace robot_fingers
 {

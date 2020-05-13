@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # stop build on first error
-string(APPEND CMAKE_CXX_FLAGS "-Wfatal-errors")
+string(APPEND CMAKE_CXX_FLAGS " -Wfatal-errors")
 
 
 find_package(catkin REQUIRED COMPONENTS
