@@ -16,7 +16,7 @@ namespace robot_fingers
  *
  * Driver for a double BLMC joint.  Mostly intended for testing purposes.
  */
-class TwoJointDriver : public blmc_robots::NJointBlmcRobotDriver<2, 1>
+class TwoJointDriver : public blmc_robots::SimpleNJointBlmcRobotDriver<2, 1>
 {
 public:
     TwoJointDriver(const Config &config)
@@ -26,7 +26,7 @@ public:
 
 private:
     TwoJointDriver(const MotorBoards &motor_boards, const Config &config)
-        : blmc_robots::NJointBlmcRobotDriver<2, 1>(
+        : blmc_robots::SimpleNJointBlmcRobotDriver<2, 1>(
               motor_boards,
               create_motors(motor_boards),
               {

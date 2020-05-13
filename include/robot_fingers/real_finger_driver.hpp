@@ -14,7 +14,7 @@
 
 namespace robot_fingers
 {
-class RealFingerDriver : public blmc_robots::NJointBlmcRobotDriver<3, 2>
+class RealFingerDriver : public blmc_robots::FingerRobotDriver<1>
 {
 public:
     RealFingerDriver(const Config &config)
@@ -24,7 +24,7 @@ public:
 
 private:
     RealFingerDriver(const MotorBoards &motor_boards, const Config &config)
-        : blmc_robots::NJointBlmcRobotDriver<3, 2>(
+        : blmc_robots::FingerRobotDriver<1>(
               motor_boards,
               create_motors(motor_boards),
               {
