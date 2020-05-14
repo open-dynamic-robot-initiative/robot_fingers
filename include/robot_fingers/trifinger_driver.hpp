@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include <blmc_robots/n_joint_blmc_robot_driver.hpp>
+#include "finger_driver.hpp"
 
 namespace robot_fingers
 {
-class TriFingerDriver : public blmc_robots::FingerRobotDriver<3>
+class TriFingerDriver : public FingerDriver<3>
 {
 public:
     TriFingerDriver(const Config &config)
@@ -21,7 +21,7 @@ public:
 
 private:
     TriFingerDriver(const MotorBoards &motor_boards, const Config &config)
-        : blmc_robots::FingerRobotDriver<3>(
+        : FingerDriver<3>(
               motor_boards,
               create_motors(motor_boards),
               {

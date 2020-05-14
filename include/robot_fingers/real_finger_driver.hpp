@@ -9,12 +9,11 @@
 
 #pragma once
 
-#include <blmc_robots/n_joint_blmc_robot_driver.hpp>
-#include <robot_interfaces/finger_types.hpp>
+#include "finger_driver.hpp"
 
 namespace robot_fingers
 {
-class RealFingerDriver : public blmc_robots::FingerRobotDriver<1>
+class RealFingerDriver : public FingerDriver<1>
 {
 public:
     RealFingerDriver(const Config &config)
@@ -24,7 +23,7 @@ public:
 
 private:
     RealFingerDriver(const MotorBoards &motor_boards, const Config &config)
-        : blmc_robots::FingerRobotDriver<1>(
+        : FingerDriver<1>(
               motor_boards,
               create_motors(motor_boards),
               {
