@@ -11,10 +11,6 @@
 
 namespace robot_fingers
 {
-// FIXME this is defined in multiple places?
-constexpr size_t JOINTS_PER_FINGER = 3;
-constexpr size_t BOARDS_PER_FINGER = 2;
-
 /**
  * @brief Driver for the Finger robots.
  *
@@ -25,17 +21,17 @@ constexpr size_t BOARDS_PER_FINGER = 2;
  */
 template <size_t N_FINGERS>
 class FingerDriver : public blmc_robots::NJointBlmcRobotDriver<
-                              robot_interfaces::FingerObservation<N_FINGERS>,
-                              N_FINGERS * JOINTS_PER_FINGER,
-                              N_FINGERS * BOARDS_PER_FINGER>
+                         robot_interfaces::FingerObservation<N_FINGERS>,
+                         N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
+                         N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
 {
 public:
     typedef robot_interfaces::FingerObservation<N_FINGERS> Observation;
 
-    using blmc_robots::NJointBlmcRobotDriver<robot_interfaces::FingerObservation<N_FINGERS>,
-                                N_FINGERS * JOINTS_PER_FINGER,
-                                N_FINGERS *
-                                    BOARDS_PER_FINGER>::NJointBlmcRobotDriver;
+    using blmc_robots::NJointBlmcRobotDriver<
+        robot_interfaces::FingerObservation<N_FINGERS>,
+        N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
+        N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>::NJointBlmcRobotDriver;
 
     Observation get_latest_observation() override
     {
@@ -49,7 +45,8 @@ public:
         {
             // The force sensor is supposed to be connected to ADC A on the
             // first board of each finger.
-            const size_t board_idx = finger_idx * BOARDS_PER_FINGER;
+            const size_t board_idx =
+                finger_idx * robot_interfaces::BOARDS_PER_FINGER;
 
             auto adc_a_history =
                 this->motor_boards_[board_idx]->get_measurement(
