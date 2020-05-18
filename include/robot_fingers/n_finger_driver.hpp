@@ -21,9 +21,9 @@ namespace robot_fingers
  */
 template <size_t N_FINGERS>
 class NFingerDriver : public blmc_robots::NJointBlmcRobotDriver<
-                         robot_interfaces::NFingerObservation<N_FINGERS>,
-                         N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
-                         N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
+                          robot_interfaces::NFingerObservation<N_FINGERS>,
+                          N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
+                          N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
 {
 public:
     typedef robot_interfaces::NFingerObservation<N_FINGERS> Observation;

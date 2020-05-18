@@ -32,14 +32,11 @@ NUM_FIXED_VELOCITY_MOVEMENT_STEPS = 150
 
 
 # Number of times the complete scenario is repeated
-#NUM_ITERATIONS = 20
+# NUM_ITERATIONS = 20
 NUM_ITERATIONS = 1
 
 
 # ========================================
-
-
-
 
 
 def zero_torque_ctrl(robot, duration, print_position=False):
@@ -52,8 +49,11 @@ def zero_torque_ctrl(robot, duration, print_position=False):
         t = robot.append_desired_action(action)
         robot.wait_until_time_index(t)
         if print_position:
-            print("\rPosition: %10.4f" %
-                  robot.get_observation(t).position[0], end="")
+            print(
+                "\rPosition: %10.4f" % robot.get_observation(t).position[0],
+                end="",
+            )
+
 
 def go_to(robot, goal_position, steps, hold):
     """Go to the goal position with linear profile and hold there.
@@ -80,9 +80,11 @@ def go_to(robot, goal_position, steps, hold):
         t = robot.append_desired_action(action)
         robot.wait_until_time_index(t)
 
+
 def go_to_zero(robot, steps, hold):
     """Go to zero position.  See go_to for description of parameters."""
     go_to(robot, np.zeros(N_JOINTS), steps, hold)
+
 
 def hit_endstop(robot, desired_torque, hold=0, timeout=5000):
     """Hit the end stop with the given torque.
@@ -101,8 +103,10 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000):
     action = Action(torque=desired_torque)
     t = robot.append_desired_action(action)
 
-    while ((np.any(np.abs(robot.get_observation(t).velocity) > zero_velocity) or
-           step < 100) and step < timeout):
+    while (
+        np.any(np.abs(robot.get_observation(t).velocity) > zero_velocity)
+        or step < 100
+    ) and step < timeout:
         t = robot.append_desired_action(action)
 
         step += 1
@@ -110,6 +114,7 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000):
     for step in range(hold):
         t = robot.append_desired_action(action)
         robot.wait_until_time_index(t)
+
 
 def test_if_moves(robot, desired_torque, timeout):
     for i in range(timeout):
@@ -161,8 +166,9 @@ def validate_position(robot):
     center = (position[0] + position[1]) / 2
 
     if np.abs(center) > tolerance:
-        raise RuntimeError("Unexpected center position."
-                           "Expected 0.0, actual is %f" % center)
+        raise RuntimeError(
+            "Unexpected center position." "Expected 0.0, actual is %f" % center
+        )
     else:
         print("Position is okay.")
 
@@ -212,32 +218,34 @@ def main():
     config_file_path = path.join(
         rospkg.RosPack().get_path("robot_fingers"),
         "config",
-        "onejoint_high_load.yaml")
+        "onejoint_high_load.yaml",
+    )
 
     robot_data = one_joint.SingleProcessData()
-    finger_backend = robot_fingers.create_one_joint_backend(robot_data,
-                                                            config_file_path)
+    finger_backend = robot_fingers.create_one_joint_backend(
+        robot_data, config_file_path
+    )
     robot = one_joint.Frontend(robot_data)
 
     logger = one_joint.Logger(robot_data, 100)
 
     # rotate without end stop
-    #goal_position = 60
+    # goal_position = 60
     ## move to goal position within 2000 ms and wait there for 100 ms
-    #go_to(robot, goal_position, 20000, 100)
+    # go_to(robot, goal_position, 20000, 100)
 
     finger_backend.initialize()
     print("initialization finished")
     go_to_zero(robot, 1000, 2000)
 
-    #zero_torque_ctrl(robot, 99999999, print_position=True)
+    # zero_torque_ctrl(robot, 99999999, print_position=True)
 
     print("initial position validation")
     validate_position(robot)
 
     go_to_zero(robot, 1000, 2000)
 
-    #[(0, 0.0),
+    # [(0, 0.0),
     #  (1, 0.18),
     #  (2, 0.36),
     #  (3, 0.54),
@@ -249,18 +257,17 @@ def main():
     #  (9, 1.6199999999999999),
     #  (10, 1.7999999999999998)]
 
-
     # Careful, dangerous!
-    #hit_torque = np.ones(N_JOINTS) * 1.26
-    #print("Start to push")
-    #hit_endstop(robot, hit_torque, hold=100)
-    #hit_endstop(robot, -hit_torque, hold=100)
+    # hit_torque = np.ones(N_JOINTS) * 1.26
+    # print("Start to push")
+    # hit_endstop(robot, hit_torque, hold=100)
+    # hit_endstop(robot, -hit_torque, hold=100)
 
-    for iteration in range (NUM_ITERATIONS):
+    for iteration in range(NUM_ITERATIONS):
         print("START TEST ITERATION %d" % iteration)
 
-        #print("Determine torque to start movement.")
-        #determine_start_torque(robot)
+        # print("Determine torque to start movement.")
+        # determine_start_torque(robot)
 
         print("Switch directions with high torque")
         low_trq = 0.2
@@ -273,28 +280,24 @@ def main():
             hard_direction_change(robot, 2, trq)
 
             t = robot.get_current_time_index()
-            if np.any(np.abs(robot.get_observation(t).position) >
-                      POSITION_LIMIT):
+            if np.any(
+                np.abs(robot.get_observation(t).position) > POSITION_LIMIT
+            ):
                 print("ERROR: Position limit exceeded!")
                 return
 
             hard_direction_change(robot, 10, low_trq)
 
             # Determine torque to start movement
-            #determine_start_torque(robot)
+            # determine_start_torque(robot)
 
         logger.stop()
 
         print("position validation after switch directions")
         validate_position(robot)
 
-
         # skip the following tests
         continue
-
-
-
-
 
         print("Hit the end stop...")
 
@@ -304,24 +307,23 @@ def main():
         for i in progress(range(NUM_ENDSTOP_HITS)):
             hit_torque *= -1
             hit_endstop(robot, hit_torque, hold=10)
-            #hit_endstop(robot, hit_torque)
-            #zero_torque_ctrl(robot, 10)
+            # hit_endstop(robot, hit_torque)
+            # zero_torque_ctrl(robot, 10)
 
-        #hit_torque = np.ones(N_JOINTS) * 0.2
-        #for i in range(NUM_ENDSTOP_HITS):
+        # hit_torque = np.ones(N_JOINTS) * 0.2
+        # for i in range(NUM_ENDSTOP_HITS):
         #    hit_torque *= -1
         #    hit_endstop(robot, hit_torque)
         #    zero_torque_ctrl(robot, 10)
 
-        #hit_torque = np.ones(N_JOINTS) * 0.4
-        #for i in range(NUM_ENDSTOP_HITS):
+        # hit_torque = np.ones(N_JOINTS) * 0.4
+        # for i in range(NUM_ENDSTOP_HITS):
         #    hit_torque *= -1
         #    hit_endstop(robot, hit_torque)
         #    zero_torque_ctrl(robot, 10)
 
         print("position validation after hitting")
         validate_position(robot)
-
 
         print("Move with fixed velocity...")
 
@@ -333,20 +335,19 @@ def main():
             # move to goal position within 2000 ms and wait there for 100 ms
             go_to(robot, goal_position, 2000, 100)
 
-        #print("validate position")
-        #validate_position(robot)
+        # print("validate position")
+        # validate_position(robot)
 
-        #for i in range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS):
+        # for i in range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS):
         #    goal_position *= -1
         #    go_to(robot, goal_position, 1000, 100)
 
-        #print("validate position")
-        #validate_position(robot)
+        # print("validate position")
+        # validate_position(robot)
 
-        #for i in range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS):
+        # for i in range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS):
         #    goal_position *= -1
         #    go_to(robot, goal_position, 500, 100)
-
 
         print("final position validation")
         validate_position(robot)

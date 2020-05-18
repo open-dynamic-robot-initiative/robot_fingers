@@ -4,8 +4,9 @@ import rospkg
 
 
 class Robot:
-
-    def __init__(self, robot_module, create_backend_function, config_file_name):
+    def __init__(
+        self, robot_module, create_backend_function, config_file_name
+    ):
         """Initialize the robot environment (backend and frontend).
 
         :param robot_module: The module that defines the robot classes (i.e.
@@ -19,16 +20,19 @@ class Robot:
 
         # Use the default config file from the robot_fingers package
         config_file_path = os.path.join(
-            rospkg.RosPack().get_path("robot_fingers"), "config",
-            config_file_name)
+            rospkg.RosPack().get_path("robot_fingers"),
+            "config",
+            config_file_name,
+        )
 
         # Storage for all observations, actions, etc.
         self.robot_data = robot_module.SingleProcessData()
 
         # The backend sends actions from the data to the robot and writes
         # observations from the robot to the data.
-        self.backend = create_backend_function(self.robot_data,
-                                               config_file_path)
+        self.backend = create_backend_function(
+            self.robot_data, config_file_path
+        )
 
         # The frontend is used by the user to get observations and send actions
         self.frontend = robot_module.Frontend(self.robot_data)

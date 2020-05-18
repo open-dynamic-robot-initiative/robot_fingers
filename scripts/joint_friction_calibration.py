@@ -27,7 +27,6 @@ CURRENT_TO_TORQUE_FACTOR = 0.02 * 9
 
 
 class AverageBuffer:
-
     def __init__(self, size):
         self.size = size
         self.buffer = []
@@ -76,9 +75,9 @@ def run_application(stdscr, robot, velocity_radps, buffer_size):
             # run simple PI velocity controller
             velocity_error = desired_velocity_radps - obs.velocity
             error_integral += velocity_error * step_duration_s
-            error_integral = np.clip(error_integral,
-                                     -max_error_integal,
-                                     +max_error_integal)
+            error_integral = np.clip(
+                error_integral, -max_error_integal, +max_error_integal
+            )
             torque = kp * velocity_error + ki * error_integral
 
             action = one_joint.Action(torque=torque)
@@ -97,43 +96,62 @@ def run_application(stdscr, robot, velocity_radps, buffer_size):
             stdscr.clear()
             line = 0
             # help line at the bottom
-            stdscr.addstr(curses.LINES - 1, 0,
-                          " s: start/stop motors | q: quit ",
-                          curses.A_STANDOUT)
+            stdscr.addstr(
+                curses.LINES - 1,
+                0,
+                " s: start/stop motors | q: quit ",
+                curses.A_STANDOUT,
+            )
 
-            stdscr.addstr(line, 0,
-                          "Values are averaged over {:.3f} seconds".format(
-                              buffer_size * step_duration_s))
+            stdscr.addstr(
+                line,
+                0,
+                "Values are averaged over {:.3f} seconds".format(
+                    buffer_size * step_duration_s
+                ),
+            )
 
             line += 2
             stdscr.addstr(line, 0, "Status:", curses.A_BOLD)
-            stdscr.addstr(line, len("Status:") + 1,
-                          "RUNNING" if enabled else "STOPPED")
+            stdscr.addstr(
+                line, len("Status:") + 1, "RUNNING" if enabled else "STOPPED"
+            )
 
             line += 2
             stdscr.addstr(line, 0, "Commanded Torque:", curses.A_BOLD)
             for i, p in enumerate(applied_torque_buffer.mean()):
                 line += 1
-                stdscr.addstr(line, 4,
-                              "Joint {}: {: .3f} Nm / {: .3f} A".format(
-                                  i, p, p / CURRENT_TO_TORQUE_FACTOR))
+                stdscr.addstr(
+                    line,
+                    4,
+                    "Joint {}: {: .3f} Nm / {: .3f} A".format(
+                        i, p, p / CURRENT_TO_TORQUE_FACTOR
+                    ),
+                )
 
             line += 2
             stdscr.addstr(line, 0, "Measured Torque:", curses.A_BOLD)
             for i, p in enumerate(measured_torque_buffer.mean()):
                 line += 1
-                stdscr.addstr(line, 4,
-                              "Joint {}: {: .3f} Nm / {: .3f} A".format(
-                                  i, p, p / CURRENT_TO_TORQUE_FACTOR))
+                stdscr.addstr(
+                    line,
+                    4,
+                    "Joint {}: {: .3f} Nm / {: .3f} A".format(
+                        i, p, p / CURRENT_TO_TORQUE_FACTOR
+                    ),
+                )
 
             line += 2
-            stdscr.addstr(line, 0, "Velocity (actual / desired):",
-                          curses.A_BOLD)
-            for i, (p, d) in enumerate(zip(velocity_buffer.mean(),
-                                           desired_velocity_radps)):
+            stdscr.addstr(
+                line, 0, "Velocity (actual / desired):", curses.A_BOLD
+            )
+            for i, (p, d) in enumerate(
+                zip(velocity_buffer.mean(), desired_velocity_radps)
+            ):
                 line += 1
-                stdscr.addstr(line, 4, "Joint {}: {:.3f} / {:3f}".format(
-                    i, p, d))
+                stdscr.addstr(
+                    line, 4, "Joint {}: {:.3f} / {:3f}".format(i, p, d)
+                )
 
             stdscr.refresh()
 
@@ -148,27 +166,40 @@ def run_application(stdscr, robot, velocity_radps, buffer_size):
 
 def main():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--velocity", type=float, default=np.pi/2,
-                           help="Velocity at which joints are moving [rad/s].")
-    argparser.add_argument("--average-window", type=int, default=1000,
-                           help="Number of values used for averaging.")
+    argparser.add_argument(
+        "--velocity",
+        type=float,
+        default=np.pi / 2,
+        help="Velocity at which joints are moving [rad/s].",
+    )
+    argparser.add_argument(
+        "--average-window",
+        type=int,
+        default=1000,
+        help="Number of values used for averaging.",
+    )
     args = argparser.parse_args()
-
 
     # load the default config file
     config_file_path = os.path.join(
-        rospkg.RosPack().get_path("robot_fingers"), "config",
-        "onejoint_friction_calibration.yml")
+        rospkg.RosPack().get_path("robot_fingers"),
+        "config",
+        "onejoint_friction_calibration.yml",
+    )
 
     robot_data = one_joint.SingleProcessData()
-    robot_backend = robot_fingers.create_one_joint_backend(robot_data,
-                                                           config_file_path)
+    robot_backend = robot_fingers.create_one_joint_backend(
+        robot_data, config_file_path
+    )
     robot_frontend = one_joint.Frontend(robot_data)
 
     robot_backend.initialize()
 
-    curses.wrapper(lambda stdscr: run_application(
-        stdscr, robot_frontend, args.velocity, args.average_window))
+    curses.wrapper(
+        lambda stdscr: run_application(
+            stdscr, robot_frontend, args.velocity, args.average_window
+        )
+    )
 
 
 if __name__ == "__main__":
