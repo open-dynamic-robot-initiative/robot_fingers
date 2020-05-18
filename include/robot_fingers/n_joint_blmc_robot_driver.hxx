@@ -5,8 +5,9 @@
  *            Gesellschaft.
  */
 
-#define TPL_NJBRD template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
-#define NJBRD NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>
+#define TPL_NJBRD \
+    template <typename Observation, size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+#define NJBRD NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>
 
 namespace blmc_robots
 {
@@ -188,23 +189,11 @@ void NJBRD::initialize()
         [](void *instance_pointer) {
             // instance_pointer = this, cast to correct type and call the
             // _initialize() method.
-            ((NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>
-                  *)(instance_pointer))
-                ->_initialize();
+            ((NJBRD *)(instance_pointer))->_initialize();
             return (void *)nullptr;
         },
         this);
     realtime_thread.join();
-}
-
-TPL_NJBRD
-typename NJBRD::Observation NJBRD::get_latest_observation()
-{
-    Observation observation;
-    observation.position = joint_modules_.get_measured_angles();
-    observation.velocity = joint_modules_.get_measured_velocities();
-    observation.torque = joint_modules_.get_measured_torques();
-    return observation;
 }
 
 TPL_NJBRD
@@ -290,6 +279,71 @@ void NJBRD::shutdown()
 }
 
 TPL_NJBRD
+typename NJBRD::Action NJBRD::process_desired_action(
+    const Action &desired_action,
+    const Observation &latest_observation,
+    const double max_torque_Nm,
+    const Vector &safety_kd,
+    const Vector &default_position_control_kp,
+    const Vector &default_position_control_kd)
+{
+    Action processed_action;
+
+    processed_action.torque = desired_action.torque;
+    processed_action.position = desired_action.position;
+
+    // Position controller
+    // -------------------
+    // TODO: add position limits
+
+    // Run the position controller only if a target position is set for at
+    // least one joint.
+    if (!processed_action.position.array().isNaN().all())
+    {
+        // Replace NaN-values with default gains
+        processed_action.position_kp =
+            desired_action.position_kp.array().isNaN().select(
+                default_position_control_kp, desired_action.position_kp);
+        processed_action.position_kd =
+            desired_action.position_kd.array().isNaN().select(
+                default_position_control_kd, desired_action.position_kd);
+
+        Vector position_error =
+            processed_action.position - latest_observation.position;
+
+        // simple PD controller
+        Vector position_control_torque =
+            processed_action.position_kp.cwiseProduct(position_error) -
+            processed_action.position_kd.cwiseProduct(
+                latest_observation.velocity);
+
+        // position_control_torque contains NaN for joints where target
+        // position is set to NaN!  Filter those out and set the torque to
+        // zero instead.
+        position_control_torque =
+            position_control_torque.array().isNaN().select(
+                0, position_control_torque);
+
+        // Add result of position controller to the torque command
+        processed_action.torque += position_control_torque;
+    }
+
+    // Safety Checks
+    // -------------
+    // limit to configured maximum torque
+    processed_action.torque =
+        mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
+    // velocity damping to prevent too fast movements
+    processed_action.torque -=
+        safety_kd.cwiseProduct(latest_observation.velocity);
+    // after applying checks, make sure we are still below the max. torque
+    processed_action.torque =
+        mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
+
+    return processed_action;
+}
+
+TPL_NJBRD
 typename NJBRD::Action NJBRD::apply_action_uninitialized(
     const NJBRD::Action &desired_action)
 {
@@ -297,13 +351,13 @@ typename NJBRD::Action NJBRD::apply_action_uninitialized(
 
     Observation observation = get_latest_observation();
 
-    Action applied_action = robot_interfaces::NJointRobotFunctions<
-        N_JOINTS>::process_desired_action(desired_action,
-                                          observation,
-                                          max_torque_Nm_,
-                                          config_.safety_kd,
-                                          config_.position_control_gains.kp,
-                                          config_.position_control_gains.kd);
+    Action applied_action =
+        process_desired_action(desired_action,
+                               observation,
+                               max_torque_Nm_,
+                               config_.safety_kd,
+                               config_.position_control_gains.kp,
+                               config_.position_control_gains.kd);
 
     joint_modules_.set_torques(applied_action.torque);
     joint_modules_.send_torques();
@@ -464,6 +518,19 @@ bool NJBRD::move_to_position(const NJBRD::Vector &goal_pos,
     }
 
     return reached_goal;
+}
+
+template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+typename SimpleNJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>::Observation
+SimpleNJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>::get_latest_observation()
+{
+    Observation observation;
+
+    observation.position = this->joint_modules_.get_measured_angles();
+    observation.velocity = this->joint_modules_.get_measured_velocities();
+    observation.torque = this->joint_modules_.get_measured_torques();
+
+    return observation;
 }
 
 }  // namespace blmc_robots

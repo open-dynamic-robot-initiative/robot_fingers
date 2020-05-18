@@ -18,7 +18,6 @@
 #include <yaml_cpp_catkin/yaml_eigen.h>
 #include <mpi_cpp_tools/math.hpp>
 #include <robot_interfaces/monitored_robot_driver.hpp>
-#include <robot_interfaces/n_joint_robot_functions.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
 
@@ -45,7 +44,7 @@ struct MotorParameters
 };
 
 /**
- * @brief Base class for simple n-joint BLMC robots.
+ * @brief Base class for n-joint BLMC robots.
  *
  * This is a generic base class to easily implement drivers for simple BLMC
  * robots that consist of N_JOINTS joints.
@@ -53,18 +52,21 @@ struct MotorParameters
  * @tparam N_JOINTS Number of joints.
  * @tparam N_MOTOR_BOARDS Number of motor control boards that are used.
  */
-template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+template <typename Observation, size_t N_JOINTS, size_t N_MOTOR_BOARDS>
 class NJointBlmcRobotDriver
     : public robot_interfaces::RobotDriver<
-          typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Action,
-          typename robot_interfaces::NJointRobotTypes<N_JOINTS>::Observation>
+          typename robot_interfaces::NJointAction<N_JOINTS>,
+          Observation>
 {
 public:
-    typedef typename robot_interfaces::NJointRobotTypes<N_JOINTS> Types;
+    static constexpr size_t num_joints = N_JOINTS;
+    static constexpr size_t num_motor_boards = N_MOTOR_BOARDS;
 
-    typedef typename Types::Action Action;
-    typedef typename Types::Observation Observation;
-    typedef typename Types::Vector Vector;
+    typedef typename robot_interfaces::NJointAction<N_JOINTS> Action;
+    typedef typename robot_interfaces::RobotInterfaceTypes<Action, Observation>
+        Types;
+
+    typedef typename Action::Vector Vector;
     typedef std::array<std::shared_ptr<blmc_drivers::MotorInterface>, N_JOINTS>
         Motors;
     typedef std::array<std::shared_ptr<blmc_drivers::CanBusMotorBoard>,
@@ -130,10 +132,52 @@ public:
      */
     void initialize() override;
 
-    Observation get_latest_observation() override;
+    virtual Observation get_latest_observation() override = 0;
     Action apply_action(const Action &desired_action) override;
     std::string get_error() override;
     void shutdown() override;
+
+    /**
+     * @brief Process the desired action provided by the user.
+     *
+     * Takes the desired action from the user and does the following processing:
+     *
+     * ## 1. Run the position controller in case a target position is set.
+     *
+     *   If the target position is set to a value unequal to NaN for any joint,
+     *   a PD position controller is executed for this joint and the resulting
+     *   torque command is added to the torque command in the action.
+     *
+     *   If the P- and/or D-gains are set to a non-NaN value in the action, they
+     *   are used for the control.  NaN-values are replaced with the default
+     *   gains.
+     *
+     * ## 2. Apply safety checks.
+     *
+     *   - Limit the torque to the allowed maximum value.
+     *   - Dampen velocity using the given safety_kd gains.  Damping us done
+     *     joint-wise using this equation:
+     *
+     *         torque_damped = torque_desired - safety_kd * current_velocity
+     *
+     * The resulting action with modifications of all steps is returned.
+     *
+     * @param desired_action  Desired action given by the user.
+     * @param latest_observation  Latest observation from the robot.
+     * @param max_torque_Nm  Maximum allowed absolute torque.
+     * @param safety_kd  D-gain for velocity damping.
+     * @param default_position_control_kp  Default P-gain for position control.
+     * @param default_position_control_kd  Default D-gain for position control.
+     *
+     * @return Resulting action after applying all the processing.
+     */
+    static Action process_desired_action(
+        const Action &desired_action,
+        const Observation &latest_observation,
+        const double max_torque_Nm,
+        const Vector &safety_kd,
+        const Vector &default_position_control_kp,
+        const Vector &default_position_control_kd);
 
 protected:
     BlmcJointModules<N_JOINTS> joint_modules_;
@@ -208,8 +252,8 @@ protected:
 /**
  * @brief Configuration of the robot that can be changed by the user.
  */
-template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
-struct NJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>::Config
+template <typename Observation, size_t N_JOINTS, size_t N_MOTOR_BOARDS>
+struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
 {
     typedef std::array<std::string, N_MOTOR_BOARDS> CanPortArray;
 
@@ -308,6 +352,29 @@ private:
     static void set_config_value(const YAML::Node &user_config,
                                  const std::string &name,
                                  T *var);
+};
+
+/**
+ * @brief Simple n-joint robot driver that uses NJointObservation.
+ *
+ * @tparam N_JOINTS  Number of joints
+ * @tparam N_MOTOR_BOARDS  Number of motor boards.
+ */
+template <size_t N_JOINTS, size_t N_MOTOR_BOARDS = (N_JOINTS + 1) / 2>
+class SimpleNJointBlmcRobotDriver
+    : public NJointBlmcRobotDriver<
+          robot_interfaces::NJointObservation<N_JOINTS>,
+          N_JOINTS,
+          N_MOTOR_BOARDS>
+{
+public:
+    typedef robot_interfaces::NJointObservation<N_JOINTS> Observation;
+
+    using NJointBlmcRobotDriver<robot_interfaces::NJointObservation<N_JOINTS>,
+                                N_JOINTS,
+                                N_MOTOR_BOARDS>::NJointBlmcRobotDriver;
+
+    Observation get_latest_observation() override;
 };
 
 /**
