@@ -18,9 +18,11 @@ if __name__ == "__main__":
     data = model.createData()
     tip_link_id = model.getFrameId("finger_tip_link")
 
-    robot = robot_fingers.Robot(robot_interfaces.finger,
-                                robot_fingers.create_real_finger_backend,
-                                "finger.yml")
+    robot = robot_fingers.Robot(
+        robot_interfaces.finger,
+        robot_fingers.create_real_finger_backend,
+        "finger.yml",
+    )
     robot.initialize()
 
     action = robot.Action()

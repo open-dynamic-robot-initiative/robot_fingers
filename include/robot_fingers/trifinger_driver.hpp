@@ -22,13 +22,13 @@ public:
 private:
     TriFingerDriver(const MotorBoards &motor_boards, const Config &config)
         : NFingerDriver<3>(motor_boards,
-                          create_motors(motor_boards),
-                          {
-                              // MotorParameters
-                              .torque_constant_NmpA = 0.02,
-                              .gear_ratio = 9.0,
-                          },
-                          config)
+                           create_motors(motor_boards),
+                           {
+                               // MotorParameters
+                               .torque_constant_NmpA = 0.02,
+                               .gear_ratio = 9.0,
+                           },
+                           config)
     {
     }
 

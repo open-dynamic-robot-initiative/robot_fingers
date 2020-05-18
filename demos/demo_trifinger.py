@@ -19,7 +19,8 @@ def run_choreography(frontend):
         # one step should take 1 second, so repeat action 1000 times
         for i in range(1000):
             t = frontend.append_desired_action(
-                robot_interfaces.trifinger.Action(position=position))
+                robot_interfaces.trifinger.Action(position=position)
+            )
             frontend.wait_until_time_index(t)
 
     deg45 = np.pi / 4
@@ -52,31 +53,37 @@ def run_choreography(frontend):
         # print current date/time every hour, so we can roughly see how long it
         # ran in case it crashes during a long-run-test.
         now = time.time()
-        if (now - last_time_print > 3600):
+        if now - last_time_print > 3600:
             print(time.strftime("%F %T"))
             last_time_print = now
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--multi-process", action="store_true",
-                        help="""If set run only frontend with multi-process
+    parser.add_argument(
+        "--multi-process",
+        action="store_true",
+        help="""If set run only frontend with multi-process
                         robot data.  Otherwise run everything within a single
-                        process.""")
+                        process.""",
+    )
     args = parser.parse_args()
 
     if args.multi_process:
         # In multi-process case assume that the backend is running in a
         # separate process and only set up the frontend here.
-        robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger",
-                                                                 False)
+        robot_data = robot_interfaces.trifinger.MultiProcessData(
+            "trifinger", False
+        )
         frontend = robot_interfaces.trifinger.Frontend(robot_data)
     else:
         # In single-process case run both frontend and backend in this process
         # (using the `Robot` helper class).
-        robot = robot_fingers.Robot(robot_interfaces.trifinger,
-                                    robot_fingers.create_trifinger_backend,
-                                    "trifinger.yml")
+        robot = robot_fingers.Robot(
+            robot_interfaces.trifinger,
+            robot_fingers.create_trifinger_backend,
+            "trifinger.yml",
+        )
         robot.initialize()
         frontend = robot.frontend
 

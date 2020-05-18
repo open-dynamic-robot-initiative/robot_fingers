@@ -25,9 +25,11 @@ def main():
     while True:
         for _ in range(1000):
             t = finger_frontend.append_desired_action(
-                finger.Action(torque=desired_torque))
+                finger.Action(torque=desired_torque)
+            )
 
             pos = finger_frontend.get_observation(t).position
+
 
 if __name__ == "__main__":
     main()

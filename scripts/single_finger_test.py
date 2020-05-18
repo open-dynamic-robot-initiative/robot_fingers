@@ -99,7 +99,9 @@ class CursesGUI:
             self.win.addstr(line, 0, "━" * 40)
             line += 1
             self.win.addstr(
-                line, 0, "Action Repetitions: {}".format(status.action_repetitions)
+                line,
+                0,
+                "Action Repetitions: {}".format(status.action_repetitions),
             )
             line += 1
             self.win.addstr(
@@ -116,7 +118,8 @@ class CursesGUI:
 
         except curses.error as e:
             raise RuntimeError(
-                "GUI rendering error.  Try increasing the terminal window.")
+                "GUI rendering error.  Try increasing the terminal window."
+            )
 
         # quit if user presses "q"
         c = self.win.getch()
@@ -236,6 +239,7 @@ def main():
     robot_data = finger.SingleProcessData()
     if USE_SIMULATION:
         import pybullet_fingers.drivers
+
         backend = pybullet_fingers.drivers.create_single_finger_backend(
             robot_data, real_time_mode=True, visualize=True
         )
