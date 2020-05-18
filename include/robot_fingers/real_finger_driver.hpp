@@ -9,11 +9,11 @@
 
 #pragma once
 
-#include "finger_driver.hpp"
+#include "n_finger_driver.hpp"
 
 namespace robot_fingers
 {
-class RealFingerDriver : public FingerDriver<1>
+class RealFingerDriver : public NFingerDriver<1>
 {
 public:
     RealFingerDriver(const Config &config)
@@ -23,7 +23,7 @@ public:
 
 private:
     RealFingerDriver(const MotorBoards &motor_boards, const Config &config)
-        : FingerDriver<1>(motor_boards,
+        : NFingerDriver<1>(motor_boards,
                           create_motors(motor_boards),
                           {
                               // MotorParameters
