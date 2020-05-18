@@ -25,7 +25,7 @@ class CursesGUI:
     def update(self, observation, desired_action, applied_action, status):
         """Update the displayed robot data."""
         # arrange data in arrays
-        observation_data = np.vstack(
+        motor_observation_data = np.vstack(
             [observation.position, observation.velocity, observation.torque]
         ).T
         desired_action_data = np.vstack(
@@ -39,74 +39,84 @@ class CursesGUI:
 
         self.win.erase()
 
-        # status line
-        status_line = " Press 'q' to quit."
-        max_rows, max_cols = self.win.getmaxyx()
-        self.win.insstr(
-            max_rows - 1,
-            0,
-            status_line.ljust(max_cols, " "),
-            curses.A_STANDOUT,
-        )
+        try:
 
-        # header line
-        line = 0
-        self.win.addstr(
-            line, 0, "Single Finger Test Application", curses.A_BOLD
-        )
-        line += 3
+            # status line
+            status_line = " Press 'q' to quit."
+            max_rows, max_cols = self.win.getmaxyx()
+            self.win.insstr(
+                max_rows - 1,
+                0,
+                status_line.ljust(max_cols, " "),
+                curses.A_STANDOUT,
+            )
 
-        # draw the data tables
-        line = self.draw_data_table(
-            line,
-            0,
-            "OBSERVATION",
-            joint_names,
-            ["Position [rad]", "Velocity [rad/s]", "Torque [Nm]"],
-            observation_data,
-        )
-        line += 2
+            # header line
+            line = 0
+            self.win.addstr(
+                line, 0, "Single Finger Test Application", curses.A_BOLD
+            )
+            line += 3
 
-        line = self.draw_data_table(
-            line,
-            0,
-            "DESIRED ACTION",
-            joint_names,
-            ["Torque [Nm]", "Position [rad]"],
-            desired_action_data,
-        )
-        line += 2
+            # draw the data tables
+            line = self.draw_data_table(
+                line,
+                0,
+                "OBSERVATION",
+                joint_names,
+                ["Position [rad]", "Velocity [rad/s]", "Torque [Nm]"],
+                motor_observation_data,
+            )
+            self.win.addstr(
+                line, 0, "Tip Force: {}".format(observation.tip_force)
+            )
+            line += 1
+            line += 2
 
-        line = self.draw_data_table(
-            line,
-            0,
-            "APPLIED ACTION",
-            joint_names,
-            ["Torque [Nm]", "Position [rad]"],
-            applied_action_data,
-        )
-        line += 2
+            line = self.draw_data_table(
+                line,
+                0,
+                "DESIRED ACTION",
+                joint_names,
+                ["Torque [Nm]", "Position [rad]"],
+                desired_action_data,
+            )
+            line += 2
 
-        # status does not fit well in a table, so list values manually here
-        self.win.addstr(line, 0, "STATUS", curses.A_BOLD)
-        line += 1
-        self.win.addstr(line, 0, "━" * 40)
-        line += 1
-        self.win.addstr(
-            line, 0, "Action Repetitions: {}".format(status.action_repetitions)
-        )
-        line += 1
-        self.win.addstr(
-            line, 0, "Error Status: {}".format(status.error_status)
-        )
-        line += 1
-        self.win.addstr(
-            line, 0, "Error Message: {}".format(status.error_message)
-        )
-        line += 1
-        self.win.addstr(line, 0, "━" * 40)
+            line = self.draw_data_table(
+                line,
+                0,
+                "APPLIED ACTION",
+                joint_names,
+                ["Torque [Nm]", "Position [rad]"],
+                applied_action_data,
+            )
+            line += 2
 
-        self.win.refresh()
+            # status does not fit well in a table, so list values manually here
+            self.win.addstr(line, 0, "STATUS", curses.A_BOLD)
+            line += 1
+            self.win.addstr(line, 0, "━" * 40)
+            line += 1
+            self.win.addstr(
+                line, 0, "Action Repetitions: {}".format(status.action_repetitions)
+            )
+            line += 1
+            self.win.addstr(
+                line, 0, "Error Status: {}".format(status.error_status)
+            )
+            line += 1
+            self.win.addstr(
+                line, 0, "Error Message: {}".format(status.error_message)
+            )
+            line += 1
+            self.win.addstr(line, 0, "━" * 40)
+
+            self.win.refresh()
+
+        except curses.error as e:
+            raise RuntimeError(
+                "GUI rendering error.  Try increasing the terminal window.")
 
         # quit if user presses "q"
         c = self.win.getch()

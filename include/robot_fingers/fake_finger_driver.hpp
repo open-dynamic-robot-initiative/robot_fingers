@@ -12,14 +12,15 @@
 
 namespace robot_fingers
 {
+// TODO rename to include "Mono"
 class FakeFingerDriver : public robot_interfaces::RobotDriver<
-                             robot_interfaces::FingerTypes::Action,
-                             robot_interfaces::FingerTypes::Observation>
+                             robot_interfaces::MonoFingerTypes::Action,
+                             robot_interfaces::MonoFingerTypes::Observation>
 {
 public:
-    typedef robot_interfaces::FingerTypes::Action Action;
-    typedef robot_interfaces::FingerTypes::Observation Observation;
-    typedef robot_interfaces::FingerTypes::Vector Vector;
+    typedef robot_interfaces::MonoFingerTypes::Action Action;
+    typedef robot_interfaces::MonoFingerTypes::Observation Observation;
+    typedef robot_interfaces::MonoFingerTypes::Action::Vector Vector;
 
     int data_generating_index_ = 0;
 
@@ -44,6 +45,8 @@ public:
         observation.torque[0] = data_generating_index_ + 2;
         observation.torque[1] = 2 * data_generating_index_ + 2;
         observation.torque[2] = 3 * data_generating_index_ + 2;
+
+        observation.tip_force[0] = data_generating_index_ / 2;
 
         data_generating_index_++;
 
@@ -74,11 +77,11 @@ public:
     }
 };
 
-robot_interfaces::FingerTypes::BackendPtr create_fake_finger_backend(
-    robot_interfaces::FingerTypes::BaseDataPtr robot_data)
+robot_interfaces::MonoFingerTypes::BackendPtr create_fake_finger_backend(
+    robot_interfaces::MonoFingerTypes::BaseDataPtr robot_data)
 {
     auto robot = std::make_shared<FakeFingerDriver>();
-    auto backend = std::make_shared<robot_interfaces::FingerTypes::Backend>(
+    auto backend = std::make_shared<robot_interfaces::MonoFingerTypes::Backend>(
         robot, robot_data);
     backend->set_max_action_repetitions(-1);
 
