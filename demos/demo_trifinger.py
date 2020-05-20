@@ -23,13 +23,23 @@ def run_choreography(frontend):
             )
             frontend.wait_until_time_index(t)
 
+    deg22 = np.pi / 8
     deg45 = np.pi / 4
+    deg90 = np.pi / 2
 
-    pose_idle = [0, -deg45, -deg45]
-    pose_inward = [0, +deg45, +deg45]
-    pose_side_1 = [-deg45, -deg45, -deg45]
-    pose_side_2 = [0, -deg45, 0]
-    pose_side_3 = [deg45, -deg45, -deg45]
+    # choreography without stage
+    #pose_idle = [0, -deg45, -deg45]
+    #pose_inward = [0, +deg45, +deg45]
+    #pose_side_1 = [-deg45, -deg45, -deg45]
+    #pose_side_2 = [0, -deg45, 0]
+    #pose_side_3 = [deg45, -deg45, -deg45]
+
+    # choreography with stage (limited movement range to avoid collisions)
+    pose_idle = [0, -deg45, -deg90]
+    pose_inward = [0, +deg45, -(deg90 - deg22)]
+    pose_side_1 = [-deg45, -deg22, -deg45]
+    pose_side_2 = pose_idle
+    pose_side_3 = [deg45, -deg22, -deg45]
 
     last_time_print = 0
 
@@ -39,15 +49,17 @@ def run_choreography(frontend):
 
         # one finger moving to the centre
         perform_step(pose_inward + pose_idle + pose_idle)
+        perform_step(pose_idle * 3)
         perform_step(pose_idle + pose_inward + pose_idle)
+        perform_step(pose_idle * 3)
         perform_step(pose_idle + pose_idle + pose_inward)
-
-        # initial pose
         perform_step(pose_idle * 3)
 
         # side-wards movement
         perform_step(pose_side_1 + pose_side_2 + pose_side_3)
+        perform_step(pose_idle * 3)
         perform_step(pose_side_3 + pose_side_1 + pose_side_2)
+        perform_step(pose_idle * 3)
         perform_step(pose_side_2 + pose_side_3 + pose_side_1)
 
         # print current date/time every hour, so we can roughly see how long it
