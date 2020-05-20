@@ -43,15 +43,15 @@ public:
 
         for (size_t finger_idx = 0; finger_idx < N_FINGERS; finger_idx++)
         {
-            // The force sensor is supposed to be connected to ADC A on the
-            // first board of each finger.
+            // The force sensor is supposed to be connected to ADC A
+            // (= analog_0) on the first board of each finger.
             const size_t board_idx =
                 finger_idx * robot_interfaces::BOARDS_PER_FINGER;
 
             auto adc_a_history =
                 this->motor_boards_[board_idx]->get_measurement(
                     blmc_drivers::MotorBoardInterface::MeasurementIndex::
-                        analog_1);
+                        analog_0);
 
             if (adc_a_history->length() == 0)
             {
