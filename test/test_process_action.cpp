@@ -5,8 +5,8 @@
  *            Gesellschaft.
  */
 #include <gtest/gtest.h>
-#include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_fingers/n_joint_blmc_robot_driver.hpp>
+#include <robot_interfaces/n_joint_robot_types.hpp>
 
 /**
  * @brief Fixture for the tests of process_desired_action().
@@ -54,11 +54,11 @@ TEST_F(TestProcessDesiredAction, valid_torque_no_safety)
 
     Types::Action resulting_action =
         Driver::process_desired_action(action,
-                                          observation,
-                                          max_torque_Nm,
-                                          safety_kd,
-                                          default_position_control_kp,
-                                          default_position_control_kd);
+                                       observation,
+                                       max_torque_Nm,
+                                       safety_kd,
+                                       default_position_control_kp,
+                                       default_position_control_kd);
 
     ASSERT_EQ(desired_torque[0], resulting_action.torque[0]);
     ASSERT_EQ(desired_torque[1], resulting_action.torque[1]);
@@ -78,11 +78,11 @@ TEST_F(TestProcessDesiredAction, exceed_max_torque_no_safety)
 
     Types::Action resulting_action =
         Driver::process_desired_action(action,
-                                          observation,
-                                          max_torque_Nm,
-                                          safety_kd,
-                                          default_position_control_kp,
-                                          default_position_control_kd);
+                                       observation,
+                                       max_torque_Nm,
+                                       safety_kd,
+                                       default_position_control_kp,
+                                       default_position_control_kd);
 
     ASSERT_EQ(max_torque_Nm, resulting_action.torque[0]);
     ASSERT_EQ(-max_torque_Nm, resulting_action.torque[1]);
@@ -99,11 +99,11 @@ TEST_F(TestProcessDesiredAction, velocity_damping_low_velocity)
 
     Types::Action resulting_action =
         Driver::process_desired_action(action,
-                                          observation,
-                                          max_torque_Nm,
-                                          safety_kd,
-                                          default_position_control_kp,
-                                          default_position_control_kd);
+                                       observation,
+                                       max_torque_Nm,
+                                       safety_kd,
+                                       default_position_control_kp,
+                                       default_position_control_kd);
 
     // joint 0 has positive velocity so expecting a reduced torque.
     // joint 1 has negative velocity so expecting an increased torque.
@@ -131,11 +131,11 @@ TEST_F(TestProcessDesiredAction, velocity_damping_high_velocity)
 
     Types::Action resulting_action =
         Driver::process_desired_action(action,
-                                          observation,
-                                          max_torque_Nm,
-                                          safety_kd,
-                                          default_position_control_kp,
-                                          default_position_control_kd);
+                                       observation,
+                                       max_torque_Nm,
+                                       safety_kd,
+                                       default_position_control_kp,
+                                       default_position_control_kd);
 
     // joint 0 has positive velocity so expecting a reduced torque.
     // joint 1 has negative velocity so expecting an increased torque.
@@ -163,11 +163,11 @@ TEST_F(TestProcessDesiredAction, position_controller_basic)
 
     Types::Action resulting_action =
         Driver::process_desired_action(action,
-                                          observation,
-                                          max_torque_Nm,
-                                          safety_kd,
-                                          default_position_control_kp,
-                                          default_position_control_kd);
+                                       observation,
+                                       max_torque_Nm,
+                                       safety_kd,
+                                       default_position_control_kp,
+                                       default_position_control_kd);
 
     // Just testing here if the torque command goes in the right direction
 
@@ -203,11 +203,11 @@ TEST_F(TestProcessDesiredAction, position_controller_one_joint_only)
 
     Types::Action resulting_action =
         Driver::process_desired_action(action,
-                                          observation,
-                                          max_torque_Nm,
-                                          safety_kd,
-                                          default_position_control_kp,
-                                          default_position_control_kd);
+                                       observation,
+                                       max_torque_Nm,
+                                       safety_kd,
+                                       default_position_control_kp,
+                                       default_position_control_kd);
 
     // Just testing here if the torque command goes in the right direction
     ASSERT_LT(resulting_action.torque[0], 0.0);
@@ -243,14 +243,13 @@ TEST_F(TestProcessDesiredAction, position_controller_with_velocity)
 
     observation.velocity << -.01, .01;
 
-    Types::Action result_action_with_velocity =
-        Driver::process_desired_action(
-            Types::Action::Position(desired_position),
-            observation,
-            max_torque_Nm,
-            safety_kd,
-            default_position_control_kp,
-            default_position_control_kd);
+    Types::Action result_action_with_velocity = Driver::process_desired_action(
+        Types::Action::Position(desired_position),
+        observation,
+        max_torque_Nm,
+        safety_kd,
+        default_position_control_kp,
+        default_position_control_kd);
 
     // Since velocity has same sign as position error, the resulting
     // (absolute) torques should be lower (since it is
@@ -331,11 +330,11 @@ TEST_F(TestProcessDesiredAction, position_controller_and_torque)
 
     Types::Action resulting_action =
         Driver::process_desired_action(action,
-                                          observation,
-                                          max_torque_Nm,
-                                          safety_kd,
-                                          default_position_control_kp,
-                                          default_position_control_kd);
+                                       observation,
+                                       max_torque_Nm,
+                                       safety_kd,
+                                       default_position_control_kp,
+                                       default_position_control_kd);
 
     // Just testing here if the torque command goes in the right direction
 
