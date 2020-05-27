@@ -28,8 +28,8 @@ position_control_gains:
     kp: [6, 6, 6, 6, 6, 6, 6, 6, 6]
     kd: [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03]
 
-joint_lower_limits: [-1.6, -1.4, -3.1, -1.6, -1.4, -3.1, -1.6, -1.4, -3.1]
-joint_upper_limits: [1.6, 4.5, 3.1, 1.6, 4.5, 3.1, 1.6, 4.5, 3.1]
+joint_lower_limits: [-1.8, -1.4, -3.1, -1.8, -1.4, -3.1, -1.8, -1.4, -3.1]
+joint_upper_limits: [1.8, 4.5, 3.1, 1.8, 4.5, 3.1, 1.8, 4.5, 3.1]
 
 # Set zero-position according to URDF (finger pointing straight down).
 home_offset_rad:
