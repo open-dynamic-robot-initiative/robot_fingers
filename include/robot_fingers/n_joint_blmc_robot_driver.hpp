@@ -179,6 +179,14 @@ public:
         const Vector &default_position_control_kp,
         const Vector &default_position_control_kd);
 
+
+    /**
+     * @brief Check if the joint position is within the allowed limits.
+     *
+     * @see Config::is_within_joint_limits
+     */
+    bool is_within_joint_limits(const Observation &observation) const;
+
 protected:
     BlmcJointModules<N_JOINTS> joint_modules_;
     MotorBoards motor_boards_;
@@ -296,7 +304,7 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
         double move_timeout = 0.0;
     } calibration;
 
-    //! \brief D-gain to dampen velocity.  Set to zero to disable damping.
+    //! @brief D-gain to dampen velocity.  Set to zero to disable damping.
     // set some rather high damping by default
     Vector safety_kd = Vector::Constant(0.1);
 
@@ -307,7 +315,12 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
         Vector kd = Vector::Zero();
     } position_control_gains;
 
-    //! \brief Offset between home position and zero.
+    //! @brief Lower limits for joint position.
+    Vector joint_lower_limits = Vector::Zero();
+    //! @brief Upper limits for joint position.
+    Vector joint_upper_limits = Vector::Zero();
+
+    //! @brief Offset between home position and zero.
     Vector home_offset_rad = Vector::Zero();
 
     /**
@@ -315,6 +328,16 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      *        initialization.
      */
     Vector initial_position_rad = Vector::Zero();
+
+
+    /**
+     * @brief Check if the given position is within the joint limits.
+     *
+     * @param position Joint positions.
+     *
+     * @return True if `joint_lower_limits <= position <= joint_upper_limits`.
+     */
+    bool is_within_joint_limits(const Vector &position) const;
 
     /**
      * @brief Print the given configuration in a human-readable way.

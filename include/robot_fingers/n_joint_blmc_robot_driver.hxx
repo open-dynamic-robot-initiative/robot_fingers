@@ -12,6 +12,13 @@
 namespace blmc_robots
 {
 TPL_NJBRD
+bool NJBRD::Config::is_within_joint_limits(const Vector &position) const
+{
+    return (joint_lower_limits.array() <= position.array()).all() &&
+           (position.array() <= joint_upper_limits.array()).all();
+}
+
+TPL_NJBRD
 void NJBRD::Config::print() const
 {
     std::cout << "Configuration:\n"
@@ -23,18 +30,19 @@ void NJBRD::Config::print() const
     std::cout << "\n"
               << "\t max_current_A: " << max_current_A << "\n"
               << "\t has_endstop: " << has_endstop << "\n"
-              << "\t calibration: "
-              << "\n"
+              << "\t calibration:\n"
               << "\t\t endstop_search_torques_Nm: "
               << calibration.endstop_search_torques_Nm.transpose() << "\n"
               << "\t\t position_tolerance_rad: "
               << calibration.position_tolerance_rad << "\n"
               << "\t\t move_timeout: " << calibration.move_timeout << "\n"
               << "\t safety_kd: " << safety_kd.transpose() << "\n"
-              << "\t position_control_gains: "
-              << "\n"
+              << "\t position_control_gains:\n"
               << "\t\t kp: " << position_control_gains.kp.transpose() << "\n"
               << "\t\t kd: " << position_control_gains.kd.transpose() << "\n"
+              << "\t joint_limits:\n"
+              << "\t\t lower: " << joint_lower_limits.transpose() << "\n"
+              << "\t\t upper: " << joint_upper_limits.transpose() << "\n"
               << "\t home_offset_rad: " << home_offset_rad.transpose() << "\n"
               << "\t initial_position_rad: " << initial_position_rad.transpose()
               << "\n"
@@ -107,6 +115,11 @@ typename NJBRD::Config NJBRD::Config::load_config(
         set_config_value(pos_ctrl, "kp", &config.position_control_gains.kp);
         set_config_value(pos_ctrl, "kd", &config.position_control_gains.kd);
     }
+
+    set_config_value(
+        user_config, "joint_lower_limits", &config.joint_lower_limits);
+    set_config_value(
+        user_config, "joint_upper_limits", &config.joint_upper_limits);
 
     set_config_value(user_config, "home_offset_rad", &config.home_offset_rad);
     set_config_value(
@@ -269,6 +282,18 @@ std::string NJBRD::get_error()
         }
     }
 
+    // check if position is within the limits
+    Vector position = this->joint_modules_.get_measured_angles();
+    if (!config_.is_within_joint_limits(position))
+    {
+        if (!error_msg.empty())
+        {
+            error_msg += " | ";
+        }
+
+        error_msg += "Position limits exceeded.";
+    }
+
     return error_msg;
 }
 
@@ -292,9 +317,10 @@ typename NJBRD::Action NJBRD::process_desired_action(
     processed_action.torque = desired_action.torque;
     processed_action.position = desired_action.position;
 
+    // TODO if desired position exceeds allowed limits, clamp it?
+
     // Position controller
     // -------------------
-    // TODO: add position limits
 
     // Run the position controller only if a target position is set for at
     // least one joint.
@@ -341,6 +367,12 @@ typename NJBRD::Action NJBRD::process_desired_action(
         mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
 
     return processed_action;
+}
+
+TPL_NJBRD
+bool NJBRD::is_within_joint_limits(const Observation &observation) const
+{
+    return config_.is_within_joint_limits(observation.position);
 }
 
 TPL_NJBRD
