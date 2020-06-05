@@ -49,6 +49,27 @@ hard_position_limits_upper:
     - 1.8
     - 3.2
 
+soft_position_limits_lower:
+    - -1.6
+    - -1.2
+    - -3.0
+    - -1.6
+    - -1.2
+    - -3.0
+    - -1.6
+    - -1.2
+    - -3.0
+soft_position_limits_upper:
+    - 1.0
+    - 1.6
+    - 3.0
+    - 1.0
+    - 1.6
+    - 3.0
+    - 1.0
+    - 1.6
+    - 3.0
+
 # Set zero-position according to URDF (finger pointing straight down).
 home_offset_rad:
     - -1.543
