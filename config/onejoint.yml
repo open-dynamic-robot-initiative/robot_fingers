@@ -19,6 +19,6 @@ position_control_gains:
 home_offset_rad: [2.241742]
 initial_position_rad: [0.0]
 
-joint_lower_limits: [-3.2]
-joint_upper_limits: [3.2]
+hard_position_limits_lower: [-3.2]
+hard_position_limits_upper: [3.2]
 

@@ -9,8 +9,8 @@ safety_kd: [0.08, 0.08, 0.04]
 position_control_gains:
     kp: [6, 6, 6]
     kd: [0.03, 0.03, 0.03]
-joint_lower_limits: [-1.6, -1.4, -3.1]
-joint_upper_limits: [1.6, 4.5, 3.1]
+hard_position_limits_lower: [-1.6, -1.4, -3.1]
+hard_position_limits_upper: [1.6, 4.5, 3.1]
 
 # Set zero-position according to URDF (finger pointing straight down).
 home_offset_rad: [0.940, 0.743, 2.746]

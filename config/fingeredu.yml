@@ -9,12 +9,12 @@ safety_kd: [0.08, 0.08, 0.04]
 position_control_gains:
     kp: [6, 6, 6]
     kd: [0.03, 0.03, 0.03]
-joint_lower_limits: [-2.0, -1.4, -3.2]
-joint_upper_limits: [1.6, 1.8, 3.2]
+hard_position_limits_lower: [-2.0, -1.4, -3.2]
+hard_position_limits_upper: [1.6, 1.8, 3.2]
 
 home_offset_rad: [-0.642, -0.247, -0.616]
 initial_position_rad: [0, 0, 0]
 
-joint_lower_limits: [-1.6, -1.4, -3.1]
-joint_upper_limits: [1.6, 4.5, 3.1]
+hard_position_limits_lower: [-1.6, -1.4, -3.1]
+hard_position_limits_upper: [1.6, 4.5, 3.1]
 
