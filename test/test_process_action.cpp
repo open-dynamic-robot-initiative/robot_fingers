@@ -395,9 +395,8 @@ TEST_F(TestProcessDesiredAction, position_below_limits)
     limits << 1, 2;
 
     Vector desired_position, kp, kd;
-    // use low position change to not saturate torques with lower gains
-    desired_position << -.01, .01;
-    // set gains significantly higher than the default gains above
+    // use current position as target to ensure they are outside the limits
+    desired_position = observation.position;
     kp << 10, 10;
     kd << 5, 5;
 
@@ -433,9 +432,8 @@ TEST_F(TestProcessDesiredAction, position_above_limits)
     limits << 1, 2;
 
     Vector desired_position, kp, kd;
-    // use low position change to not saturate torques with lower gains
-    desired_position << -.01, .01;
-    // set gains significantly higher than the default gains above
+    // use current position as target to ensure they are outside the limits
+    desired_position = observation.position;
     kp << 10, 10;
     kd << 5, 5;
 
@@ -471,9 +469,7 @@ TEST_F(TestProcessDesiredAction, position_one_joint_above_limit)
     limits << 1, 2;
 
     Vector desired_position, kp, kd;
-    // use low position change to not saturate torques with lower gains
-    desired_position << -.01, .01;
-    // set gains significantly higher than the default gains above
+    desired_position << -.01, 4;
     kp << 10, 10;
     kd << 5, 5;
 
@@ -510,9 +506,7 @@ TEST_F(TestProcessDesiredAction, position_one_above_one_below_limit)
     limits << 1, 2;
 
     Vector desired_position, kp, kd;
-    // use low position change to not saturate torques with lower gains
-    desired_position << -.01, .01;
-    // set gains significantly higher than the default gains above
+    desired_position << -4, 4;
     kp << 10, 10;
     kd << 5, 5;
 
