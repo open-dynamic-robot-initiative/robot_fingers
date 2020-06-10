@@ -28,7 +28,7 @@ position_control_gains:
     kp: [5, 5, 5, 5, 5, 5, 5, 5, 5]
     kd: [0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03, 0.03]
 
-joint_lower_limits:
+hard_position_limits_lower:
     - -2.0
     - -1.4
     - -3.2
@@ -38,7 +38,7 @@ joint_lower_limits:
     - -2.0
     - -1.4
     - -3.2
-joint_upper_limits:
+hard_position_limits_upper:
     - 1.6
     - 1.8
     - 3.2
@@ -48,6 +48,27 @@ joint_upper_limits:
     - 1.6
     - 1.8
     - 3.2
+
+soft_position_limits_lower:
+    - -1.6
+    - -1.2
+    - -3.0
+    - -1.6
+    - -1.2
+    - -3.0
+    - -1.6
+    - -1.2
+    - -3.0
+soft_position_limits_upper:
+    - 1.0
+    - 1.6
+    - 3.0
+    - 1.0
+    - 1.6
+    - 3.0
+    - 1.0
+    - 1.6
+    - 3.0
 
 # Set zero-position according to URDF (finger pointing straight down).
 home_offset_rad:
