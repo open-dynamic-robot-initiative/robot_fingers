@@ -142,7 +142,14 @@ public:
      *
      * Takes the desired action from the user and does the following processing:
      *
-     * ## 1. Run the position controller in case a target position is set.
+     * ## 1. Check position limits
+     *
+     *   If the observed position of a joint exceeds the limits, actions for
+     *   that joint that do not point back towards the allowed range are
+     *   replaced with a position command to the limit value.  Further custom
+     *   PD-gains are ignored in this case.
+     *
+     * ## 2. Run the position controller in case a target position is set.
      *
      *   If the target position is set to a value unequal to NaN for any joint,
      *   a PD position controller is executed for this joint and the resulting
@@ -152,7 +159,7 @@ public:
      *   are used for the control.  NaN-values are replaced with the default
      *   gains.
      *
-     * ## 2. Apply safety checks.
+     * ## 3. Apply safety checks.
      *
      *   - Limit the torque to the allowed maximum value.
      *   - Dampen velocity using the given safety_kd gains.  Damping us done
@@ -168,6 +175,8 @@ public:
      * @param safety_kd  D-gain for velocity damping.
      * @param default_position_control_kp  Default P-gain for position control.
      * @param default_position_control_kd  Default D-gain for position control.
+     * @param lower_position_limits  Lower limits for joint positions.
+     * @param upper_position_limits  Upper limits for joint positions.
      *
      * @return Resulting action after applying all the processing.
      */
@@ -177,15 +186,18 @@ public:
         const double max_torque_Nm,
         const Vector &safety_kd,
         const Vector &default_position_control_kp,
-        const Vector &default_position_control_kd);
-
+        const Vector &default_position_control_kd,
+        const Vector &lower_position_limits =
+            Vector::Constant(-std::numeric_limits<double>::infinity()),
+        const Vector &upper_position_limits =
+            Vector::Constant(std::numeric_limits<double>::infinity()));
 
     /**
-     * @brief Check if the joint position is within the allowed limits.
+     * @brief Check if the joint position is within the hard limits.
      *
-     * @see Config::is_within_joint_limits
+     * @see Config::is_within_hard_position_limits
      */
-    bool is_within_joint_limits(const Observation &observation) const;
+    bool is_within_hard_position_limits(const Observation &observation) const;
 
 protected:
     BlmcJointModules<N_JOINTS> joint_modules_;
@@ -315,10 +327,35 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
         Vector kd = Vector::Zero();
     } position_control_gains;
 
-    //! @brief Lower limits for joint position.
-    Vector joint_lower_limits = Vector::Zero();
-    //! @brief Upper limits for joint position.
-    Vector joint_upper_limits = Vector::Zero();
+    /**
+     * @brief Hard lower limits for joint position.
+     *
+     * Exceeding this limit results in an error and robot shutdown.
+     */
+    Vector hard_position_limits_lower = Vector::Zero();
+    /**
+     * @brief Hard upper limits for joint position.
+     *
+     * Exceeding this limit results in an error and robot shutdown.
+     */
+    Vector hard_position_limits_upper = Vector::Zero();
+
+    /**
+     * @brief Soft lower limits for joint position.
+     *
+     * Exceeding this limit results in the action being adjusted to move the
+     * joint back inside the limits.
+     */
+    Vector soft_position_limits_lower =
+        Vector::Constant(-std::numeric_limits<double>::infinity());
+    /**
+     * @brief Soft upper limits for joint position.
+     *
+     * Exceeding this limit results in the action being adjusted to move the
+     * joint back inside the limits.
+     */
+    Vector soft_position_limits_upper =
+        Vector::Constant(std::numeric_limits<double>::infinity());
 
     //! @brief Offset between home position and zero.
     Vector home_offset_rad = Vector::Zero();
@@ -331,13 +368,14 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
 
 
     /**
-     * @brief Check if the given position is within the joint limits.
+     * @brief Check if the given position is within the hard limits.
      *
      * @param position Joint positions.
      *
-     * @return True if `joint_lower_limits <= position <= joint_upper_limits`.
+     * @return True if `hard_position_limits_lower <= position <=
+     *     hard_position_limits_upper`.
      */
-    bool is_within_joint_limits(const Vector &position) const;
+    bool is_within_hard_position_limits(const Vector &position) const;
 
     /**
      * @brief Print the given configuration in a human-readable way.

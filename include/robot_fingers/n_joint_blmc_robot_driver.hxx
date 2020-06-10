@@ -12,10 +12,10 @@
 namespace blmc_robots
 {
 TPL_NJBRD
-bool NJBRD::Config::is_within_joint_limits(const Vector &position) const
+bool NJBRD::Config::is_within_hard_position_limits(const Vector &position) const
 {
-    return (joint_lower_limits.array() <= position.array()).all() &&
-           (position.array() <= joint_upper_limits.array()).all();
+    return (hard_position_limits_lower.array() <= position.array()).all() &&
+           (position.array() <= hard_position_limits_upper.array()).all();
 }
 
 TPL_NJBRD
@@ -40,9 +40,16 @@ void NJBRD::Config::print() const
               << "\t position_control_gains:\n"
               << "\t\t kp: " << position_control_gains.kp.transpose() << "\n"
               << "\t\t kd: " << position_control_gains.kd.transpose() << "\n"
-              << "\t joint_limits:\n"
-              << "\t\t lower: " << joint_lower_limits.transpose() << "\n"
-              << "\t\t upper: " << joint_upper_limits.transpose() << "\n"
+              << "\t hard_position_limits_\n"
+              << "\t\t lower: " << hard_position_limits_lower.transpose()
+              << "\n"
+              << "\t\t upper: " << hard_position_limits_upper.transpose()
+              << "\n"
+              << "\t soft_position_limits_\n"
+              << "\t\t lower: " << soft_position_limits_lower.transpose()
+              << "\n"
+              << "\t\t upper: " << soft_position_limits_upper.transpose()
+              << "\n"
               << "\t home_offset_rad: " << home_offset_rad.transpose() << "\n"
               << "\t initial_position_rad: " << initial_position_rad.transpose()
               << "\n"
@@ -116,10 +123,26 @@ typename NJBRD::Config NJBRD::Config::load_config(
         set_config_value(pos_ctrl, "kd", &config.position_control_gains.kd);
     }
 
-    set_config_value(
-        user_config, "joint_lower_limits", &config.joint_lower_limits);
-    set_config_value(
-        user_config, "joint_upper_limits", &config.joint_upper_limits);
+    set_config_value(user_config,
+                     "hard_position_limits_lower",
+                     &config.hard_position_limits_lower);
+    set_config_value(user_config,
+                     "hard_position_limits_upper",
+                     &config.hard_position_limits_upper);
+
+    // soft limits are optional
+    if (user_config["soft_position_limits_lower"])
+    {
+        set_config_value(user_config,
+                         "soft_position_limits_lower",
+                         &config.soft_position_limits_lower);
+    }
+    if (user_config["soft_position_limits_upper"])
+    {
+        set_config_value(user_config,
+                         "soft_position_limits_upper",
+                         &config.soft_position_limits_upper);
+    }
 
     set_config_value(user_config, "home_offset_rad", &config.home_offset_rad);
     set_config_value(
@@ -284,7 +307,7 @@ std::string NJBRD::get_error()
 
     // check if position is within the limits
     Vector position = this->joint_modules_.get_measured_angles();
-    if (!config_.is_within_joint_limits(position))
+    if (!config_.is_within_hard_position_limits(position))
     {
         if (!error_msg.empty())
         {
@@ -310,16 +333,60 @@ typename NJBRD::Action NJBRD::process_desired_action(
     const double max_torque_Nm,
     const Vector &safety_kd,
     const Vector &default_position_control_kp,
-    const Vector &default_position_control_kd)
+    const Vector &default_position_control_kd,
+    const Vector &lower_position_limits,
+    const Vector &upper_position_limits)
 {
-    Action processed_action;
+    Action processed_action = desired_action;
 
-    processed_action.torque = desired_action.torque;
-    processed_action.position = desired_action.position;
+    // Position Limits
+    // ---------------
+    // If a joint exceeds the soft position limit, replace the command for that
+    // joint with a position command to the limit
+    for (std::size_t i = 0; i < N_JOINTS; i++)
+    {
+        // Clamp position commands to the allowed range (note that if position
+        // is NaN both conditions are false, so the NaN is preserved).
+        if (processed_action.position[i] < lower_position_limits[i])
+        {
+            processed_action.position[i] = lower_position_limits[i];
+        }
+        else if (processed_action.position[i] > upper_position_limits[i])
+        {
+            processed_action.position[i] = upper_position_limits[i];
+        }
 
-    // TODO if desired position exceeds allowed limits, clamp it?
+        auto set_limit_action = [&](double sign, double limit) {
+            // Discard torque command if it pushes further out of the valid
+            // range.
+            if (processed_action.torque[i] * sign > 0)
+            {
+                processed_action.torque[i] = 0;
+            }
 
-    // Position controller
+            // If no position is set, set it to the limit value (otherwise it
+            // will already be clamped to the limit range, so it will be fine).
+            if (std::isnan(processed_action.position[i]))
+            {
+                processed_action.position[i] = limit;
+            }
+
+            // do not allow custom gains
+            processed_action.position_kp[i] = default_position_control_kp[i];
+            processed_action.position_kd[i] = default_position_control_kd[i];
+        };
+
+        if (latest_observation.position[i] < lower_position_limits[i])
+        {
+            set_limit_action(-1, lower_position_limits[i]);
+        }
+        else if (latest_observation.position[i] > upper_position_limits[i])
+        {
+            set_limit_action(+1, upper_position_limits[i]);
+        }
+    }
+
+    // Position Controller
     // -------------------
 
     // Run the position controller only if a target position is set for at
@@ -328,11 +395,11 @@ typename NJBRD::Action NJBRD::process_desired_action(
     {
         // Replace NaN-values with default gains
         processed_action.position_kp =
-            desired_action.position_kp.array().isNaN().select(
-                default_position_control_kp, desired_action.position_kp);
+            processed_action.position_kp.array().isNaN().select(
+                default_position_control_kp, processed_action.position_kp);
         processed_action.position_kd =
-            desired_action.position_kd.array().isNaN().select(
-                default_position_control_kd, desired_action.position_kd);
+            processed_action.position_kd.array().isNaN().select(
+                default_position_control_kd, processed_action.position_kd);
 
         Vector position_error =
             processed_action.position - latest_observation.position;
@@ -370,9 +437,9 @@ typename NJBRD::Action NJBRD::process_desired_action(
 }
 
 TPL_NJBRD
-bool NJBRD::is_within_joint_limits(const Observation &observation) const
+bool NJBRD::is_within_hard_position_limits(const Observation &observation) const
 {
-    return config_.is_within_joint_limits(observation.position);
+    return config_.is_within_hard_position_limits(observation.position);
 }
 
 TPL_NJBRD
@@ -383,13 +450,26 @@ typename NJBRD::Action NJBRD::apply_action_uninitialized(
 
     Observation observation = get_latest_observation();
 
+    // Only enable soft position limits once initialization is done (i.e. no
+    // limits during homing).
+    Vector lower_limits =
+        is_initialized_
+            ? config_.soft_position_limits_lower
+            : Vector::Constant(-std::numeric_limits<double>::infinity());
+    Vector upper_limits =
+        is_initialized_
+            ? config_.soft_position_limits_upper
+            : Vector::Constant(std::numeric_limits<double>::infinity());
+
     Action applied_action =
         process_desired_action(desired_action,
                                observation,
                                max_torque_Nm_,
                                config_.safety_kd,
                                config_.position_control_gains.kp,
-                               config_.position_control_gains.kd);
+                               config_.position_control_gains.kd,
+                               lower_limits,
+                               upper_limits);
 
     joint_modules_.set_torques(applied_action.torque);
     joint_modules_.send_torques();
