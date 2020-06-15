@@ -38,17 +38,17 @@ private:
 
         // there are three fingers
         // each finger has three motors and two boards
-        motors[0] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 0);
-        motors[1] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 1);
-        motors[2] = std::make_shared<blmc_drivers::Motor>(motor_boards[1], 0);
+        motors[0] = std::make_shared<blmc_drivers::Motor>(motor_boards[1], 0);
+        motors[1] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 0);
+        motors[2] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 1);
 
-        motors[3] = std::make_shared<blmc_drivers::Motor>(motor_boards[2], 0);
-        motors[4] = std::make_shared<blmc_drivers::Motor>(motor_boards[2], 1);
-        motors[5] = std::make_shared<blmc_drivers::Motor>(motor_boards[3], 0);
+        motors[3] = std::make_shared<blmc_drivers::Motor>(motor_boards[3], 0);
+        motors[4] = std::make_shared<blmc_drivers::Motor>(motor_boards[2], 0);
+        motors[5] = std::make_shared<blmc_drivers::Motor>(motor_boards[2], 1);
 
-        motors[6] = std::make_shared<blmc_drivers::Motor>(motor_boards[4], 0);
-        motors[7] = std::make_shared<blmc_drivers::Motor>(motor_boards[4], 1);
-        motors[8] = std::make_shared<blmc_drivers::Motor>(motor_boards[5], 0);
+        motors[6] = std::make_shared<blmc_drivers::Motor>(motor_boards[5], 0);
+        motors[7] = std::make_shared<blmc_drivers::Motor>(motor_boards[4], 0);
+        motors[8] = std::make_shared<blmc_drivers::Motor>(motor_boards[4], 1);
 
         return motors;
     }

@@ -38,9 +38,9 @@ private:
     {
         // set up motors
         Motors motors;
-        motors[0] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 0);
-        motors[1] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 1);
-        motors[2] = std::make_shared<blmc_drivers::Motor>(motor_boards[1], 0);
+        motors[0] = std::make_shared<blmc_drivers::Motor>(motor_boards[1], 0);
+        motors[1] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 0);
+        motors[2] = std::make_shared<blmc_drivers::Motor>(motor_boards[0], 1);
 
         return motors;
     }
