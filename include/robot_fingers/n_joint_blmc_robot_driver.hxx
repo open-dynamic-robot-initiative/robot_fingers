@@ -490,13 +490,22 @@ void NJBRD::_initialize()
 
     if (is_initialized_)
     {
-        bool reached_goal =
-            move_to_position(config_.initial_position_rad,
-                             config_.calibration.position_tolerance_rad,
-                             config_.calibration.move_timeout);
+        apply_action(Action::Zero());
+        Vector waypoint = get_latest_observation().position;
+
+        bool reached_goal = false;
+        for (size_t i = 0; i < N_JOINTS; i++)
+        {
+            waypoint[i] = config_.initial_position_rad[i];
+
+            reached_goal =
+                move_to_position(waypoint,
+                                 config_.calibration.position_tolerance_rad,
+                                 config_.calibration.move_timeout);
+        }
         if (!reached_goal)
         {
-            rt_printf("Failed to reach goal, timeout exceeded.\n");
+            rt_printf("Failed to reach initial position, timeout exceeded.\n");
         }
     }
 
@@ -620,9 +629,37 @@ bool NJBRD::move_to_position(const NJBRD::Vector &goal_pos,
             goal_pos - get_latest_observation().position;
         const Vector velocity = get_latest_observation().velocity;
 
+#ifdef VERBOSE
+        rt_printf(
+            "error: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n"
+            "veloc: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n\n",
+            position_error[0],
+            position_error[1],
+            position_error[2],
+            position_error[3],
+            position_error[4],
+            position_error[5],
+            position_error[6],
+            position_error[7],
+            position_error[8],
+            velocity[0],
+            velocity[1],
+            velocity[2],
+            velocity[3],
+            velocity[4],
+            velocity[5],
+            velocity[6],
+            velocity[7],
+            velocity[8]);
+#endif
+
         // Check if the goal is reached (position error below tolerance and
         // velocity close to zero).
-        constexpr double ZERO_VELOCITY = 1e-4;
+        // FIXME: zero velocity threshold is pretty large.  This is because when
+        // the controller is vibrating a bit, the velocity is oscillating
+        // between positive and negative non-zero values.  Maybe use some
+        // averaging?
+        constexpr double ZERO_VELOCITY = 0.1;
         reached_goal = ((position_error.array().abs() < tolerance).all() &&
                         (velocity.array().abs() < ZERO_VELOCITY).all());
 
