@@ -10,5 +10,9 @@ position_control_gains:
     kp: [6, 6, 6]
     kd: [0.03, 0.03, 0.03]
 
+# No position limits in this mode
+hard_position_limits_lower: [-.inf, -.inf, -.inf]
+hard_position_limits_upper: [.inf, .inf, .inf]
+
 home_offset_rad: [0, 0, 0]
 initial_position_rad: [0, 0, 0]
