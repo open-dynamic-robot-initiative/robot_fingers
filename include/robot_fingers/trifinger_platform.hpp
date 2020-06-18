@@ -16,10 +16,10 @@ namespace robot_fingers
 // TODO move implementation to cpp file
 // NOTE: Inheriting from Frontend makes implementation easier but means that we
 // cannot rename get_observation
-class TriFingerPlattform : public robot_interfaces::TriFingerTypes::Frontend
+class TriFingerPlatform : public robot_interfaces::TriFingerTypes::Frontend
 {
 public:
-    TriFingerPlattform(
+    TriFingerPlatform(
         robot_interfaces::TriFingerTypes::Data::Ptr robot_data,
         trifinger_object_tracking::ObjectTrackerData::Ptr object_tracker_data)
         : robot_interfaces::TriFingerTypes::Frontend(robot_data),
