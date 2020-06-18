@@ -69,7 +69,6 @@ public:
         // called twice with the same `t` if a new object tracker observation
         // arrived in between the calls.
 
-
         // TODO: The implementation below is very naive.
         // It simply does a linear search starting from the latest time index.
         // So worst case performance is O(n) where n is the number of object
@@ -88,15 +87,19 @@ public:
         // the first candidate for `t_o` that is checked should always be the
         // latest one.
 
-        time_series::Index t_tracker;
-        auto stamp_robot = get_timestamp_ms(t);
+        time_series::Timestamp stamp_robot = get_timestamp_ms(t);
 
-        do
+        time_series::Index t_tracker =
+            object_tracker_frontend_.get_current_timeindex();
+        time_series::Timestamp stamp_tracker =
+            object_tracker_frontend_.get_timestamp_ms(t_tracker);
+
+        while (stamp_robot < stamp_tracker)
         {
-            t_tracker = object_tracker_frontend_.get_current_timeindex();
-            auto stamp_tracker =
+            t_tracker--;
+            stamp_tracker =
                 object_tracker_frontend_.get_timestamp_ms(t_tracker);
-        } while (stamp_robot < stamp_tracker);
+        }
 
         return object_tracker_frontend_.get_pose(t_tracker);
     }
