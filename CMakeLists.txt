@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   robot_interfaces
   mpi_cmake_modules
   pybind11_catkin
+  trifinger_object_tracking
 )
 
 ## System dependencies are found with CMake's conventions
@@ -63,10 +64,16 @@ macro(add_python_bindings module_name)
     install(TARGETS ${module_name} DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
 endmacro()
 
+# FIXME use catkin_add_pybind11_module
 add_python_bindings(py_one_joint)
 add_python_bindings(py_two_joint)
 add_python_bindings(py_real_finger)
 add_python_bindings(py_trifinger)
+
+
+# Demo executable
+add_executable(demo_trifinger_platform src/demo_platform_frontend.cpp)
+target_link_libraries(demo_trifinger_platform ${catkin_LIBRARIES})
 
 
 # Building documentation
