@@ -9,7 +9,7 @@
 // TODO move to a separate package to not add unnecessary dependencies to
 // robot_fingers?
 #include <robot_interfaces/finger_types.hpp>
-#include <trifinger_object_tracking/object_tracker_data.hpp>
+#include <trifinger_object_tracking/object_tracker_frontend.hpp>
 
 namespace robot_fingers
 {
@@ -19,23 +19,40 @@ namespace robot_fingers
 class TriFingerPlatform : public robot_interfaces::TriFingerTypes::Frontend
 {
 public:
+    // typedefs for easy access
+    typedef robot_interfaces::TriFingerTypes::Action Action;
+    typedef robot_interfaces::TriFingerTypes::Observation Observation;
+    typedef robot_interfaces::Status Status;
+
     TriFingerPlatform(
-        robot_interfaces::TriFingerTypes::Data::Ptr robot_data,
+        robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
         trifinger_object_tracking::ObjectTrackerData::Ptr object_tracker_data)
         : robot_interfaces::TriFingerTypes::Frontend(robot_data),
           object_tracker_frontend_(object_tracker_data)
     {
     }
 
+    TriFingerPlatform()
+        : robot_interfaces::TriFingerTypes::Frontend(
+              std::make_shared<
+                  robot_interfaces::TriFingerTypes::MultiProcessData>(
+                  "trifinger", false)),
+          object_tracker_frontend_(
+              std::make_shared<trifinger_object_tracking::ObjectTrackerData>(
+                  "object_tracker", false))
+
+    {
+    }
+
     // alias
     robot_interfaces::TriFingerTypes::Observation get_robot_observation(
-        const TimeIndex t)
+        const time_series::Index t) const
     {
         return get_observation(t);
     }
 
     trifinger_object_tracking::ObjectPose get_object_pose(
-        const time_series::Index t)
+        const time_series::Index t) const
     {
         // The given time index t refers to the robot data time series.  To
         // provide the correct object tracker observation for this time step,
