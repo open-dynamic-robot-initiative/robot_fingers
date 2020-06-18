@@ -13,7 +13,6 @@
 
 namespace robot_fingers
 {
-// FIXME rename file
 // TODO move implementation to cpp file
 // NOTE: Inheriting from Frontend makes implementation easier but means that we
 // cannot rename get_observation
