@@ -1,4 +1,5 @@
 #include <robot_fingers/trifinger_platform.hpp>
+#include <opencv2/highgui.hpp>
 
 using namespace robot_fingers;
 
@@ -27,15 +28,21 @@ int main()
         }
 
         auto robot_observation = frontend.get_robot_observation(t);
-        //std::cout << "Robot[:3]: " << robot_observation.position[0] << ", "
-        //          << robot_observation.position[1] << ", "
-        //          << robot_observation.position[2] << std::endl;
+        std::cout << "Robot[:3]: " << robot_observation.position[0] << ", "
+                  << robot_observation.position[1] << ", "
+                  << robot_observation.position[2] << std::endl;
 
         auto object_pose = frontend.get_object_pose(t);
-        //std::cout << "Object: " << object_pose.position[0] << ", "
-        //          << object_pose.position[0] << ", " << object_pose.position[0]
-        //          << std::endl;
+        std::cout << "Object: " << object_pose.position[0] << ", "
+                  << object_pose.position[0] << ", " << object_pose.position[0]
+                  << std::endl;
 
-        //std::cout << std::endl;
+        auto images = frontend.get_camera_observation(t);
+        cv::imshow("camera60", images.cameras[0].image);
+        cv::imshow("camera180", images.cameras[1].image);
+        cv::imshow("camera300", images.cameras[2].image);
+        cv::waitKey(3);
+
+        std::cout << std::endl;
     }
 }

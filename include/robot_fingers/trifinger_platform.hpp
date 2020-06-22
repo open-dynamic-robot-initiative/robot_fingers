@@ -9,6 +9,8 @@
 // TODO move to a separate package to not add unnecessary dependencies to
 // robot_fingers?
 #include <robot_interfaces/finger_types.hpp>
+#include <robot_interfaces/sensors/sensor_frontend.hpp>
+#include <trifinger_cameras/tricamera_observation.hpp>
 #include <trifinger_object_tracking/object_tracker_frontend.hpp>
 
 namespace robot_fingers
@@ -21,14 +23,18 @@ class TriFingerPlatform : public robot_interfaces::TriFingerTypes::Frontend
 public:
     // typedefs for easy access
     typedef robot_interfaces::TriFingerTypes::Action Action;
-    typedef robot_interfaces::TriFingerTypes::Observation Observation;
+    typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
     typedef robot_interfaces::Status Status;
+    typedef trifinger_cameras::TriCameraObservation CameraObservation;
 
     TriFingerPlatform(
         robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
-        trifinger_object_tracking::ObjectTrackerData::Ptr object_tracker_data)
+        trifinger_object_tracking::ObjectTrackerData::Ptr object_tracker_data,
+        std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
+            camera_data)
         : robot_interfaces::TriFingerTypes::Frontend(robot_data),
-          object_tracker_frontend_(object_tracker_data)
+          object_tracker_frontend_(object_tracker_data),
+          camera_frontend_(camera_data)
     {
     }
 
@@ -39,14 +45,16 @@ public:
                   "trifinger", false)),
           object_tracker_frontend_(
               std::make_shared<trifinger_object_tracking::ObjectTrackerData>(
-                  "object_tracker", false))
+                  "object_tracker", false)),
+          camera_frontend_(
+              std::make_shared<robot_interfaces::MultiProcessSensorData<CameraObservation>>(
+                  "tricamera", false, 10))
 
     {
     }
 
     // alias
-    robot_interfaces::TriFingerTypes::Observation get_robot_observation(
-        const time_series::Index t) const
+    RobotObservation get_robot_observation(const time_series::Index t) const
     {
         return get_observation(t);
     }
@@ -104,7 +112,31 @@ public:
         return object_tracker_frontend_.get_pose(t_tracker);
     }
 
+    CameraObservation get_camera_observation(
+        const time_series::Index t) const
+    {
+        // FIXME redundancy with get_object_pose()
+
+        time_series::Timestamp stamp_robot = get_timestamp_ms(t);
+
+        time_series::Index t_camera =
+            camera_frontend_.get_current_timeindex();
+        time_series::Timestamp stamp_camera =
+            camera_frontend_.get_timestamp_ms(t_camera);
+
+        while (stamp_robot < stamp_camera)
+        {
+            t_camera--;
+            stamp_camera =
+                camera_frontend_.get_timestamp_ms(t_camera);
+        }
+
+        return camera_frontend_.get_observation(t_camera);
+    }
+
+
 private:
     trifinger_object_tracking::ObjectTrackerFrontend object_tracker_frontend_;
+    robot_interfaces::SensorFrontend<CameraObservation> camera_frontend_;
 };
 }  // namespace robot_fingers

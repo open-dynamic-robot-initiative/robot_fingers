@@ -15,11 +15,13 @@ find_package(catkin REQUIRED COMPONENTS
   mpi_cmake_modules
   pybind11_catkin
   trifinger_object_tracking
+  trifinger_cameras
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 
 catkin_python_setup()
@@ -73,7 +75,8 @@ add_python_bindings(py_trifinger)
 
 # Demo executable
 add_executable(demo_trifinger_platform src/demo_platform_frontend.cpp)
-target_link_libraries(demo_trifinger_platform ${catkin_LIBRARIES})
+target_link_libraries(demo_trifinger_platform ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES})  # FIXME why do I need to link opencv?
 
 
 # Building documentation
