@@ -54,6 +54,13 @@ include_directories(
 )
 
 
+add_library(trifinger_platform_frontend
+    src/trifinger_platform_frontend.cpp
+)
+target_link_libraries(trifinger_platform_frontend
+    ${catkin_LIBRARIES}
+)
+
 # Python Bindings
 
 # TODO move this macro to mpi_cmake_modules?  More or less the same block is
@@ -75,8 +82,10 @@ add_python_bindings(py_trifinger)
 
 # Demo executable
 add_executable(demo_trifinger_platform src/demo_platform_frontend.cpp)
-target_link_libraries(demo_trifinger_platform ${catkin_LIBRARIES}
-    ${OpenCV_LIBRARIES})  # FIXME why do I need to link opencv?
+target_link_libraries(demo_trifinger_platform
+    trifinger_platform_frontend
+    ${OpenCV_LIBRARIES}
+)
 
 
 # Building documentation
