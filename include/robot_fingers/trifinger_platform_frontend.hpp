@@ -18,7 +18,7 @@ namespace robot_fingers
 // TODO move implementation to cpp file
 // NOTE: Inheriting from Frontend makes implementation easier but means that we
 // cannot rename get_observation
-class TriFingerPlatform : public robot_interfaces::TriFingerTypes::Frontend
+class TriFingerPlatformFrontend : public robot_interfaces::TriFingerTypes::Frontend
 {
 public:
     // typedefs for easy access
@@ -27,7 +27,7 @@ public:
     typedef robot_interfaces::Status Status;
     typedef trifinger_cameras::TriCameraObservation CameraObservation;
 
-    TriFingerPlatform(
+    TriFingerPlatformFrontend(
         robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
         trifinger_object_tracking::ObjectTrackerData::Ptr object_tracker_data,
         std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
@@ -38,7 +38,7 @@ public:
     {
     }
 
-    TriFingerPlatform()
+    TriFingerPlatformFrontend()
         : robot_interfaces::TriFingerTypes::Frontend(
               std::make_shared<
                   robot_interfaces::TriFingerTypes::MultiProcessData>(

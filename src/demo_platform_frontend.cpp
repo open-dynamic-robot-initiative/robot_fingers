@@ -1,13 +1,13 @@
-#include <robot_fingers/trifinger_platform.hpp>
+#include <robot_fingers/trifinger_platform_frontend.hpp>
 #include <opencv2/highgui.hpp>
 
 using namespace robot_fingers;
 
 int main()
 {
-    auto frontend = TriFingerPlatform();
+    auto frontend = TriFingerPlatformFrontend();
 
-    TriFingerPlatform::Action::Vector position;
+    TriFingerPlatformFrontend::Action::Vector position;
 
     position << -0.2, -0.9, -1.7, -0.2, -0.9, -1.7, -0.2, -0.9, -1.7;
 
@@ -19,7 +19,7 @@ int main()
         position[3] *= -1;
         position[6] *= -1;
 
-        auto action = TriFingerPlatform::Action::Position(position);
+        auto action = TriFingerPlatformFrontend::Action::Position(position);
 
         for (int i = 0; i < 300; i++)
         {
