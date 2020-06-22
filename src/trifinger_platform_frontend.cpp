@@ -1,6 +1,6 @@
 /**
  * @file
- * @brief TODO
+ * @brief Combined frontend for the TriFinger Platform
  * @copyright 2020, Max Planck Gesellschaft.  All rights reserved.
  * @license BSD 3-clause
  */
