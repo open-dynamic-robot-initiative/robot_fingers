@@ -15,17 +15,13 @@
 
 namespace robot_fingers
 {
-// TODO move implementation to cpp file
-// NOTE: Inheriting from Frontend makes implementation easier but means that we
-// cannot rename get_observation
 class TriFingerPlatformFrontend
-    : public robot_interfaces::TriFingerTypes::Frontend
 {
 public:
     // typedefs for easy access
     typedef robot_interfaces::TriFingerTypes::Action Action;
     typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
-    typedef robot_interfaces::Status Status;
+    typedef robot_interfaces::Status RobotStatus;
     typedef trifinger_cameras::TriCameraObservation CameraObservation;
 
     TriFingerPlatformFrontend(
@@ -36,8 +32,21 @@ public:
 
     TriFingerPlatformFrontend();
 
-    // alias
-    RobotObservation get_robot_observation(const time_series::Index t) const;
+    time_series::Index append_desired_action(const Action &desired_action);
+
+    RobotObservation get_robot_observation(const time_series::Index &t) const;
+
+    Action get_desired_action(const time_series::Index &t) const;
+
+    Action get_applied_action(const time_series::Index &t) const;
+
+    RobotStatus get_robot_status(const time_series::Index &t) const;
+
+    time_series::Timestamp get_timestamp_ms(const time_series::Index &t) const;
+
+    time_series::Index get_current_timeindex() const;
+
+    void wait_until_timeindex(const time_series::Index &t) const;
 
     trifinger_object_tracking::ObjectPose get_object_pose(
         const time_series::Index t) const;
@@ -45,6 +54,7 @@ public:
     CameraObservation get_camera_observation(const time_series::Index t) const;
 
 private:
+    robot_interfaces::TriFingerTypes::Frontend robot_frontend_;
     trifinger_object_tracking::ObjectTrackerFrontend object_tracker_frontend_;
     robot_interfaces::SensorFrontend<CameraObservation> camera_frontend_;
 };

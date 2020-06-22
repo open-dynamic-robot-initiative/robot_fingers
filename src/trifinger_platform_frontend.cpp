@@ -13,14 +13,14 @@ TriFingerPlatformFrontend::TriFingerPlatformFrontend(
     trifinger_object_tracking::ObjectTrackerData::Ptr object_tracker_data,
     std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
         camera_data)
-    : robot_interfaces::TriFingerTypes::Frontend(robot_data),
+    : robot_frontend_(robot_data),
       object_tracker_frontend_(object_tracker_data),
       camera_frontend_(camera_data)
 {
 }
 
 TriFingerPlatformFrontend::TriFingerPlatformFrontend()
-    : robot_interfaces::TriFingerTypes::Frontend(
+    : robot_frontend_(
           std::make_shared<robot_interfaces::TriFingerTypes::MultiProcessData>(
               "trifinger", false)),
       object_tracker_frontend_(
@@ -34,11 +34,52 @@ TriFingerPlatformFrontend::TriFingerPlatformFrontend()
 {
 }
 
+time_series::Index TriFingerPlatformFrontend::append_desired_action(
+    const Action &desired_action)
+{
+    return robot_frontend_.append_desired_action(desired_action);
+}
+
 TriFingerPlatformFrontend::RobotObservation
 TriFingerPlatformFrontend::get_robot_observation(
-    const time_series::Index t) const
+    const time_series::Index &t) const
 {
-    return get_observation(t);
+    return robot_frontend_.get_observation(t);
+}
+
+TriFingerPlatformFrontend::Action TriFingerPlatformFrontend::get_desired_action(
+    const time_series::Index &t) const
+{
+    return robot_frontend_.get_desired_action(t);
+}
+
+TriFingerPlatformFrontend::Action TriFingerPlatformFrontend::get_applied_action(
+    const time_series::Index &t) const
+{
+    return robot_frontend_.get_applied_action(t);
+}
+
+TriFingerPlatformFrontend::RobotStatus
+TriFingerPlatformFrontend::get_robot_status(const time_series::Index &t) const
+{
+    return robot_frontend_.get_status(t);
+}
+
+time_series::Timestamp TriFingerPlatformFrontend::get_timestamp_ms(
+    const time_series::Index &t) const
+{
+    return robot_frontend_.get_timestamp_ms(t);
+}
+
+time_series::Index TriFingerPlatformFrontend::get_current_timeindex() const
+{
+    return robot_frontend_.get_current_timeindex();
+}
+
+void TriFingerPlatformFrontend::wait_until_timeindex(
+    const time_series::Index &t) const
+{
+    robot_frontend_.wait_until_timeindex(t);
 }
 
 trifinger_object_tracking::ObjectPose
