@@ -1,5 +1,5 @@
-#include <robot_fingers/trifinger_platform_frontend.hpp>
 #include <opencv2/highgui.hpp>
+#include <robot_fingers/trifinger_platform_frontend.hpp>
 
 using namespace robot_fingers;
 
@@ -38,9 +38,16 @@ int main()
                   << std::endl;
 
         auto images = frontend.get_camera_observation(t);
-        cv::imshow("camera60", images.cameras[0].image);
-        cv::imshow("camera180", images.cameras[1].image);
-        cv::imshow("camera300", images.cameras[2].image);
+        // images are RGB, need to convert to BGR for visualization with OpenCV
+        cv::Mat bgr_images[3];
+        for (int i = 0; i < 3; i++)
+        {
+            cv::cvtColor(
+                images.cameras[i].image, bgr_images[i], cv::COLOR_RGB2BGR);
+        }
+        cv::imshow("camera60", bgr_images[0]);
+        cv::imshow("camera180", bgr_images[1]);
+        cv::imshow("camera300", bgr_images[2]);
         cv::waitKey(3);
 
         std::cout << std::endl;
