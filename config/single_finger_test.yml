@@ -7,8 +7,8 @@ calibration:
     move_timeout: 2000
 safety_kd: [0.08, 0.08, 0.04]
 position_control_gains:
-    kp: [6, 6, 6]
-    kd: [0.03, 0.03, 0.03]
+    kp: [4, 4, 4]
+    kd: [0.01, 0.01, 0.01]
 
 # No position limits in this mode
 hard_position_limits_lower: [-.inf, -.inf, -.inf]
