@@ -32,23 +32,30 @@ int main()
                   << robot_observation.position[1] << ", "
                   << robot_observation.position[2] << std::endl;
 
-        auto object_pose = frontend.get_object_pose(t);
-        std::cout << "Object: " << object_pose.position[0] << ", "
-                  << object_pose.position[0] << ", " << object_pose.position[0]
-                  << std::endl;
-
-        auto images = frontend.get_camera_observation(t);
-        // images are RGB, need to convert to BGR for visualization with OpenCV
-        cv::Mat bgr_images[3];
-        for (int i = 0; i < 3; i++)
+        try
         {
-            cv::cvtColor(
-                images.cameras[i].image, bgr_images[i], cv::COLOR_RGB2BGR);
+            auto object_pose = frontend.get_object_pose(t);
+            std::cout << "Object: " << object_pose.position[0] << ", "
+                      << object_pose.position[0] << ", "
+                      << object_pose.position[0] << std::endl;
         }
-        cv::imshow("camera60", bgr_images[0]);
-        cv::imshow("camera180", bgr_images[1]);
-        cv::imshow("camera300", bgr_images[2]);
-        cv::waitKey(3);
+        catch (const std::invalid_argument &e)
+        {
+            std::cerr << "No object pose: " << e.what() << std::endl;
+        }
+
+        try
+        {
+            auto images = frontend.get_camera_observation(t);
+            cv::imshow("camera60", images.cameras[0].image);
+            cv::imshow("camera180", images.cameras[1].image);
+            cv::imshow("camera300", images.cameras[2].image);
+            cv::waitKey(3);
+        }
+        catch (const std::invalid_argument &e)
+        {
+            std::cerr << "No camera image: " << e.what() << std::endl;
+        }
 
         std::cout << std::endl;
     }
