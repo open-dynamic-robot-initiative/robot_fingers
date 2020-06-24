@@ -29,7 +29,7 @@ TriFingerPlatformFrontend::TriFingerPlatformFrontend()
       camera_frontend_(
           std::make_shared<
               robot_interfaces::MultiProcessSensorData<CameraObservation>>(
-              "tricamera", false, 10))
+              "tricamera", false, 100))
 
 {
 }
