@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # stop build on first error
-string(APPEND CMAKE_CXX_FLAGS " -Wfatal-errors")
+string(APPEND CMAKE_CXX_FLAGS " -Wfatal-errors -Werror=return-type")
 
 
 find_package(catkin REQUIRED COMPONENTS
@@ -14,11 +14,14 @@ find_package(catkin REQUIRED COMPONENTS
   robot_interfaces
   mpi_cmake_modules
   pybind11_catkin
+  trifinger_object_tracking
+  trifinger_cameras
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 
 catkin_python_setup()
@@ -51,22 +54,26 @@ include_directories(
 )
 
 
+add_library(trifinger_platform_frontend
+    src/trifinger_platform_frontend.cpp
+)
+target_link_libraries(trifinger_platform_frontend
+    ${catkin_LIBRARIES}
+)
+
 # Python Bindings
+catkin_add_pybind11_module(py_one_joint)
+catkin_add_pybind11_module(py_two_joint)
+catkin_add_pybind11_module(py_real_finger)
+catkin_add_pybind11_module(py_trifinger)
 
-# TODO move this macro to mpi_cmake_modules?  More or less the same block is
-# copy-pasted all over our workspace (link libraries may differ).
-macro(add_python_bindings module_name)
-    pybind11_add_module(${module_name} srcpy/${module_name}.cpp)
-    target_link_libraries(${module_name} PRIVATE ${catkin_LIBRARIES})
-    set_target_properties(${module_name} PROPERTIES
-        LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
-    install(TARGETS ${module_name} DESTINATION ${CATKIN_PACKAGE_PYTHON_DESTINATION})
-endmacro()
 
-add_python_bindings(py_one_joint)
-add_python_bindings(py_two_joint)
-add_python_bindings(py_real_finger)
-add_python_bindings(py_trifinger)
+# Demo executable
+add_executable(demo_trifinger_platform src/demo_platform_frontend.cpp)
+target_link_libraries(demo_trifinger_platform
+    trifinger_platform_frontend
+    ${OpenCV_LIBRARIES}
+)
 
 
 # Building documentation
