@@ -1,3 +1,4 @@
+"""Functions for sampling, validating and evaluating "move cube" goals."""
 import random
 
 import numpy as np
@@ -8,7 +9,7 @@ CUBE_WIDTH = 0.065
 ARENA_RADIUS = 0.195
 
 cube_3d_radius = CUBE_WIDTH * np.sqrt(3) / 2
-max_radius = ARENA_RADIUS - cube_3d_radius  # FIXME better name
+max_cube_com_distance_to_center = ARENA_RADIUS - cube_3d_radius
 
 min_height = CUBE_WIDTH / 2
 max_height = 0.1  # TODO
@@ -77,7 +78,7 @@ def sample_goal(difficulty, current_position=None, current_orientation=None):
     # that are too easy?
 
     # sample uniform position in circle (https://stackoverflow.com/a/50746409)
-    radius = max_radius * np.sqrt(random.random())
+    radius = max_cube_com_distance_to_center * np.sqrt(random.random())
     theta = random.uniform(0, 2 * np.pi)
 
     # x,y-position of the cube
@@ -120,7 +121,7 @@ def validate_goal(position, orientation):
         return False, "len(position) != 3"
     if len(orientation) != 4:
         return False, "len(orientation) != 4"
-    if np.linalg.norm(position[:2]) > max_radius:
+    if np.linalg.norm(position[:2]) > max_cube_com_distance_to_center:
         return False, "Position is outside of the arena circle."
     if position[2] <= min_height:
         return False, "Position is too low."
