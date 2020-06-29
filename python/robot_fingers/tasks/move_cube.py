@@ -39,15 +39,42 @@ def get_cube_corner_positions(position, orientation):
         (array, shape=(8, 3)): Positions of the corners of the cube in the
             given pose.
     """
-    rotation = Rotation(orientation)
+    rotation = Rotation.from_quat(orientation)
     translation = np.asarray(position)
 
     return rotation.apply(cube_corners) + translation
 
 
-def sample_goal(difficulty: int, current_state=None):
-    # TODO depending on difficulty, the current state of the object needs to be
-    # considered (mostly for the orientation)
+def sample_goal(difficulty, current_position=None, current_orientation=None):
+    """Sample a goal pose for the cube.
+
+    Args:
+        difficulty (int):  Difficulty level.  The higher, the more difficult is
+            the goal.  Possible levels are:
+
+            - 1: Goal is on the ground with a random rotation around the
+                  z-axis.
+            - 2: The goal can be above the ground.  Rotation is limited to the
+                  z-axis.
+
+        current_position:  Current (x, y, z)-position of the cube.  Currently
+            unused.
+        current_orientation:  Current orientation of the cube as quaternion
+            (x, y, z, w).  If set, it is considered while sampling the goal
+            orientation.  If not set, it is assumed that the cube is currently
+            aligned with the axes of the world frame.  This is relevant for
+            some difficulty levels to ensure that the goal orientation only
+            differs from the current one by what is specified for that
+            difficulty level (e.g. only rotation around z-axes for level 1).
+
+    Returns:
+        (tuple): A tuple with the goal position (x, y, z) and the goal
+        orientation quaternion (x, y, z, w) relative to the world frame.
+    """
+    # difficulty -1 is for initialization
+
+    # TODO Should we add a minimum distance to current_position to avoid goals
+    # that are too easy?
 
     # sample uniform position in circle (https://stackoverflow.com/a/50746409)
     radius = max_radius * np.sqrt(random.random())
@@ -59,14 +86,21 @@ def sample_goal(difficulty: int, current_state=None):
 
     if difficulty == -1 or difficulty == 1:
         # on the ground, random yaw
-
         z = CUBE_WIDTH / 2
-        yaw = random.uniform(0, 2 * np.pi)
-
-        position = np.array((x, y, z))
-        orientation = Rotation.from_euler("z", yaw).as_quat()
+    elif difficulty == 2:
+        # in the air, random yaw
+        z = random.uniform(min_height, max_height)
     else:
         raise ValueError("Invalid difficulty %d" % difficulty)
+
+    position = np.array((x, y, z))
+
+    # random yaw angle (relative to current_orientation if given)
+    yaw = random.uniform(0, 2 * np.pi)
+
+    orientation = Rotation.from_euler("z", yaw).as_quat()
+    if current_orientation is not None:
+        orientation = orientation * current_orientation
 
     return position, orientation
 
