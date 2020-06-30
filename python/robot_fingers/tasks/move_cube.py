@@ -5,17 +5,21 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 
-CUBE_WIDTH = 0.065
-ARENA_RADIUS = 0.195
-
-cube_3d_radius = CUBE_WIDTH * np.sqrt(3) / 2
-max_cube_com_distance_to_center = ARENA_RADIUS - cube_3d_radius
-
-min_height = CUBE_WIDTH / 2
-max_height = 0.1  # TODO
+# Number of time steps in one episode
+episode_length = 5000  # TODO set actual value
 
 
-cube_corners = np.array(
+_CUBE_WIDTH = 0.065
+_ARENA_RADIUS = 0.195
+
+_cube_3d_radius = _CUBE_WIDTH * np.sqrt(3) / 2
+_max_cube_com_distance_to_center = _ARENA_RADIUS - _cube_3d_radius
+
+_min_height = _CUBE_WIDTH / 2
+_max_height = 0.1  # TODO
+
+
+_cube_corners = np.array(
     [
         [-1, -1, -1],
         [-1, -1, +1],
@@ -26,7 +30,7 @@ cube_corners = np.array(
         [+1, +1, -1],
         [+1, +1, +1],
     ]
-) * (CUBE_WIDTH / 2)
+) * (_CUBE_WIDTH / 2)
 
 
 def get_cube_corner_positions(position, orientation):
@@ -43,7 +47,7 @@ def get_cube_corner_positions(position, orientation):
     rotation = Rotation.from_quat(orientation)
     translation = np.asarray(position)
 
-    return rotation.apply(cube_corners) + translation
+    return rotation.apply(_cube_corners) + translation
 
 
 def sample_goal(difficulty, current_position=None, current_orientation=None):
@@ -78,7 +82,7 @@ def sample_goal(difficulty, current_position=None, current_orientation=None):
     # that are too easy?
 
     # sample uniform position in circle (https://stackoverflow.com/a/50746409)
-    radius = max_cube_com_distance_to_center * np.sqrt(random.random())
+    radius = _max_cube_com_distance_to_center * np.sqrt(random.random())
     theta = random.uniform(0, 2 * np.pi)
 
     # x,y-position of the cube
@@ -87,10 +91,10 @@ def sample_goal(difficulty, current_position=None, current_orientation=None):
 
     if difficulty == -1 or difficulty == 1:
         # on the ground, random yaw
-        z = CUBE_WIDTH / 2
+        z = _CUBE_WIDTH / 2
     elif difficulty == 2:
         # in the air, random yaw
-        z = random.uniform(min_height, max_height)
+        z = random.uniform(_min_height, _max_height)
     else:
         raise ValueError("Invalid difficulty %d" % difficulty)
 
@@ -121,14 +125,14 @@ def validate_goal(position, orientation):
         return False, "len(position) != 3"
     if len(orientation) != 4:
         return False, "len(orientation) != 4"
-    if np.linalg.norm(position[:2]) > max_cube_com_distance_to_center:
+    if np.linalg.norm(position[:2]) > _max_cube_com_distance_to_center:
         return False, "Position is outside of the arena circle."
-    if position[2] <= min_height:
+    if position[2] <= _min_height:
         return False, "Position is too low."
-    if position[2] >= max_height:
+    if position[2] >= _max_height:
         return False, "Position is too high."
 
-    # even if the CoM is above min_height, a corner could be intersecting with
+    # even if the CoM is above _min_height, a corner could be intersecting with
     # the bottom depending on the orientation
     corners = get_cube_corner_positions(position, orientation)
     min_z = min(z for x, y, z in corners)
