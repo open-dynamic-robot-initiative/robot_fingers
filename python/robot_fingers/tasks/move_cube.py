@@ -33,6 +33,15 @@ _cube_corners = np.array(
 ) * (_CUBE_WIDTH / 2)
 
 
+class InvalidGoalError(Exception):
+    """Exception used to indicate that the given goal is invalid."""
+
+    def __init__(self, message, position, orientation):
+        super().__init__(message)
+        self.position = position
+        self.orientation = orientation
+
+
 def get_cube_corner_positions(position, orientation):
     """Get the positions of the cube's corners with the given pose.
 
@@ -103,41 +112,50 @@ def sample_goal(difficulty, current_position=None, current_orientation=None):
     # random yaw angle (relative to current_orientation if given)
     yaw = random.uniform(0, 2 * np.pi)
 
-    orientation = Rotation.from_euler("z", yaw).as_quat()
+    orientation = Rotation.from_euler("z", yaw)
     if current_orientation is not None:
-        orientation = orientation * current_orientation
+        orientation = orientation * Rotation.from_quat(current_orientation)
 
-    return position, orientation
+    return position, orientation.as_quat()
 
 
 def validate_goal(position, orientation):
     """Validate that the given pose is a valid goal (e.g. no collision)
 
+    Raises an error if the given goal pose is invalid.
+
     Args:
         position:  Goal position.
         orientation:  Goal orientation.
 
-    Returns:
-        (bool): True if the given goal pose is within the goal space and does
-            not collide with the static environment.
+    Raises:
+        ValueError:  If given values are not a valid 3d position/orientation.
+        InvalidGoalError:  If the given pose exceeds the allowed goal space.
     """
     if len(position) != 3:
-        return False, "len(position) != 3"
+        raise ValueError("len(position) != 3")
     if len(orientation) != 4:
-        return False, "len(orientation) != 4"
+        raise ValueError("len(orientation) != 4")
     if np.linalg.norm(position[:2]) > _max_cube_com_distance_to_center:
-        return False, "Position is outside of the arena circle."
-    if position[2] <= _min_height:
-        return False, "Position is too low."
-    if position[2] >= _max_height:
-        return False, "Position is too high."
+        raise InvalidGoalError(
+            "Position is outside of the arena circle.", position, orientation
+        )
+    if position[2] < _min_height:
+        raise InvalidGoalError("Position is too low.", position, orientation)
+    if position[2] > _max_height:
+        raise InvalidGoalError("Position is too high.", position, orientation)
 
     # even if the CoM is above _min_height, a corner could be intersecting with
     # the bottom depending on the orientation
     corners = get_cube_corner_positions(position, orientation)
     min_z = min(z for x, y, z in corners)
-    if min_z < 0:
-        return False, "Position is too low."
+    # allow a bit below zero to compensate numerical inaccuracies
+    if min_z < -1e-10:
+        raise InvalidGoalError(
+            "Position of a corner is too low (z = {}).".format(min_z),
+            position,
+            orientation,
+        )
 
 
 def evaluate_state(
