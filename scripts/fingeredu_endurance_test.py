@@ -39,7 +39,7 @@ def demo_position_commands(finger):
             # executed.
             action = robot_interfaces.finger.Action(position=desired_position)
             t = finger.append_desired_action(action)
-            finger.wait_until_time_index(t)
+            finger.wait_until_timeindex(t)
 
         # print current date/time every hour, so we can roughly see how long it
         # ran in case it crashes during a long-run-test.

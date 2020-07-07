@@ -41,7 +41,7 @@ def main():
         # set only the position in the action, torque is zero by default
         action = robot_interfaces.finger.Action(position=desired_position)
         t = finger.append_desired_action(action)
-        finger.wait_until_time_index(t)
+        finger.wait_until_timeindex(t)
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ def run_choreography(frontend):
         for i in range(1000):
             t = frontend.append_desired_action(
                 robot_interfaces.trifinger.Action(position=position))
-            frontend.wait_until_time_index(t)
+            frontend.wait_until_timeindex(t)
 
     deg45 = np.pi / 4
 
