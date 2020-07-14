@@ -24,8 +24,8 @@ def run_choreography(frontend):
 
     pose_initial = [0, 0.9, -1.7]
     pose_intermediate = [0.75, 1.2, -2.3]
-    pose_up = [1.5, 1.5, -3.0]
-    pose_other_side_up = [-1.5, 1.5, -1.7]
+    pose_up = [1.3, 1.5, -2.6]
+    pose_other_side_up = [-0.8, 1.5, -1.7]
 
     last_time_print = 0
 
@@ -51,6 +51,7 @@ def main():
                         help="""If set run only frontend with multi-process
                         robot data.  Otherwise run everything within a single
                         process.""")
+    parser.add_argument("--log", type=str)
     args = parser.parse_args()
 
     if args.multi_process:
@@ -65,6 +66,10 @@ def main():
         robot = robot_fingers.Robot(robot_interfaces.trifinger,
                                     robot_fingers.create_trifinger_backend,
                                     "trifingerpro.yml")
+        if args.log:
+            logger = robot_interfaces.trifinger.Logger(robot.robot_data, 100)
+            logger.start(args.log)
+
         robot.initialize()
         frontend = robot.frontend
 
