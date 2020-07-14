@@ -28,20 +28,63 @@ position_control_gains:
     kp: [4, 4, 4, 4, 4, 4, 4, 4, 4]
     kd: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
 
-hard_position_limits_lower: [-5, -5, -5, -5, -5, -5, -5, -5, -5]
-hard_position_limits_upper: [5, 5, 5, 5, 5, 5, 5, 5, 5]
+
+#hard_position_limits_lower: [-.inf, -.inf, -.inf, -.inf, -.inf, -.inf, -.inf, -.inf, -.inf]
+#hard_position_limits_upper: [.inf, .inf, .inf, .inf, .inf, .inf, .inf, .inf, .inf]
+
+hard_position_limits_lower:
+    - -1.0
+    - -1.67
+    - -2.8
+    - -1.0
+    - -1.67
+    - -2.8
+    - -1.0
+    - -1.67
+    - -2.7
+hard_position_limits_upper:
+    - 1.5
+    - 1.67
+    - 2.8
+    - 1.5
+    - 1.67
+    - 2.8
+    - 1.5
+    - 1.67
+    - 2.8
+
+soft_position_limits_lower:
+    - -0.9
+    - -1.57
+    - -2.7
+    - -0.9
+    - -1.57
+    - -2.7
+    - -0.9
+    - -1.57
+    - -2.7
+soft_position_limits_upper:
+    - 1.4
+    - 1.57
+    - 2.7
+    - 1.4
+    - 1.57
+    - 2.7
+    - 1.4
+    - 1.57
+    - 2.7
 
 # Set zero-position according to URDF (finger pointing straight down).
 home_offset_rad:
-    - -2.12
-    - -2.44
-    - 2.16
-    - -1.6
-    - -2.16
-    - 2.58
-    - -2.01
-    - -2.14
-    - 2.57
+    - -1.903
+    - -1.845
+    - 2.242
+    - -1.616
+    - -1.762
+    - 1.996
+    - -2.148
+    - -2.143
+    - 2.152
 
 # Set the initial position such that it is still save when the stage is at the
 # highest level.

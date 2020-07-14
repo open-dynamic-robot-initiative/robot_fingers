@@ -28,6 +28,11 @@ def main():
             robot_fingers.create_trifinger_backend,
             "trifingeredu.yml",
         ),
+        "trifingerpro": (
+            robot_interfaces.trifinger,
+            robot_fingers.create_trifinger_backend,
+            "trifingerpro.yml",
+        ),
     }
 
     parser = argparse.ArgumentParser(description=__doc__)
