@@ -58,7 +58,7 @@ if __name__ == "__main__":
             # executed.
             action = robot_interfaces.finger.Action(position=desired_position)
             t = robot.frontend.append_desired_action(action)
-            robot.frontend.wait_until_time_index(t)
+            robot.frontend.wait_until_timeindex(t)
 
         desired_tip_pos = forward_kinematics(desired_position)
         actual_tip_pos = forward_kinematics(

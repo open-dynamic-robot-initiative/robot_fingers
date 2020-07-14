@@ -47,7 +47,7 @@ def zero_torque_ctrl(robot, duration, print_position=False):
     while step < duration:
         step += 1
         t = robot.append_desired_action(action)
-        robot.wait_until_time_index(t)
+        robot.wait_until_timeindex(t)
         if print_position:
             print(
                 "\rPosition: %10.4f" % robot.get_observation(t).position[0],
@@ -73,12 +73,12 @@ def go_to(robot, goal_position, steps, hold):
     for step in range(steps):
         desired_step_position += stepsize
         t = robot.append_desired_action(Action(position=desired_step_position))
-        robot.wait_until_time_index(t)
+        robot.wait_until_timeindex(t)
 
     action = Action(position=np.ones(N_JOINTS) * goal_position)
     for step in range(hold):
         t = robot.append_desired_action(action)
-        robot.wait_until_time_index(t)
+        robot.wait_until_timeindex(t)
 
 
 def go_to_zero(robot, steps, hold):
@@ -113,7 +113,7 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000):
 
     for step in range(hold):
         t = robot.append_desired_action(action)
-        robot.wait_until_time_index(t)
+        robot.wait_until_timeindex(t)
 
 
 def test_if_moves(robot, desired_torque, timeout):
@@ -160,7 +160,7 @@ def validate_position(robot):
 
     for i, sign in enumerate((+1, -1)):
         hit_endstop(robot, sign * desired_torque)
-        t = robot.get_current_time_index()
+        t = robot.get_current_timeindex()
         position[i] = robot.get_observation(t).position
 
     center = (position[0] + position[1]) / 2
@@ -279,7 +279,7 @@ def main():
             go_to(robot, -POSITION_LIMIT, 500, 10)
             hard_direction_change(robot, 2, trq)
 
-            t = robot.get_current_time_index()
+            t = robot.get_current_timeindex()
             if np.any(
                 np.abs(robot.get_observation(t).position) > POSITION_LIMIT
             ):

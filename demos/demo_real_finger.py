@@ -71,7 +71,7 @@ def demo_position_commands(finger):
             # executed.
             action = robot_interfaces.finger.Action(position=desired_position)
             t = finger.append_desired_action(action)
-            finger.wait_until_time_index(t)
+            finger.wait_until_timeindex(t)
 
         # print current position from time to time
         print("Position: %s" % finger.get_observation(t).position)
