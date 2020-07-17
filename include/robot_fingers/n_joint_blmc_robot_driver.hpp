@@ -16,12 +16,12 @@
 #include <Eigen/Eigen>
 
 #include <yaml_cpp_catkin/yaml_eigen.h>
-#include <mpi_cpp_tools/math.hpp>
 #include <robot_interfaces/monitored_robot_driver.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
 
 #include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_robots/clamp.hpp>
 #include <blmc_robots/common_header.hpp>
 
 namespace blmc_robots
@@ -365,7 +365,6 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      *        initialization.
      */
     Vector initial_position_rad = Vector::Zero();
-
 
     /**
      * @brief Check if the given position is within the hard limits.

@@ -425,13 +425,13 @@ typename NJBRD::Action NJBRD::process_desired_action(
     // -------------
     // limit to configured maximum torque
     processed_action.torque =
-        mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
+        clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
     // velocity damping to prevent too fast movements
     processed_action.torque -=
         safety_kd.cwiseProduct(latest_observation.velocity);
     // after applying checks, make sure we are still below the max. torque
     processed_action.torque =
-        mct::clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
+        clamp(processed_action.torque, -max_torque_Nm, max_torque_Nm);
 
     return processed_action;
 }
