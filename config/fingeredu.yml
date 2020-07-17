@@ -4,7 +4,7 @@ has_endstop: false
 calibration:
     endstop_search_torques_Nm: [0.22, 0.22, -0.18]
     position_tolerance_rad: 0.05
-    move_timeout: 2000
+    move_steps: 500
 safety_kd: [0.08, 0.08, 0.04]
 position_control_gains:
     kp: [7, 7, 6.5]
