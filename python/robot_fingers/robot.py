@@ -2,8 +2,80 @@
 import os
 import rospkg
 
+import robot_interfaces
+import robot_fingers
+
+
+#: Default configurations for various robots.
+#: Maps robot names to a tuple of
+#:  1) the module defining the corresponding types for this robot,
+#:  2) a function to create the backend, and
+#:  3) the name of the configuration file
+#:
+#: This corresponds to the arguments of the :class:`Robot` class.
+robot_configs = {
+    "fingerone": (
+        robot_interfaces.finger,
+        robot_fingers.create_real_finger_backend,
+        "finger.yml",
+    ),
+    "trifingerone": (
+        robot_interfaces.trifinger,
+        robot_fingers.create_trifinger_backend,
+        "trifinger.yml",
+    ),
+    "fingeredu": (
+        robot_interfaces.finger,
+        robot_fingers.create_real_finger_backend,
+        "fingeredu.yml",
+    ),
+    "trifingeredu": (
+        robot_interfaces.trifinger,
+        robot_fingers.create_trifinger_backend,
+        "trifingeredu.yml",
+    ),
+    "trifingerpro": (
+        robot_interfaces.trifinger,
+        robot_fingers.create_trifinger_backend,
+        "trifingerpro.yml",
+    ),
+    "onejoint": (
+        robot_interfaces.one_joint,
+        robot_fingers.create_one_joint_backend,
+        "onejoint.yml",
+    ),
+    "twojoint": (
+        robot_interfaces.two_joint,
+        robot_fingers.create_two_joint_backend,
+        "twojoint.yml",
+    ),
+}
+
 
 class Robot:
+
+    @classmethod
+    def create_by_name(cls, robot_name):
+        """Create a ``Robot`` instance for the specified robot.
+
+        Args:
+            robot_name (str):  Name of the robots.  See
+            :meth:`Robot.get_supported_robots` for a list of supported robots.
+
+        Returns:
+            Robot: A ``Robot`` instance for the specified robot.
+        """
+        return cls(*robot_configs[robot_name])
+
+    @staticmethod
+    def get_supported_robots():
+        """Get list of robots supported by ``create_by_name``.
+
+        Returns:
+            List of supported robot names.
+        """
+        return robot_configs.keys()
+
     def __init__(
         self, robot_module, create_backend_function, config_file_name
     ):
@@ -34,8 +106,11 @@ class Robot:
             self.robot_data, config_file_path
         )
 
-        # The frontend is used by the user to get observations and send actions
+        #: The frontend is used to send actions and get observations.
         self.frontend = robot_module.Frontend(self.robot_data)
+
+        #: The logger can be used to log robot data to a file
+        self.logger = robot_module.Logger(self.robot_data, 100)
 
     def initialize(self):
         """Initialize the robot."""
