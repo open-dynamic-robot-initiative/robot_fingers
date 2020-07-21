@@ -39,6 +39,11 @@ robot_configs = {
         robot_fingers.create_trifinger_backend,
         "trifingerpro.yml",
     ),
+    "trifingerpro_calib": (
+        robot_interfaces.trifinger,
+        robot_fingers.create_trifinger_backend,
+        "trifingerpro_for_calib.yml",
+    ),
     "onejoint": (
         robot_interfaces.one_joint,
         robot_fingers.create_one_joint_backend,
