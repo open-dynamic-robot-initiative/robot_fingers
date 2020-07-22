@@ -35,7 +35,7 @@ void NJBRD::Config::print() const
               << calibration.endstop_search_torques_Nm.transpose() << "\n"
               << "\t\t position_tolerance_rad: "
               << calibration.position_tolerance_rad << "\n"
-              << "\t\t move_timeout: " << calibration.move_timeout << "\n"
+              << "\t\t move_steps: " << calibration.move_steps << "\n"
               << "\t safety_kd: " << safety_kd.transpose() << "\n"
               << "\t position_control_gains:\n"
               << "\t\t kp: " << position_control_gains.kp.transpose() << "\n"
@@ -109,8 +109,7 @@ typename NJBRD::Config NJBRD::Config::load_config(
         set_config_value(calib,
                          "position_tolerance_rad",
                          &config.calibration.position_tolerance_rad);
-        set_config_value(
-            calib, "move_timeout", &config.calibration.move_timeout);
+        set_config_value(calib, "move_steps", &config.calibration.move_steps);
     }
 
     set_config_value(user_config, "safety_kd", &config.safety_kd);
@@ -501,7 +500,7 @@ void NJBRD::_initialize()
             reached_goal =
                 move_to_position(waypoint,
                                  config_.calibration.position_tolerance_rad,
-                                 config_.calibration.move_timeout);
+                                 config_.calibration.move_steps);
         }
         if (!reached_goal)
         {
@@ -616,55 +615,28 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
 TPL_NJBRD
 bool NJBRD::move_to_position(const NJBRD::Vector &goal_pos,
                              const double tolerance,
-                             const uint32_t timeout_cycles)
+                             const uint32_t time_steps)
 {
-    bool reached_goal = false;
-    uint32_t cycle_count = 0;
+    // move to the goal position on a minium jerk trajectory, see
+    // https://web.archive.org/web/20200715015252/https://mika-s.github.io/python/control-theory/trajectory-generation/2017/12/06/trajectory-generation-with-a-minimum-jerk-trajectory.html
 
-    while (!reached_goal && cycle_count < timeout_cycles)
+    const auto initial_position = get_latest_observation().position;
+
+    for (int t = 0; t < time_steps; t++)
     {
-        apply_action(Action::Position(goal_pos));
+        double alpha = (double)t / (double)time_steps;
+        auto step_goal =
+            initial_position +
+            (goal_pos - initial_position) *
+                (10.0 * std::pow(alpha, 3) - 15.0 * std::pow(alpha, 4) +
+                 6.0 * std::pow(alpha, 5));
 
-        const Vector position_error =
-            goal_pos - get_latest_observation().position;
-        const Vector velocity = get_latest_observation().velocity;
-
-#ifdef VERBOSE
-        rt_printf(
-            "error: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n"
-            "veloc: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n\n",
-            position_error[0],
-            position_error[1],
-            position_error[2],
-            position_error[3],
-            position_error[4],
-            position_error[5],
-            position_error[6],
-            position_error[7],
-            position_error[8],
-            velocity[0],
-            velocity[1],
-            velocity[2],
-            velocity[3],
-            velocity[4],
-            velocity[5],
-            velocity[6],
-            velocity[7],
-            velocity[8]);
-#endif
-
-        // Check if the goal is reached (position error below tolerance and
-        // velocity close to zero).
-        // FIXME: zero velocity threshold is pretty large.  This is because when
-        // the controller is vibrating a bit, the velocity is oscillating
-        // between positive and negative non-zero values.  Maybe use some
-        // averaging?
-        constexpr double ZERO_VELOCITY = 0.1;
-        reached_goal = ((position_error.array().abs() < tolerance).all() &&
-                        (velocity.array().abs() < ZERO_VELOCITY).all());
-
-        cycle_count++;
+        apply_action(Action::Position(step_goal));
     }
+
+    // check if the goal was really reached
+    const Vector position_error = goal_pos - get_latest_observation().position;
+    bool reached_goal = (position_error.array().abs() < tolerance).all();
 
     return reached_goal;
 }

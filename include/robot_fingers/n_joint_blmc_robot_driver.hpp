@@ -254,19 +254,22 @@ protected:
                 Vector home_offset_rad = Vector::Zero());
 
     /**
-     * @brief Move to given goal position using PD control.
+     * @brief Move to given goal position with a minimum jerk trajectory.
+     *
+     * Use a series of position actions to move to the given goal position on a
+     * minimum jerk trajectory.
      *
      * @param goal_pos Angular goal position for each joint.
      * @param tolerance Allowed position error for reaching the goal.  This is
      *     checked per joint, that is the maximal possible error is +/-tolerance
      *     on each joint.
-     * @param timeout_cycles Timeout.  If exceeded before goal is reached, the
-     *     procedure is aborted. Unit: Number of control loop cycles.
+     * @param time_steps Number of control loop cycles for reaching the goal.
+     *     The lower the number of steps, the faster the robot will move.
      * @return True if goal position is reached, false if timeout is exceeded.
      */
     bool move_to_position(const Vector &goal_pos,
                           const double tolerance,
-                          const uint32_t timeout_cycles);
+                          const uint32_t time_steps);
 };
 
 /**
@@ -310,10 +313,10 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
     {
         //! @brief Torque that is used to find the end stop.
         Vector endstop_search_torques_Nm = Vector::Zero();
-        //! @brief Tolerance for reaching the starting position.
+        //! @brief Tolerance for reaching the initial position.
         double position_tolerance_rad = 0.0;
-        //! @brief Timeout for reaching the starting position.
-        double move_timeout = 0.0;
+        //! @brief Number of time steps for reaching the initial position.
+        uint32_t move_steps = 0;
     } calibration;
 
     //! @brief D-gain to dampen velocity.  Set to zero to disable damping.
