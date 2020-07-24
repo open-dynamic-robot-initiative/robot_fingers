@@ -24,7 +24,6 @@ def record(trajectory):
 
         if len(trajectory) > 3000:
             if np.abs(trajectory[-1] - trajectory[-2000]).sum() < 0.01:
-                robot.frontend.append_desired_action(robot.Action())
                 return
 
 
@@ -33,6 +32,8 @@ def play(trajectory):
         action = robot.Action(position=position)
         t = robot.frontend.append_desired_action(action)
         robot.frontend.wait_until_timeindex(t - 10)
+    
+    robot.frontend.append_desired_action(robot.Action())
 
 
 if __name__ == "__main__":
