@@ -22,10 +22,14 @@
 
 #include <robot_fingers/two_joint_driver.hpp>
 
+using namespace pybind11::literals;
 using namespace robot_fingers;
 using namespace blmc_robots;
 
 PYBIND11_MODULE(py_two_joint, m)
 {
-    m.def("create_two_joint_backend", &create_backend<TwoJointDriver>);
+    m.def("create_two_joint_backend", &create_backend<TwoJointDriver>,
+          "robot_data"_a,
+          "config_file"_a,
+          "first_action_timeout"_a = std::numeric_limits<double>::infinity());
 }
