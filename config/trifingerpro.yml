@@ -74,17 +74,27 @@ soft_position_limits_upper:
     - 1.57
     - 2.7
 
-# Set zero-position according to URDF (finger pointing straight down).
-home_offset_rad:
-    - -1.903
-    - -1.845
-    - 2.242
-    - -1.616
-    - -1.762
-    - 1.996
-    - -2.148
-    - -2.143
-    - 2.152
+# Prototype platform (1)
+#home_offset_rad: [-1.876, -1.877,  2.368, -1.633, -1.825,  2.045, -2.158, -2.215,  2.133]
+
+# platform 2
+#home_offset_rad: [-1.681, -2.251,  2.039, -1.975, -1.855,  2.233, -1.651, -2.447,  2.057]
+
+# Platform 3
+#home_offset_rad:
+#    - -2.02
+#    - -2.37
+#    - 2.12
+#    - -2.06
+#    - -2.23
+#    - 2.08
+#    - -1.58
+#    - -2.18
+#    - 2.19
+
+# platform 4
+home_offset_rad: [-1.744, -2.233,  2.611, -1.659, -2.346,  2.677, -2.127, -2.463,  2.597]
+
 
 # Set the initial position such that it is still save when the stage is at the
 # highest level.

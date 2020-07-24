@@ -41,6 +41,8 @@ def main():
     robot = robot_fingers.Robot.create_by_name(args.robot_type)
     robot.initialize()
 
+    input("Press enter to start playback")
+
     # move robot to the recorded positions.  At speed = 1, every position is
     # executed once (= original speed), at speed < 1, positions are repeated
     # (slower playback), at speed > 1, some positions are skipped (faster

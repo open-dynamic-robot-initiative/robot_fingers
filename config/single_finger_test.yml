@@ -1,4 +1,4 @@
-can_ports: ["can0", "can1"]
+can_ports: ["can4", "can5"]
 max_current_A: 2
 has_endstop: false
 calibration:

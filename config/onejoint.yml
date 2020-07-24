@@ -1,9 +1,9 @@
 # can6: MPI board
 # can7: TI Launchpad
-can_ports: ["can6"]
+can_ports: ["can5"]
 
 max_current_A: 2
-has_endstop: true
+has_endstop: false
 calibration:
     endstop_search_torques_Nm: [-0.22]
     position_tolerance_rad: 0.05
@@ -16,7 +16,9 @@ position_control_gains:
 # Offset between encoder index and zero-position (in radian).
 # Set this such that the zero position is in the center between left and
 # right end stop.
-home_offset_rad: [2.241742]
+#home_offset_rad: [2.241742]
+#initial_position_rad: [0.0]
+home_offset_rad: [0]
 initial_position_rad: [0.0]
 
 hard_position_limits_lower: [-3.2]
