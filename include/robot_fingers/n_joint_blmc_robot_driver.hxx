@@ -484,12 +484,17 @@ void NJBRD::_initialize()
     joint_modules_.set_position_control_gains(
         config_.position_control_gains.kp, config_.position_control_gains.kd);
 
-    is_initialized_ = homing(config_.calibration.endstop_search_torques_Nm,
-                             config_.home_offset_rad);
+    bool homing_succeeded = homing(
+        config_.calibration.endstop_search_torques_Nm,
+        config_.home_offset_rad
+    );
+    pause_motors();
 
-    if (is_initialized_)
+    // NOTE: do not set is_initialized_ yet as we want to allow move_to_position
+    // below to move without position limits (as it might be that after homing
+    // it is out of the limits).
+    if (homing_succeeded)
     {
-        apply_action(Action::Zero());
         Vector waypoint = get_latest_observation().position;
 
         bool reached_goal = false;
@@ -509,6 +514,8 @@ void NJBRD::_initialize()
     }
 
     pause_motors();
+
+    is_initialized_ = homing_succeeded;
 }
 
 TPL_NJBRD
@@ -631,7 +638,7 @@ bool NJBRD::move_to_position(const NJBRD::Vector &goal_pos,
                 (10.0 * std::pow(alpha, 3) - 15.0 * std::pow(alpha, 4) +
                  6.0 * std::pow(alpha, 5));
 
-        apply_action(Action::Position(step_goal));
+        apply_action_uninitialized(Action::Position(step_goal));
     }
 
     // check if the goal was really reached
