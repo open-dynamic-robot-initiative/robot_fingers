@@ -27,8 +27,8 @@ def record(trajectory):
                 return
 
 
-def play(trajectory):
-    for position in trajectory:
+def play(trajectory, factor):
+    for position in trajectory[::factor]:
         action = robot.Action(position=position)
         t = robot.frontend.append_desired_action(action)
         robot.frontend.wait_until_timeindex(t - 10)
@@ -44,8 +44,8 @@ if __name__ == "__main__":
         if key == 'r':
             print('recording')
             record(trajectory)
-        elif key == 'p':
-            print('playing')
-            play(trajectory)
+        elif key in list(map(str, range(1, 20))):
+            print('playing with factor ' + key)
+            play(trajectory, int(key))
         else:
             print('invalid key')
