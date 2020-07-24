@@ -13,6 +13,9 @@ position_control_gains:
     kp: [3, 3]
     kd: [0.03, 0.03]
 
+hard_position_limits_lower: [-.inf, -.inf]
+hard_position_limits_upper: [.inf, .inf]
+
 # Offset between encoder index and zero-position (in radian).
 # Set this such that the zero position is in the center between left and
 # right end stop.
