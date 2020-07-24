@@ -3,6 +3,10 @@
 import argparse
 import curses
 
+# %%
+
+# %%
+
 import robot_fingers
 
 robot = robot_fingers.Robot.create_by_name('trifingerpro')
@@ -13,13 +17,32 @@ trajectory = []
 def record():
     trajectory = []
     t = 0
-    while t < 10000:
+    for _ in range(10e4):
         t = robot.frontend.append_desired_action(robot.Action())
         robot.frontend.wait_until_timeindex(t)
         trajectory += [robot.frontend.get_observation(t).position]
         
-    print(trajectory)
+
+def play():
+    for position in trajectory:    
+        action = robot.Action(position=position)
+        robot.append_desired_action(action)
 
 
 if __name__ == "__main__":
-    record()
+    
+    while True:
+        print('enter key')
+        key = input()
+        if key == 'r':
+            print('recording')
+            record()
+            print(trajectory)
+        elif key == 'p':
+            play()
+            print('playing')
+        else:
+            print('invalid key')
+    
+
+
