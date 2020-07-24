@@ -25,7 +25,9 @@ def record(trajectory):
 def play(trajectory):
     for position in trajectory:    
         action = robot.Action(position=position)
-        robot.frontend.append_desired_action(action)
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t - 10)
+
 
 
 if __name__ == "__main__":
