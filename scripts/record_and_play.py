@@ -17,7 +17,7 @@ trajectory = []
 def record():
     trajectory = []
     t = 0
-    for _ in range(10e4):
+    for _ in range(10**4):
         t = robot.frontend.append_desired_action(robot.Action())
         robot.frontend.wait_until_timeindex(t)
         trajectory += [robot.frontend.get_observation(t).position]
@@ -39,8 +39,8 @@ if __name__ == "__main__":
             record()
             print(trajectory)
         elif key == 'p':
-            play()
             print('playing')
+            play()
         else:
             print('invalid key')
     
