@@ -5,6 +5,7 @@ import curses
 
 # %%
 
+
 # %%
 
 import robot_fingers
@@ -15,7 +16,7 @@ robot.initialize()
 trajectory = []
 
 def record():
-    trajectory = []
+    trajectory[:] = []
     t = 0
     for _ in range(10**4):
         t = robot.frontend.append_desired_action(robot.Action())
