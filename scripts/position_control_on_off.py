@@ -62,24 +62,15 @@ class CursesGUI:
                 self.win.addstr(line, 0, "Position Control Disabled")
             line += 3
 
-            joints_per_finger = 3
-            positions = observation.position
-            n_fingers = len(positions) // joints_per_finger
-
-            for i in range(n_fingers):
-                self.win.addstr(line, 0, "Finger %d" % i, curses.A_BOLD)
-                line += 1
-
-                for j, joint_name in enumerate(["upper", "middle", "lower"]):
-                    joint_idx = i * joints_per_finger + j
-                    self.win.addstr(
-                        line,
-                        4,
-                        "%s: %.4f" % (joint_name, positions[joint_idx]),
-                    )
-                    line += 1
-
-                line += 1
+            # If number of joints is divisible by 3 assume it is a finger
+            # robot, otherwise simply print all joint positions without
+            # grouping.
+            if len(observation.position) % 3 == 0:
+                line = self._print_joint_positions_per_finger(
+                    line, observation.position
+                )
+            else:
+                line = self._print_joint_positions(line, observation.position)
 
             self.win.refresh()
 
@@ -89,6 +80,40 @@ class CursesGUI:
             )
 
         return self.win.getch()
+
+    def _print_joint_positions(self, line, positions):
+        """Print positions of all joints without grouping."""
+        for j, pos in enumerate(positions):
+            self.win.addstr(
+                line,
+                4,
+                "Joint %d: %.4f" % (j, pos),
+            )
+            line += 1
+
+        return line
+
+    def _print_joint_positions_per_finger(self, line, positions):
+        """Print joint positions grouped by finger."""
+        joints_per_finger = 3
+        n_fingers = len(positions) // joints_per_finger
+
+        for i in range(n_fingers):
+            self.win.addstr(line, 0, "Finger %d" % i, curses.A_BOLD)
+            line += 1
+
+            for j, joint_name in enumerate(["upper", "middle", "lower"]):
+                joint_idx = i * joints_per_finger + j
+                self.win.addstr(
+                    line,
+                    4,
+                    "%s: %.4f" % (joint_name, positions[joint_idx]),
+                )
+                line += 1
+
+            line += 1
+
+        return line
 
     def display_error(self, message):
         """Display error message and wait until user presses a key.
@@ -136,39 +161,11 @@ def loop(win, robot):
 
 
 def main():
-    robot_type = {
-        "fingerone": (
-            robot_interfaces.finger,
-            robot_fingers.create_real_finger_backend,
-            "finger.yml",
-        ),
-        "trifingerone": (
-            robot_interfaces.trifinger,
-            robot_fingers.create_trifinger_backend,
-            "trifinger.yml",
-        ),
-        "fingeredu": (
-            robot_interfaces.finger,
-            robot_fingers.create_real_finger_backend,
-            "fingeredu.yml",
-        ),
-        "trifingeredu": (
-            robot_interfaces.trifinger,
-            robot_fingers.create_trifinger_backend,
-            "trifingeredu.yml",
-        ),
-        "trifingerpro": (
-            robot_interfaces.trifinger,
-            robot_fingers.create_trifinger_backend,
-            "trifingerpro.yml",
-        ),
-    }
-
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("robot_type", choices=robot_type.keys())
+    parser.add_argument("robot_type", choices=robot_fingers.Robot.get_supported_robots())
     args = parser.parse_args()
 
-    robot = robot_fingers.Robot(*robot_type[args.robot_type])
+    robot = robot_fingers.Robot.create_by_name(args.robot_type)
 
     robot.initialize()
 
