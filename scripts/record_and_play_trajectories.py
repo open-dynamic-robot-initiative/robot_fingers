@@ -3,15 +3,7 @@
 import argparse
 import curses
 import numpy as np
-
-# %%
-
-
-# %%
-
 import robot_fingers
-robot = robot_fingers.Robot.create_by_name('trifingerpro')
-robot.initialize()
 
 
 def record(trajectory):
@@ -32,11 +24,14 @@ def play(trajectory, factor):
         action = robot.Action(position=position)
         t = robot.frontend.append_desired_action(action)
         robot.frontend.wait_until_timeindex(t - 10)
-    
+
     robot.frontend.append_desired_action(robot.Action())
 
 
 if __name__ == "__main__":
+    robot = robot_fingers.Robot.create_by_name('trifingerpro')
+    robot.initialize()
+
     trajectory = []
     while True:
         print('enter key')
