@@ -26,12 +26,14 @@ class NFingerDriver : public blmc_robots::NJointBlmcRobotDriver<
                           N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
 {
 public:
-    typedef robot_interfaces::NFingerObservation<N_FINGERS> Observation;
-
-    using blmc_robots::NJointBlmcRobotDriver<
+    typedef blmc_robots::NJointBlmcRobotDriver<
         robot_interfaces::NFingerObservation<N_FINGERS>,
         N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
-        N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>::NJointBlmcRobotDriver;
+        N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
+        NJointBlmcRobotDriver;
+    typedef robot_interfaces::NFingerObservation<N_FINGERS> Observation;
+
+    using NJointBlmcRobotDriver::NJointBlmcRobotDriver;
 
     Observation get_latest_observation() override
     {
@@ -66,6 +68,32 @@ public:
         }
 
         return observation;
+    }
+
+    void shutdown() override
+    {
+        std::cout << "Shutdown Finger.  Move to rest position." << std::endl;
+
+        // move back to initial position
+        // TODO use different number of move_steps here?
+        bool success = this->move_to_position(
+            this->config_.initial_position_rad,
+            this->config_.calibration.position_tolerance_rad,
+            this->config_.calibration.move_steps);
+
+        // TODO: after reaching the initial position move to an even more safe
+        // rest position directly at the end stops (this should guarantee
+        // success when homing next time).
+
+        NJointBlmcRobotDriver::shutdown();
+
+        if (!success)
+        {
+            // TODO: report this somehow as this probably means that someone
+            // needs to disentangle the robot manually.
+            throw std::runtime_error(
+                "Failed to reach rest position.  Fingers may be blocked.");
+        }
     }
 };
 
