@@ -12,7 +12,7 @@ calibration:
         - +0.22
         - +0.22
         - -0.22
-    position_tolerance_rad: 0.05
+    position_tolerance_rad: 0.07
     move_steps: 500
 safety_kd:
     - 0.09
@@ -41,7 +41,7 @@ hard_position_limits_lower:
     - -2.8
     - -1.0
     - -1.67
-    - -2.7
+    - -2.8
 hard_position_limits_upper:
     - 1.5
     - 1.67
