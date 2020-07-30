@@ -238,9 +238,9 @@ def main():
 
     robot_data = finger.SingleProcessData()
     if USE_SIMULATION:
-        import pybullet_fingers.drivers
+        import trifinger_simulation.drivers
 
-        backend = pybullet_fingers.drivers.create_single_finger_backend(
+        backend = trifinger_simulation.drivers.create_single_finger_backend(
             robot_data, real_time_mode=True, visualize=True
         )
     else:
