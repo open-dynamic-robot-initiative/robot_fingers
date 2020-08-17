@@ -17,8 +17,10 @@ open-source version of the TriFinger robot.
 Content
 -------
 
-- [About Singularity](@ref md_doc_singularity)
-- [Tools for Testing the Hardware](@ref md_doc_hardware_testing)
+- @ref md_doc_installation
+- @ref md_doc_singularity
+- @ref md_doc_getting_started
+- @ref md_doc_hardware_testing
 
 Links
 -----
