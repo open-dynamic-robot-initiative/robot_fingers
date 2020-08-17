@@ -14,8 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
   robot_interfaces
   mpi_cmake_modules
   pybind11_catkin
-  trifinger_object_tracking
-  trifinger_cameras
+  #trifinger_object_tracking
+  #trifinger_cameras
 )
 
 ## System dependencies are found with CMake's conventions
@@ -54,12 +54,12 @@ include_directories(
 )
 
 
-add_library(trifinger_platform_frontend
-    src/trifinger_platform_frontend.cpp
-)
-target_link_libraries(trifinger_platform_frontend
-    ${catkin_LIBRARIES}
-)
+#add_library(trifinger_platform_frontend
+#    src/trifinger_platform_frontend.cpp
+#)
+#target_link_libraries(trifinger_platform_frontend
+#    ${catkin_LIBRARIES}
+#)
 
 # Python Bindings
 catkin_add_pybind11_module(py_one_joint)
@@ -69,11 +69,11 @@ catkin_add_pybind11_module(py_trifinger)
 
 
 # Demo executable
-add_executable(demo_trifinger_platform src/demo_platform_frontend.cpp)
-target_link_libraries(demo_trifinger_platform
-    trifinger_platform_frontend
-    ${OpenCV_LIBRARIES}
-)
+#add_executable(demo_trifinger_platform src/demo_platform_frontend.cpp)
+#target_link_libraries(demo_trifinger_platform
+#    trifinger_platform_frontend
+#    ${OpenCV_LIBRARIES}
+#)
 
 
 # Building documentation
