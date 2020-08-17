@@ -17,7 +17,7 @@ Get our Singularity Image
 We provide a Singularity image with Ubuntu 18.04 with all dependencies needed to
 build and run the software here:
 
-- [Download Singularity Image](TODO)
+- [Download Singularity Image](https://drive.google.com/file/d/1yJ_RI1GpnPcs_fxcNYYUXZtQPHvhlGNH/view?usp=sharing)
 
 
 Install Singularity
