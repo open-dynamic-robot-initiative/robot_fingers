@@ -63,9 +63,7 @@ def main():
     else:
         # In single-process case run both frontend and backend in this process
         # (using the `Robot` helper class).
-        robot = robot_fingers.Robot(robot_interfaces.trifinger,
-                                    robot_fingers.create_trifinger_backend,
-                                    "trifingerpro.yml")
+        robot = robot_fingers.Robot.create_by_name("trifingerpro")
         if args.log:
             logger = robot_interfaces.trifinger.Logger(robot.robot_data, 100)
             logger.start(args.log)
