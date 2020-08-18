@@ -37,6 +37,15 @@ robot_configs = {
     "trifingerpro": (
         robot_interfaces.trifinger,
         robot_fingers.create_trifinger_backend,
+        os.path.join(
+            os.path.expanduser(os.getenv("XDG_CONFIG_HOME", "~/.config")),
+            "trifingerpro",
+            "trifingerpro.yml",
+        )
+    ),
+    "trifingerpro_default": (
+        robot_interfaces.trifinger,
+        robot_fingers.create_trifinger_backend,
         "trifingerpro.yml",
     ),
     "trifingerpro_calib": (
