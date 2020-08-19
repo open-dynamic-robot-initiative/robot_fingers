@@ -1,8 +1,9 @@
 can_ports: ["can0", "can1", "can2", "can3", "can4", "can5"]
 max_current_A: 2.0
 has_endstop: true
+move_to_position_tolerance_rad: 0.07
 calibration:
-    endstop_search_torques_Nm: 
+    endstop_search_torques_Nm:
         - +0.22
         - +0.22
         - -0.22
@@ -12,7 +13,6 @@ calibration:
         - +0.22
         - +0.22
         - -0.22
-    position_tolerance_rad: 0.07
     move_steps: 500
 safety_kd:
     - 0.09
@@ -99,3 +99,11 @@ initial_position_rad:
     - 0.9
     - -1.7
 
+shutdown_trajectory:
+    # first move slowly back to initial position
+    - target_position_rad: [0, 0.9, -1.7, 0, 0.9, -1.7, 0, 0.9, -1.7]
+      move_steps: 3000
+    # then move to rest position (a position from which it cannot get stuck
+    # during homing for the next run).
+    - target_position_rad: [0.0161, 0.8998, -0.9770, 0.0161, 0.8998, -0.9770, 0.0161, 0.8998, -0.9770]
+      move_steps: 1000
