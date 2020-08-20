@@ -37,6 +37,15 @@ robot_configs = {
     "trifingerpro": (
         robot_interfaces.trifinger,
         robot_fingers.create_trifinger_backend,
+        os.path.join(
+            os.path.expanduser(os.getenv("XDG_CONFIG_HOME", "~/.config")),
+            "trifingerpro",
+            "trifingerpro.yml",
+        )
+    ),
+    "trifingerpro_default": (
+        robot_interfaces.trifinger,
+        robot_fingers.create_trifinger_backend,
         "trifingerpro.yml",
     ),
     "trifingerpro_calib": (
@@ -89,18 +98,24 @@ class Robot:
         :param robot_module: The module that defines the robot classes (i.e.
             `Data`, `Frontend`, `Backend`, ...)
         :param create_backend_function: Function to create the robot backend.
-        :param config_file_name: Name of the config file (expected to be
-            located in robot_fingers/config).
+        :param config_file_name: Either an absolute path to a config file
+            (needs to start with "/" in this case) or the name of a config
+            file located in robot_fingers/config.
         """
         # convenience mapping of the Action type
         self.Action = robot_module.Action
 
-        # Use the default config file from the robot_fingers package
-        config_file_path = os.path.join(
-            rospkg.RosPack().get_path("robot_fingers"),
-            "config",
-            config_file_name,
-        )
+        # If config_file_name starts with "/" assume it is an absolute path and
+        # use it as is.  Otherwise interpret it relative to the config
+        # directory of the robot_fingers package.
+        if config_file_name.startswith("/"):
+            config_file_path = config_file_name
+        else:
+            config_file_path = os.path.join(
+                rospkg.RosPack().get_path("robot_fingers"),
+                "config",
+                config_file_name,
+            )
 
         # Storage for all observations, actions, etc.
         self.robot_data = robot_module.SingleProcessData()
