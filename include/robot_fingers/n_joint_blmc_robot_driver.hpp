@@ -280,6 +280,16 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
 {
     typedef std::array<std::string, N_MOTOR_BOARDS> CanPortArray;
 
+    //! @brief A sub-goal of a trajectory.
+    struct TrajectoryStep
+    {
+        //! @brief Target position to which the joints should move.
+        Vector target_position_rad = Vector::Zero();
+
+        //! @brief Number of time steps for reaching the target position.
+        uint32_t move_steps = 0;
+    };
+
     // All parameters should have default values that should not result in
     // dangerous behaviour in case someone forgets to specify them.
 
@@ -313,11 +323,13 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
     {
         //! @brief Torque that is used to find the end stop.
         Vector endstop_search_torques_Nm = Vector::Zero();
-        //! @brief Tolerance for reaching the initial position.
-        double position_tolerance_rad = 0.0;
         //! @brief Number of time steps for reaching the initial position.
         uint32_t move_steps = 0;
     } calibration;
+
+    //! @brief Tolerance for reaching the target with
+    //!        @ref NJointBlmcRobotDriver::move_to_position.
+    double move_to_position_tolerance_rad = 0.0;
 
     //! @brief D-gain to dampen velocity.  Set to zero to disable damping.
     // set some rather high damping by default
@@ -368,6 +380,15 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      *        initialization.
      */
     Vector initial_position_rad = Vector::Zero();
+
+    /**
+     * @brief Trajectory which is executed in the shutdown method.
+     *
+     * Use this to move the robot to a "rest position" during shutdown of the
+     * robot driver.  It can consist of arbitrarily many steps.  Leave it empty
+     * to not move during shutdown.
+     */
+    std::vector<TrajectoryStep> shutdown_trajectory;
 
     /**
      * @brief Check if the given position is within the hard limits.

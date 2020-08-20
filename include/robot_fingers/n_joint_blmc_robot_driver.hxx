@@ -30,11 +30,11 @@ void NJBRD::Config::print() const
     std::cout << "\n"
               << "\t max_current_A: " << max_current_A << "\n"
               << "\t has_endstop: " << has_endstop << "\n"
+              << "\t move_to_position_tolerance_rad: "
+              << move_to_position_tolerance_rad << "\n"
               << "\t calibration:\n"
               << "\t\t endstop_search_torques_Nm: "
               << calibration.endstop_search_torques_Nm.transpose() << "\n"
-              << "\t\t position_tolerance_rad: "
-              << calibration.position_tolerance_rad << "\n"
               << "\t\t move_steps: " << calibration.move_steps << "\n"
               << "\t safety_kd: " << safety_kd.transpose() << "\n"
               << "\t position_control_gains:\n"
@@ -53,7 +53,23 @@ void NJBRD::Config::print() const
               << "\t home_offset_rad: " << home_offset_rad.transpose() << "\n"
               << "\t initial_position_rad: " << initial_position_rad.transpose()
               << "\n"
-              << std::endl;
+              << "\t shutdown_trajectory:\n";
+
+    if (shutdown_trajectory.empty())
+    {
+        std::cout << "\t\t None\n";
+    }
+    else
+    {
+        for (const TrajectoryStep &step : shutdown_trajectory)
+        {
+            std::cout << "\t\t - target: "
+                      << step.target_position_rad.transpose() << "\n"
+                      << "\t\t   move_steps: " << step.move_steps << "\n";
+        }
+    }
+
+    std::cout << std::endl;
 }
 
 TPL_NJBRD
@@ -98,6 +114,9 @@ typename NJBRD::Config NJBRD::Config::load_config(
 
     set_config_value(user_config, "max_current_A", &config.max_current_A);
     set_config_value(user_config, "has_endstop", &config.has_endstop);
+    set_config_value(user_config,
+                     "move_to_position_tolerance_rad",
+                     &config.move_to_position_tolerance_rad);
 
     if (user_config["calibration"])
     {
@@ -106,9 +125,6 @@ typename NJBRD::Config NJBRD::Config::load_config(
         set_config_value(calib,
                          "endstop_search_torques_Nm",
                          &config.calibration.endstop_search_torques_Nm);
-        set_config_value(calib,
-                         "position_tolerance_rad",
-                         &config.calibration.position_tolerance_rad);
         set_config_value(calib, "move_steps", &config.calibration.move_steps);
     }
 
@@ -146,6 +162,29 @@ typename NJBRD::Config NJBRD::Config::load_config(
     set_config_value(user_config, "home_offset_rad", &config.home_offset_rad);
     set_config_value(
         user_config, "initial_position_rad", &config.initial_position_rad);
+
+    if (user_config["shutdown_trajectory"])
+    {
+        YAML::Node trajectory = user_config["shutdown_trajectory"];
+
+        if (!trajectory.IsSequence())
+        {
+            std::cerr << "FATAL: Parameter 'shutdown_trajectory' from "
+                         "configuration file is not a list."
+                      << std::endl;
+            std::exit(1);
+        }
+
+        for (size_t i = 0; i < trajectory.size(); i++)
+        {
+            TrajectoryStep step;
+            set_config_value(trajectory[i],
+                             "target_position_rad",
+                             &step.target_position_rad);
+            set_config_value(trajectory[i], "move_steps", &step.move_steps);
+            config.shutdown_trajectory.push_back(step);
+        }
+    }
 
     return config;
 }
@@ -322,7 +361,32 @@ std::string NJBRD::get_error()
 TPL_NJBRD
 void NJBRD::shutdown()
 {
+    // Move on the shutdown trajectory step by step.  If no shutdown trajectory
+    // is configured, the list of steps will be empty, so nothing will happen.
+    bool success = true;
+    for (const auto &step: config_.shutdown_trajectory)
+    {
+        success &= this->move_to_position(
+            step.target_position_rad,
+            this->config_.move_to_position_tolerance_rad,
+            step.move_steps);
+
+        // do not continue if one step failed
+        if (!success)
+        {
+            break;
+        }
+    }
+
     pause_motors();
+
+    if (!success)
+    {
+        // TODO: report this somehow as this probably means that someone
+        // needs to disentangle the robot manually.
+        throw std::runtime_error(
+            "Failed to reach rest position.  Robot may be blocked.");
+    }
 }
 
 TPL_NJBRD
@@ -485,9 +549,7 @@ void NJBRD::_initialize()
         config_.position_control_gains.kp, config_.position_control_gains.kd);
 
     bool homing_succeeded = homing(
-        config_.calibration.endstop_search_torques_Nm,
-        config_.home_offset_rad
-    );
+        config_.calibration.endstop_search_torques_Nm, config_.home_offset_rad);
     pause_motors();
 
     // NOTE: do not set is_initialized_ yet as we want to allow move_to_position
@@ -504,7 +566,7 @@ void NJBRD::_initialize()
 
             reached_goal =
                 move_to_position(waypoint,
-                                 config_.calibration.position_tolerance_rad,
+                                 config_.move_to_position_tolerance_rad,
                                  config_.calibration.move_steps);
         }
         if (!reached_goal)
@@ -632,11 +694,10 @@ bool NJBRD::move_to_position(const NJBRD::Vector &goal_pos,
     for (int t = 0; t < time_steps; t++)
     {
         double alpha = (double)t / (double)time_steps;
-        auto step_goal =
-            initial_position +
-            (goal_pos - initial_position) *
-                (10.0 * std::pow(alpha, 3) - 15.0 * std::pow(alpha, 4) +
-                 6.0 * std::pow(alpha, 5));
+        auto step_goal = initial_position + (goal_pos - initial_position) *
+                                                (10.0 * std::pow(alpha, 3) -
+                                                 15.0 * std::pow(alpha, 4) +
+                                                 6.0 * std::pow(alpha, 5));
 
         apply_action_uninitialized(Action::Position(step_goal));
     }
