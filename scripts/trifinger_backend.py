@@ -57,7 +57,7 @@ def main():
     robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger", True)
 
     if args.robot_logfile:
-        logger = robot_interfaces.trifinger.Logger(robot_data)
+        robot_logger = robot_interfaces.trifinger.Logger(robot_data)
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.
@@ -71,6 +71,7 @@ def main():
     backend.initialize()
 
     if args.cameras:
+        print("Start camera backend")
         import trifinger_cameras
 
         CAMERA_TIME_SERIES_LENGTH = 100
@@ -94,8 +95,10 @@ def main():
             log_size = camera_fps * episode_length_s * 1.1
 
             print("Start camera logger with buffer size", log_size)
-            logger = trifinger_cameras.tricamera.Logger(camera_data, log_size)
-            logger.start()
+            camera_logger = trifinger_cameras.tricamera.Logger(camera_data, log_size)
+            camera_logger.start()
+
+        print("Camera backend ready.")
 
     if args.fake_object_tracker:
         import trifinger_object_tracking.py_object_tracker as object_tracker
@@ -106,9 +109,9 @@ def main():
 
     backend.wait_until_terminated()
 
-    if args.camera_logfile:
+    if args.cameras and args.camera_logfile:
         print("Save recorded camera data to file {}".format(args.camera_logfile))
-        logger.stop_and_save(args.camera_logfile)
+        camera_logger.stop_and_save(args.camera_logfile)
 
     if args.robot_logfile:
         print("Save robot data to file {}".format(args.robot_logfile))
@@ -116,7 +119,7 @@ def main():
             end_index = args.max_number_of_actions
         else:
             end_index = -1
-        logger.write_current_buffer(
+        robot_logger.write_current_buffer(
             args.robot_logfile, start_index=0, end_index=end_index
         )
 
