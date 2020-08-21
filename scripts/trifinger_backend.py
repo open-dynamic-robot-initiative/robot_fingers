@@ -48,8 +48,9 @@ def main():
     args = parser.parse_args()
 
     # Use the default config file from the robot_fingers package
+    # FIXME use robot-dependent config file
     config_file_path = os.path.join(
-        rospkg.RosPack().get_path("robot_fingers"), "config", "trifinger.yml"
+        rospkg.RosPack().get_path("robot_fingers"), "config", "trifingerpro.yml"
     )
 
     # Storage for all observations, actions, etc.
