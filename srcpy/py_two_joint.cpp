@@ -31,5 +31,6 @@ PYBIND11_MODULE(py_two_joint, m)
     m.def("create_two_joint_backend", &create_backend<TwoJointDriver>,
           "robot_data"_a,
           "config_file"_a,
-          "first_action_timeout"_a = std::numeric_limits<double>::infinity());
+          "first_action_timeout"_a = std::numeric_limits<double>::infinity(),
+          "max_number_of_actions"_a = 0);
 }
