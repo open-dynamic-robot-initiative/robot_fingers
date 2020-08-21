@@ -103,7 +103,7 @@ def main():
 
     backend.wait_until_terminated()
 
-    if args.record:
+    if args.camera_logfile:
         print("Save recorded camera data to file {}".format(args.camera_logfile))
         logger.stop_and_save(args.camera_logfile)
 
