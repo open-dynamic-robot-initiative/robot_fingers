@@ -53,24 +53,25 @@ hard_position_limits_upper:
     - 1.67
     - 2.8
 
+# Set limits such that the motors cannot collide with the middle links
 soft_position_limits_lower:
     - -0.9
-    - -1.57
+    - 0.0
     - -2.7
     - -0.9
-    - -1.57
+    - 0.0
     - -2.7
     - -0.9
-    - -1.57
+    - 0.0
     - -2.7
 soft_position_limits_upper:
-    - 1.4
+    - 1.0
     - 1.57
     - 0.0
-    - 1.4
+    - 1.0
     - 1.57
     - 0.0
-    - 1.4
+    - 1.0
     - 1.57
     - 0.0
 
