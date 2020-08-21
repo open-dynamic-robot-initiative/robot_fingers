@@ -62,7 +62,9 @@ def main():
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.
     backend = robot_fingers.create_trifinger_backend(
-        robot_data, config_file_path
+        robot_data,
+        config_file_path,
+        max_number_of_actions=args.max_number_of_actions,
     )
 
     # Initializes the robot (e.g. performs homing).
