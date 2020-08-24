@@ -65,11 +65,8 @@ def main():
 
         print("Camera backend ready.")
 
-    # Use the default config file from the robot_fingers package
-    # FIXME use robot-dependent config file
-    config_file_path = os.path.join(
-        rospkg.RosPack().get_path("robot_fingers"), "config", "trifingerpro.yml"
-    )
+    # Use robot-dependent config file
+    config_file_path = "/etc/trifingerpro/trifingerpro.yml"
 
     # Storage for all observations, actions, etc.
     robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger", True)
