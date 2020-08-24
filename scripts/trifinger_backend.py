@@ -47,6 +47,24 @@ def main():
     )
     args = parser.parse_args()
 
+    if args.cameras:
+        print("Start camera backend")
+        import trifinger_cameras
+
+        CAMERA_TIME_SERIES_LENGTH = 100
+
+        camera_data = trifinger_cameras.tricamera.MultiProcessData(
+            "tricamera", True, CAMERA_TIME_SERIES_LENGTH
+        )
+        camera_driver = trifinger_cameras.tricamera.TriCameraDriver(
+            "camera60", "camera180", "camera300"
+        )
+        camera_backend = trifinger_cameras.tricamera.Backend(  # noqa
+            camera_driver, camera_data
+        )
+
+        print("Camera backend ready.")
+
     # Use the default config file from the robot_fingers package
     # FIXME use robot-dependent config file
     config_file_path = os.path.join(
@@ -70,35 +88,17 @@ def main():
     # Initializes the robot (e.g. performs homing).
     backend.initialize()
 
-    if args.cameras:
-        print("Start camera backend")
-        import trifinger_cameras
+    if args.cameras and args.camera_logfile:
+        camera_fps = 100
+        robot_rate_hz = 1000
+        episode_length_s = args.max_number_of_actions / robot_rate_hz
+        # Compute camera log size based on number of robot actions plus a
+        # 10% buffer
+        log_size = int(camera_fps * episode_length_s * 1.1)
 
-        CAMERA_TIME_SERIES_LENGTH = 100
-
-        camera_data = trifinger_cameras.tricamera.MultiProcessData(
-            "tricamera", True, CAMERA_TIME_SERIES_LENGTH
-        )
-        camera_driver = trifinger_cameras.tricamera.TriCameraDriver(
-            "camera60", "camera180", "camera300"
-        )
-        camera_backend = trifinger_cameras.tricamera.Backend(  # noqa
-            camera_driver, camera_data
-        )
-
-        if args.camera_logfile:
-            camera_fps = 100
-            robot_rate_hz = 1000
-            episode_length_s = args.max_number_of_actions / robot_rate_hz
-            # Compute camera log size based on number of robot actions plus a
-            # 10% buffer
-            log_size = camera_fps * episode_length_s * 1.1
-
-            print("Start camera logger with buffer size", log_size)
-            camera_logger = trifinger_cameras.tricamera.Logger(camera_data, log_size)
-            camera_logger.start()
-
-        print("Camera backend ready.")
+        print("Start camera logger with buffer size", log_size)
+        camera_logger = trifinger_cameras.tricamera.Logger(camera_data, log_size)
+        camera_logger.start()
 
     if args.fake_object_tracker:
         import trifinger_object_tracking.py_object_tracker as object_tracker
