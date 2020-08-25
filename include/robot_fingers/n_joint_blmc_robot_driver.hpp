@@ -471,6 +471,8 @@ public:
  * @param config_file_path  Path to the driver configuration file.
  * @param first_action_timeout  Duration for which the backend waits for the
  *     first action to arrive.  If exceeded, the backend shuts down.
+ * @param max_number_of_actions  Number of actions after which the backend
+ *     automatically shuts down.
  *
  * @return A RobotBackend instances with a driver of the specified type.
  */
@@ -478,7 +480,8 @@ template <typename Driver>
 typename Driver::Types::BackendPtr create_backend(
     typename Driver::Types::BaseDataPtr robot_data,
     const std::string &config_file_path,
-    const double first_action_timeout = std::numeric_limits<double>::infinity())
+    const double first_action_timeout = std::numeric_limits<double>::infinity(),
+    const uint32_t max_number_of_actions = 0)
 {
     constexpr double MAX_ACTION_DURATION_S = 0.003;
     constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
@@ -497,7 +500,11 @@ typename Driver::Types::BackendPtr create_backend(
 
     constexpr bool real_time_mode = true;
     auto backend = std::make_shared<typename Driver::Types::Backend>(
-        monitored_driver, robot_data, real_time_mode, first_action_timeout);
+        monitored_driver,
+        robot_data,
+        real_time_mode,
+        first_action_timeout,
+        max_number_of_actions);
     backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
