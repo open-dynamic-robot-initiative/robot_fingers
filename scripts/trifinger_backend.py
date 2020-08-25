@@ -85,6 +85,13 @@ def main():
     # Initializes the robot (e.g. performs homing).
     backend.initialize()
 
+    if args.fake_object_tracker:
+        import trifinger_object_tracking.py_object_tracker as object_tracker
+        object_tracker_data = object_tracker.Data("object_tracker", True)
+        object_tracker_backend = object_tracker.FakeBackend(  # noqa
+            object_tracker_data
+        )
+
     if args.cameras and args.camera_logfile:
         camera_fps = 100
         robot_rate_hz = 1000
@@ -93,16 +100,13 @@ def main():
         # 10% buffer
         log_size = int(camera_fps * episode_length_s * 1.1)
 
-        print("Start camera logger with buffer size", log_size)
+        print("Initialize camera logger with buffer size", log_size)
         camera_logger = trifinger_cameras.tricamera.Logger(camera_data, log_size)
+        backend.wait_until_first_action()
         camera_logger.start()
+        print("Start camera logging", log_size)
 
-    if args.fake_object_tracker:
-        import trifinger_object_tracking.py_object_tracker as object_tracker
-        object_tracker_data = object_tracker.Data("object_tracker", True)
-        object_tracker_backend = object_tracker.FakeBackend(  # noqa
-            object_tracker_data
-        )
+
 
     backend.wait_until_terminated()
 
