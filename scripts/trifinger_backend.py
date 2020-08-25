@@ -69,7 +69,10 @@ def main():
     config_file_path = "/etc/trifingerpro/trifingerpro.yml"
 
     # Storage for all observations, actions, etc.
-    robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger", True)
+    history_size = args.max_number_of_actions + 1
+    robot_data = robot_interfaces.trifinger.MultiProcessData(
+        "trifinger", True, history_size=history_size
+    )
 
     if args.robot_logfile:
         robot_logger = robot_interfaces.trifinger.Logger(robot_data)
