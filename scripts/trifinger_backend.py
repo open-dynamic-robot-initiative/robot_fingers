@@ -19,10 +19,7 @@ def main():
         """,
     )
     parser.add_argument(
-        "--cameras",
-        "-c",
-        action="store_true",
-        help="Run camera backend.",
+        "--cameras", "-c", action="store_true", help="Run camera backend.",
     )
     parser.add_argument(
         "--fake-object-tracker",
@@ -96,6 +93,7 @@ def main():
 
     if args.fake_object_tracker:
         import trifinger_object_tracking.py_object_tracker as object_tracker
+
         object_tracker_data = object_tracker.Data("object_tracker", True)
         object_tracker_backend = object_tracker.FakeBackend(  # noqa
             object_tracker_data
@@ -110,7 +108,9 @@ def main():
         log_size = int(camera_fps * episode_length_s * 1.1)
 
         print("Initialize camera logger with buffer size", log_size)
-        camera_logger = trifinger_cameras.tricamera.Logger(camera_data, log_size)
+        camera_logger = trifinger_cameras.tricamera.Logger(
+            camera_data, log_size
+        )
 
     # if specified, create the "ready indicator" file to indicate that the
     # backend is ready
@@ -130,7 +130,9 @@ def main():
         pathlib.Path(args.ready_indicator).unlink()
 
     if args.cameras and args.camera_logfile:
-        print("Save recorded camera data to file {}".format(args.camera_logfile))
+        print(
+            "Save recorded camera data to file {}".format(args.camera_logfile)
+        )
         camera_logger.stop_and_save(args.camera_logfile)
 
     if args.robot_logfile:
