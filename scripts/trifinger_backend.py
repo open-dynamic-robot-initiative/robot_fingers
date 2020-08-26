@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Run TriFinger back-end using multi-process robot data."""
 import argparse
+import logging
 import pathlib
+import sys
 
 import robot_interfaces
 import robot_fingers
@@ -50,8 +52,15 @@ def main():
     )
     args = parser.parse_args()
 
+    log_handler = logging.StreamHandler(sys.stdout)
+    logging.basicConfig(
+        format="[TRIFINGER_BACKEND %(levelname)s %(asctime)s] %(message)s",
+        level=logging.DEBUG,
+        handlers=[log_handler]
+    )
+
     if args.cameras:
-        print("Start camera backend")
+        logging.info("Start camera backend")
         import trifinger_cameras
 
         CAMERA_TIME_SERIES_LENGTH = 100
@@ -66,7 +75,9 @@ def main():
             camera_driver, camera_data
         )
 
-        print("Camera backend ready.")
+        logging.info("Camera backend ready.")
+
+    logging.info("Start robot backend")
 
     # Use robot-dependent config file
     config_file_path = "/etc/trifingerpro/trifingerpro.yml"
@@ -91,6 +102,8 @@ def main():
     # Initializes the robot (e.g. performs homing).
     backend.initialize()
 
+    logging.info("Robot backend is ready")
+
     if args.fake_object_tracker:
         import trifinger_object_tracking.py_object_tracker as object_tracker
 
@@ -107,7 +120,7 @@ def main():
         # 10% buffer
         log_size = int(camera_fps * episode_length_s * 1.1)
 
-        print("Initialize camera logger with buffer size", log_size)
+        logging.info("Initialize camera logger with buffer size %d", log_size)
         camera_logger = trifinger_cameras.tricamera.Logger(
             camera_data, log_size
         )
@@ -120,7 +133,7 @@ def main():
     if args.cameras and args.camera_logfile:
         backend.wait_until_first_action()
         camera_logger.start()
-        print("Start camera logging")
+        logging.info("Start camera logging")
 
     backend.wait_until_terminated()
 
@@ -130,13 +143,13 @@ def main():
         pathlib.Path(args.ready_indicator).unlink()
 
     if args.cameras and args.camera_logfile:
-        print(
-            "Save recorded camera data to file {}".format(args.camera_logfile)
+        logging.info(
+            "Save recorded camera data to file %s", args.camera_logfile
         )
         camera_logger.stop_and_save(args.camera_logfile)
 
     if args.robot_logfile:
-        print("Save robot data to file {}".format(args.robot_logfile))
+        logging.info("Save robot data to file %s", args.robot_logfile)
         if args.max_number_of_actions:
             end_index = args.max_number_of_actions
         else:
