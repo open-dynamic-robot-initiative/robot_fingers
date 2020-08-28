@@ -10,11 +10,9 @@ namespace robot_fingers
 {
 TriFingerPlatformFrontend::TriFingerPlatformFrontend(
     robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
-    trifinger_object_tracking::ObjectTrackerData::Ptr object_tracker_data,
     std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
         camera_data)
     : robot_frontend_(robot_data),
-      object_tracker_frontend_(object_tracker_data),
       camera_frontend_(camera_data)
 {
 }
@@ -23,9 +21,6 @@ TriFingerPlatformFrontend::TriFingerPlatformFrontend()
     : robot_frontend_(
           std::make_shared<robot_interfaces::TriFingerTypes::MultiProcessData>(
               "trifinger", false)),
-      object_tracker_frontend_(
-          std::make_shared<trifinger_object_tracking::ObjectTrackerData>(
-              "object_tracker", false)),
       camera_frontend_(
           std::make_shared<
               robot_interfaces::MultiProcessSensorData<CameraObservation>>(
@@ -80,13 +75,6 @@ void TriFingerPlatformFrontend::wait_until_timeindex(
     const time_series::Index &t) const
 {
     robot_frontend_.wait_until_timeindex(t);
-}
-
-trifinger_object_tracking::ObjectPose
-TriFingerPlatformFrontend::get_object_pose(const time_series::Index t) const
-{
-    auto t_tracker = find_matching_timeindex(object_tracker_frontend_, t);
-    return object_tracker_frontend_.get_pose(t_tracker);
 }
 
 TriFingerPlatformFrontend::CameraObservation
