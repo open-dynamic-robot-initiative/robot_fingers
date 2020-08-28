@@ -11,7 +11,6 @@
 #include <robot_interfaces/finger_types.hpp>
 #include <robot_interfaces/sensors/sensor_frontend.hpp>
 #include <trifinger_cameras/tricamera_observation.hpp>
-#include <trifinger_object_tracking/object_tracker_frontend.hpp>
 
 namespace robot_fingers
 {
@@ -48,7 +47,6 @@ public:
      */
     TriFingerPlatformFrontend(
         robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
-        trifinger_object_tracking::ObjectTrackerData::Ptr object_tracker_data,
         std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
             camera_data);
 
@@ -113,18 +111,6 @@ public:
     void wait_until_timeindex(const time_series::Index &t) const;
 
     /**
-     * @brief Get observation of the object tracker of time step t.
-     *
-     * @param t  Time index of the robot time series.  This is internally
-     *      mapped to the corresponding time index of the object tracker time
-     *      series.
-     *
-     * @return Observation of the object tracker of time step t.
-     */
-    trifinger_object_tracking::ObjectPose get_object_pose(
-        const time_series::Index t) const;
-
-    /**
      * @brief Get camera images of time step t.
      *
      * @param t  Time index of the robot time series.  This is internally
@@ -136,7 +122,6 @@ public:
 
 private:
     robot_interfaces::TriFingerTypes::Frontend robot_frontend_;
-    trifinger_object_tracking::ObjectTrackerFrontend object_tracker_frontend_;
     robot_interfaces::SensorFrontend<CameraObservation> camera_frontend_;
 
     /**

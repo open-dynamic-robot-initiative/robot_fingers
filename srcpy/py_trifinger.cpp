@@ -21,6 +21,7 @@
 #include <pybind11/stl_bind.h>
 
 #include <robot_fingers/trifinger_driver.hpp>
+#include <robot_fingers/trifinger_platform_frontend.hpp>
 
 using namespace pybind11::literals;
 using namespace robot_fingers;
@@ -34,4 +35,36 @@ PYBIND11_MODULE(py_trifinger, m)
           "config_file"_a,
           "first_action_timeout"_a = std::numeric_limits<double>::infinity(),
           "max_number_of_actions"_a = 0);
+
+    pybind11::class_<TriFingerPlatformFrontend,
+                     std::shared_ptr<TriFingerPlatformFrontend>>(
+        m, "TriFingerPlatformFrontend")
+        .def(pybind11::init<>())
+        .def("get_robot_observation",
+             &TriFingerPlatformFrontend::get_robot_observation,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_camera_observation",
+             &TriFingerPlatformFrontend::get_camera_observation,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_desired_action",
+             &TriFingerPlatformFrontend::get_desired_action,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_applied_action",
+             &TriFingerPlatformFrontend::get_applied_action,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_robot_status",
+             &TriFingerPlatformFrontend::get_robot_status,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_timestamp_ms",
+             &TriFingerPlatformFrontend::get_timestamp_ms,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("append_desired_action",
+             &TriFingerPlatformFrontend::append_desired_action,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("wait_until_timeindex",
+             &TriFingerPlatformFrontend::wait_until_timeindex,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_current_timeindex",
+             &TriFingerPlatformFrontend::get_current_timeindex,
+             pybind11::call_guard<pybind11::gil_scoped_release>());
 }
