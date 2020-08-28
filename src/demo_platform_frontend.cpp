@@ -50,7 +50,7 @@ int main()
             cv::imshow("camera60", images.cameras[0].image);
             cv::imshow("camera180", images.cameras[1].image);
             cv::imshow("camera300", images.cameras[2].image);
-            cv::waitKey(3);
+            cv::waitKey(33);
         }
         catch (const std::invalid_argument &e)
         {
