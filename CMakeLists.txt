@@ -33,10 +33,11 @@ catkin_python_setup()
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include ${EIGEN3_INCLUDE_DIR}
-#  LIBRARIES robot_fingers
+  LIBRARIES trifinger_platform_frontend
   CATKIN_DEPENDS
     blmc_robots
     robot_interfaces
+    trifinger_cameras
 #  DEPENDS system_lib
 )
 
@@ -50,6 +51,7 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIR}
 )
 
 
@@ -58,20 +60,20 @@ add_library(trifinger_platform_frontend
 )
 target_link_libraries(trifinger_platform_frontend
     ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
 )
 
 # Python Bindings
 catkin_add_pybind11_module(py_one_joint)
 catkin_add_pybind11_module(py_two_joint)
 catkin_add_pybind11_module(py_real_finger)
-catkin_add_pybind11_module(py_trifinger)
+catkin_add_pybind11_module(py_trifinger trifinger_platform_frontend)
 
 
 # Demo executable
 add_executable(demo_trifinger_platform src/demo_platform_frontend.cpp)
 target_link_libraries(demo_trifinger_platform
     trifinger_platform_frontend
-    ${OpenCV_LIBRARIES}
 )
 
 
