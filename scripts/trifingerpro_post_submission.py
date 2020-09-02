@@ -24,7 +24,7 @@ def run_self_test(robot):
     position_tolerance = 0.2
     push_sensor_threshold = 0.2
 
-    initial_pose = [0, 0.9, -1.7] * 3
+    initial_pose = [0, 1.1, -1.9] * 3
 
     reachable_goals = [
         [0.75, 1.2, -2.3] * 3,
@@ -35,7 +35,7 @@ def run_self_test(robot):
 
     unreachable_goals = [
         [0, 0, 0] * 3,
-        [0, 1.5, 0] * 3,
+        [-0.5, 1.5, 0] * 3,
     ]
 
     for goal in reachable_goals:
