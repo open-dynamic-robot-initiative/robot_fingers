@@ -4,15 +4,15 @@ has_endstop: true
 move_to_position_tolerance_rad: 0.05
 calibration:
     endstop_search_torques_Nm: 
-        - +0.22
-        - +0.22
-        - -0.22
-        - +0.22
-        - +0.22
-        - -0.22
-        - +0.22
-        - +0.22
-        - -0.22
+        - +0.3
+        - +0.3
+        - -0.2
+        - +0.3
+        - +0.3
+        - -0.2
+        - +0.3
+        - +0.3
+        - -0.2
     move_steps: 500
 safety_kd:
     - 0.09
