@@ -154,7 +154,8 @@ def main():
             end_index = args.max_number_of_actions
         else:
             end_index = -1
-        robot_logger.write_current_buffer(
+
+        robot_logger.write_current_buffer_binary(
             args.robot_logfile, start_index=0, end_index=end_index
         )
 
