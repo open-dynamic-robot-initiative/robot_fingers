@@ -5,8 +5,6 @@ Moves the TriFingerPro robot with a hard-coded choreography for show-casing and
 testing.
 """
 import argparse
-import time
-import numpy as np
 
 import robot_interfaces
 import robot_fingers
@@ -27,7 +25,7 @@ def run_choreography(frontend):
     pose_up = [1.3, 1.5, -2.6]
     pose_other_side_up = [-0.8, 1.5, -1.7]
 
-    last_time_print = 0
+    time_printer = robot_fingers.utils.TimePrinter()
 
     while True:
         # initial pose
@@ -39,10 +37,7 @@ def run_choreography(frontend):
 
         # print current date/time every hour, so we can roughly see how long it
         # ran in case it crashes during a long-run-test.
-        now = time.time()
-        if (now - last_time_print > 3600):
-            print(time.strftime("%F %T"))
-            last_time_print = now
+        time_printer.update()
 
 
 def main():
@@ -77,4 +72,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
