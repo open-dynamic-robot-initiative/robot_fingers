@@ -4,7 +4,6 @@
 Moves the finger around to random positions.  The joint ranges are limited to
 ensure that the finger does not hit, e.g. the electronics above it.
 """
-import time
 import os
 import numpy as np
 import rospkg
@@ -25,7 +24,7 @@ def get_random_position():
 
 def demo_position_commands(finger):
     """Demo for directly sending position commands."""
-    last_time_print = 0
+    time_printer = robot_fingers.utils.TimePrinter()
 
     while True:
         # Run a position controller that randomly changes the desired position
@@ -43,10 +42,7 @@ def demo_position_commands(finger):
 
         # print current date/time every hour, so we can roughly see how long it
         # ran in case it crashes during a long-run-test.
-        now = time.time()
-        if now - last_time_print > 3600:
-            print(time.strftime("%F %T"))
-            last_time_print = now
+        time_printer.update()
 
 
 def main():
