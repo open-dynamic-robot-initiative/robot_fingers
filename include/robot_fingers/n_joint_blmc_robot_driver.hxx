@@ -364,12 +364,12 @@ void NJBRD::shutdown()
     // Move on the shutdown trajectory step by step.  If no shutdown trajectory
     // is configured, the list of steps will be empty, so nothing will happen.
     bool success = true;
-    for (const auto &step: config_.shutdown_trajectory)
+    for (const auto &step : config_.shutdown_trajectory)
     {
-        success &= this->move_to_position(
-            step.target_position_rad,
-            this->config_.move_to_position_tolerance_rad,
-            step.move_steps);
+        success &=
+            this->move_to_position(step.target_position_rad,
+                                   this->config_.move_to_position_tolerance_rad,
+                                   step.move_steps);
 
         // do not continue if one step failed
         if (!success)

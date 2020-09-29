@@ -39,4 +39,3 @@ TEST(TestClamp, clamp_below_and_above)
     Eigen::Vector4d expected(2, 2, 3, 3);
     ASSERT_EQ(expected, clamped);
 }
-

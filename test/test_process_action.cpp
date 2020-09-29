@@ -345,7 +345,6 @@ TEST_F(TestProcessDesiredAction, position_controller_and_torque)
     ASSERT_LE(resulting_action.torque[1], max_torque_Nm);
 }
 
-
 TEST_F(TestProcessDesiredAction, position_within_limits)
 {
     // disable velocity damping for this test
@@ -363,16 +362,15 @@ TEST_F(TestProcessDesiredAction, position_within_limits)
     kp << 10, 10;
     kd << 5, 5;
 
-    Types::Action resulting_action =
-        Driver::process_desired_action(
-            Types::Action::Position(desired_position, kp, kd),
-            observation,
-            max_torque_Nm,
-            safety_kd,
-            default_position_control_kp,
-            default_position_control_kd,
-            -limits,
-            limits);
+    Types::Action resulting_action = Driver::process_desired_action(
+        Types::Action::Position(desired_position, kp, kd),
+        observation,
+        max_torque_Nm,
+        safety_kd,
+        default_position_control_kp,
+        default_position_control_kd,
+        -limits,
+        limits);
 
     EXPECT_EQ(desired_position[0], resulting_action.position[0]);
     EXPECT_EQ(desired_position[1], resulting_action.position[1]);
@@ -382,7 +380,6 @@ TEST_F(TestProcessDesiredAction, position_within_limits)
     EXPECT_EQ(kd[0], resulting_action.position_kd[0]);
     EXPECT_EQ(kd[1], resulting_action.position_kd[1]);
 }
-
 
 TEST_F(TestProcessDesiredAction, position_below_limits)
 {
@@ -400,16 +397,15 @@ TEST_F(TestProcessDesiredAction, position_below_limits)
     kp << 10, 10;
     kd << 5, 5;
 
-    Types::Action resulting_action =
-        Driver::process_desired_action(
-            Types::Action::Position(desired_position, kp, kd),
-            observation,
-            max_torque_Nm,
-            safety_kd,
-            default_position_control_kp,
-            default_position_control_kd,
-            -limits,
-            limits);
+    Types::Action resulting_action = Driver::process_desired_action(
+        Types::Action::Position(desired_position, kp, kd),
+        observation,
+        max_torque_Nm,
+        safety_kd,
+        default_position_control_kp,
+        default_position_control_kd,
+        -limits,
+        limits);
 
     // verify that position is set to limit and custom gains are ignored
     EXPECT_EQ(-limits[0], resulting_action.position[0]);
@@ -419,7 +415,6 @@ TEST_F(TestProcessDesiredAction, position_below_limits)
     EXPECT_EQ(default_position_control_kd[0], resulting_action.position_kd[0]);
     EXPECT_EQ(default_position_control_kd[1], resulting_action.position_kd[1]);
 }
-
 
 TEST_F(TestProcessDesiredAction, position_above_limits)
 {
@@ -437,16 +432,15 @@ TEST_F(TestProcessDesiredAction, position_above_limits)
     kp << 10, 10;
     kd << 5, 5;
 
-    Types::Action resulting_action =
-        Driver::process_desired_action(
-            Types::Action::Position(desired_position, kp, kd),
-            observation,
-            max_torque_Nm,
-            safety_kd,
-            default_position_control_kp,
-            default_position_control_kd,
-            -limits,
-            limits);
+    Types::Action resulting_action = Driver::process_desired_action(
+        Types::Action::Position(desired_position, kp, kd),
+        observation,
+        max_torque_Nm,
+        safety_kd,
+        default_position_control_kp,
+        default_position_control_kd,
+        -limits,
+        limits);
 
     // verify that position is set to limit and custom gains are ignored
     EXPECT_EQ(limits[0], resulting_action.position[0]);
@@ -456,7 +450,6 @@ TEST_F(TestProcessDesiredAction, position_above_limits)
     EXPECT_EQ(default_position_control_kd[0], resulting_action.position_kd[0]);
     EXPECT_EQ(default_position_control_kd[1], resulting_action.position_kd[1]);
 }
-
 
 TEST_F(TestProcessDesiredAction, position_one_joint_above_limit)
 {
@@ -473,16 +466,15 @@ TEST_F(TestProcessDesiredAction, position_one_joint_above_limit)
     kp << 10, 10;
     kd << 5, 5;
 
-    Types::Action resulting_action =
-        Driver::process_desired_action(
-            Types::Action::Position(desired_position, kp, kd),
-            observation,
-            max_torque_Nm,
-            safety_kd,
-            default_position_control_kp,
-            default_position_control_kd,
-            -limits,
-            limits);
+    Types::Action resulting_action = Driver::process_desired_action(
+        Types::Action::Position(desired_position, kp, kd),
+        observation,
+        max_torque_Nm,
+        safety_kd,
+        default_position_control_kp,
+        default_position_control_kd,
+        -limits,
+        limits);
 
     // For joint 0 (within limits) desired position and gains should be used,
     // for joint 1 (above limit), position and gains should be overwritten.
@@ -493,7 +485,6 @@ TEST_F(TestProcessDesiredAction, position_one_joint_above_limit)
     EXPECT_EQ(default_position_control_kp[1], resulting_action.position_kp[1]);
     EXPECT_EQ(default_position_control_kd[1], resulting_action.position_kd[1]);
 }
-
 
 TEST_F(TestProcessDesiredAction, position_one_above_one_below_limit)
 {
@@ -510,16 +501,15 @@ TEST_F(TestProcessDesiredAction, position_one_above_one_below_limit)
     kp << 10, 10;
     kd << 5, 5;
 
-    Types::Action resulting_action =
-        Driver::process_desired_action(
-            Types::Action::Position(desired_position, kp, kd),
-            observation,
-            max_torque_Nm,
-            safety_kd,
-            default_position_control_kp,
-            default_position_control_kd,
-            -limits,
-            limits);
+    Types::Action resulting_action = Driver::process_desired_action(
+        Types::Action::Position(desired_position, kp, kd),
+        observation,
+        max_torque_Nm,
+        safety_kd,
+        default_position_control_kp,
+        default_position_control_kd,
+        -limits,
+        limits);
 
     // Joint 0 is below limit, so position should be set to lower limit.  Joint
     // 1 is above limit, so position should be set to upper limit.  For both
