@@ -91,7 +91,7 @@ target_link_libraries(demo_trifinger_platform
 
 
 # Building documentation
-build_doxygen_documentation()
+add_doxygen_documentation()
 
 # Automatic code formatting (set FORMAT_CODE=ON to reformat on build)
 format_code()
