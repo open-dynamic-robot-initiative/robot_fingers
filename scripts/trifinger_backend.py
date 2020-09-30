@@ -24,11 +24,6 @@ def main():
         "--cameras", "-c", action="store_true", help="Run camera backend.",
     )
     parser.add_argument(
-        "--fake-object-tracker",
-        action="store_true",
-        help="Run fake object tracker backend",
-    )
-    parser.add_argument(
         "--robot-logfile",
         type=str,
         help="""Path to a file to which the robot data log is written.  If not
@@ -103,14 +98,6 @@ def main():
     backend.initialize()
 
     logging.info("Robot backend is ready")
-
-    if args.fake_object_tracker:
-        import trifinger_object_tracking.py_object_tracker as object_tracker
-
-        object_tracker_data = object_tracker.Data("object_tracker", True)
-        object_tracker_backend = object_tracker.FakeBackend(  # noqa
-            object_tracker_data
-        )
 
     if args.cameras and args.camera_logfile:
         camera_fps = 100
