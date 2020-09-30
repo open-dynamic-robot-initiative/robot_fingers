@@ -30,6 +30,9 @@ using namespace blmc_robots;
 
 PYBIND11_MODULE(py_trifinger, m)
 {
+    // needed for bindings of camera observations
+    pybind11::module::import("trifinger_object_tracking.py_tricamera_types");
+
     m.def("create_trifinger_backend",
           &create_backend<TriFingerDriver>,
           "robot_data"_a,

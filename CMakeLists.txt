@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(robot_fingers)
 
 # Specify C++ Standard
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 # stop build on first error
@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   mpi_cmake_modules
   pybind11_catkin
   trifinger_cameras
+  trifinger_object_tracking
 )
 
 ## System dependencies are found with CMake's conventions
@@ -40,6 +41,7 @@ catkin_package(
     blmc_robots
     robot_interfaces
     trifinger_cameras
+    trifinger_object_tracking
 #  DEPENDS system_lib
 )
 
@@ -91,7 +93,7 @@ target_link_libraries(demo_trifinger_platform
 
 
 # Building documentation
-build_doxygen_documentation()
+add_doxygen_documentation()
 
 # Automatic code formatting (set FORMAT_CODE=ON to reformat on build)
 format_code()

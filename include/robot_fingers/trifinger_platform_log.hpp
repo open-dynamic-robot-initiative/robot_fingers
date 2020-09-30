@@ -8,7 +8,7 @@
 
 #include <robot_interfaces/finger_types.hpp>
 #include <robot_interfaces/sensors/sensor_log_reader.hpp>
-#include <trifinger_cameras/tricamera_observation.hpp>
+#include <trifinger_object_tracking/tricamera_object_observation.hpp>
 
 namespace robot_fingers
 {
@@ -31,7 +31,7 @@ public:
     typedef robot_interfaces::TriFingerTypes::Action Action;
     typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
     typedef robot_interfaces::Status RobotStatus;
-    typedef trifinger_cameras::TriCameraObservation CameraObservation;
+    typedef trifinger_object_tracking::TriCameraObjectObservation CameraObservation;
 
     TriFingerPlatformLog(const std::string &robot_log_file,
                          const std::string &camera_log_file);
