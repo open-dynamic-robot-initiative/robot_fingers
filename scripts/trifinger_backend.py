@@ -24,11 +24,6 @@ def main():
         "--cameras", "-c", action="store_true", help="Run camera backend.",
     )
     parser.add_argument(
-        "--fake-object-tracker",
-        action="store_true",
-        help="Run fake object tracker backend",
-    )
-    parser.add_argument(
         "--robot-logfile",
         type=str,
         help="""Path to a file to which the robot data log is written.  If not
@@ -104,21 +99,16 @@ def main():
 
     logging.info("Robot backend is ready")
 
-    if args.fake_object_tracker:
-        import trifinger_object_tracking.py_object_tracker as object_tracker
-
-        object_tracker_data = object_tracker.Data("object_tracker", True)
-        object_tracker_backend = object_tracker.FakeBackend(  # noqa
-            object_tracker_data
-        )
-
     if args.cameras and args.camera_logfile:
-        camera_fps = 100
+        camera_fps = 10
         robot_rate_hz = 1000
+        # make the logger buffer a bit bigger as needed to be on the safe side
+        buffer_length_factor = 1.5
+
         episode_length_s = args.max_number_of_actions / robot_rate_hz
         # Compute camera log size based on number of robot actions plus a
         # 10% buffer
-        log_size = int(camera_fps * episode_length_s * 1.1)
+        log_size = int(camera_fps * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
         camera_logger = trifinger_cameras.tricamera.Logger(
