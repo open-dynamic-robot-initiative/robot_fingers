@@ -10,7 +10,7 @@
 // robot_fingers?
 #include <robot_interfaces/finger_types.hpp>
 #include <robot_interfaces/sensors/sensor_frontend.hpp>
-#include <trifinger_cameras/tricamera_observation.hpp>
+#include <trifinger_object_tracking/tricamera_object_observation.hpp>
 
 namespace robot_fingers
 {
@@ -35,7 +35,8 @@ public:
     typedef robot_interfaces::TriFingerTypes::Action Action;
     typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
     typedef robot_interfaces::Status RobotStatus;
-    typedef trifinger_cameras::TriCameraObservation CameraObservation;
+    typedef trifinger_object_tracking::TriCameraObjectObservation
+        CameraObservation;
 
     /**
      * @brief Initialize with data instances for all internal frontends.
