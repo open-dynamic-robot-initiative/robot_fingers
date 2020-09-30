@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   mpi_cmake_modules
   pybind11_catkin
   trifinger_cameras
+  trifinger_object_tracking
 )
 
 ## System dependencies are found with CMake's conventions
@@ -40,6 +41,7 @@ catkin_package(
     blmc_robots
     robot_interfaces
     trifinger_cameras
+    trifinger_object_tracking
 #  DEPENDS system_lib
 )
 
