@@ -100,12 +100,15 @@ def main():
     logging.info("Robot backend is ready")
 
     if args.cameras and args.camera_logfile:
-        camera_fps = 100
+        camera_fps = 10
         robot_rate_hz = 1000
+        # make the logger buffer a bit bigger as needed to be on the safe side
+        buffer_length_factor = 1.5
+
         episode_length_s = args.max_number_of_actions / robot_rate_hz
         # Compute camera log size based on number of robot actions plus a
         # 10% buffer
-        log_size = int(camera_fps * episode_length_s * 1.1)
+        log_size = int(camera_fps * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
         camera_logger = trifinger_cameras.tricamera.Logger(
