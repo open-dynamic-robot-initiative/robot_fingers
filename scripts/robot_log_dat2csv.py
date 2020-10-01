@@ -70,7 +70,7 @@ def main():
 
         all_data.append(data)
 
-    np.savetxt(args.outfile, all_data, header=" ".join(header))
+    np.savetxt(args.outfile, all_data, header=" ".join(header), comments="")
 
 
 if __name__ == "__main__":
