@@ -2,6 +2,7 @@
 """Convert a binary log file into a plain text csv file."""
 import argparse
 import numpy as np
+import progressbar
 
 import robot_interfaces
 
@@ -44,8 +45,10 @@ def main():
                 "%s_%s_%d" % (action_type, field, i) for i in range(n_joints)
             ]
 
+    print("Convert log file")
+    progress = progressbar.ProgressBar()
     all_data = []
-    for entry in log.data:
+    for entry in progress(log.data):
         data = [
             entry.timeindex,
             entry.timestamp,
@@ -70,6 +73,7 @@ def main():
 
         all_data.append(data)
 
+    print("Write to file {}...".format(args.outfile))
     np.savetxt(args.outfile, all_data, header=" ".join(header), comments="")
 
 
