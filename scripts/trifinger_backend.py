@@ -56,17 +56,18 @@ def main():
 
     if args.cameras:
         logging.info("Start camera backend")
-        import trifinger_cameras
+        import trifinger_object_tracking.py_tricamera_types as tricamera
 
-        CAMERA_TIME_SERIES_LENGTH = 100
+        # make sure camera time series covers at least one second
+        CAMERA_TIME_SERIES_LENGTH = 15
 
-        camera_data = trifinger_cameras.tricamera.MultiProcessData(
+        camera_data = tricamera.MultiProcessData(
             "tricamera", True, CAMERA_TIME_SERIES_LENGTH
         )
-        camera_driver = trifinger_cameras.tricamera.TriCameraDriver(
+        camera_driver = tricamera.TriCameraObjectTrackerDriver(
             "camera60", "camera180", "camera300"
         )
-        camera_backend = trifinger_cameras.tricamera.Backend(  # noqa
+        camera_backend = tricamera.Backend(  # noqa
             camera_driver, camera_data
         )
 
@@ -111,7 +112,7 @@ def main():
         log_size = int(camera_fps * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
-        camera_logger = trifinger_cameras.tricamera.Logger(
+        camera_logger = tricamera.Logger(
             camera_data, log_size
         )
 
