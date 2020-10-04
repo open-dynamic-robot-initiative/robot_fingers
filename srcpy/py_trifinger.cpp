@@ -186,32 +186,97 @@ PYBIND11_MODULE(py_trifinger, m)
 
     pybind11::class_<TriFingerPlatformLog,
                      std::shared_ptr<TriFingerPlatformLog>>(
-        m, "TriFingerPlatformLog")
+        m, "TriFingerPlatformLog",
+        R"XXX(
+        TriFingerPlatformLog(robot_log_file: str, camera_log_file: str)
+
+        Load robot and camera log and match observations like during runtime.
+
+        The robot and camera observations are provided asynchronously.  To
+        access both through a common time index,
+        :class:`TriFingerPlatformFrontend` maps "robot time indices" to the
+        corresponding camera observations based on the time stamps.  This
+        mapping is not explicitly saved in the log files.  Therefore,
+        TriFingerPlatformLog class provides an interface to load robot and
+        camera logs together and performs the mapping from robot to camera time
+        index in the same way as it is happening in
+        :class:`TriFingerPlatformFrontend`.
+
+        Args:
+            robot_log_file (str): Path to the robot log file.
+            camera_log_file (str): Path to the camera log file.
+)XXX")
         .def(pybind11::init<const std::string&, const std::string&>(),
-             pybind11::arg("robot_log_file"),
-             pybind11::arg("camera_log_file"))
+             "robot_log_file"_a,
+             "camera_log_file"_a)
         .def("get_robot_observation",
              &TriFingerPlatformLog::get_robot_observation,
-             pybind11::call_guard<pybind11::gil_scoped_release>())
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             "t"_a,
+             R"XXX(
+                get_robot_observation(t: int) -> Observation
+
+                Get robot observation of time step t.
+)XXX")
         .def("get_camera_observation",
              &TriFingerPlatformLog::get_camera_observation,
-             pybind11::call_guard<pybind11::gil_scoped_release>())
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             "t"_a,
+             R"XXX(
+                get_camera_observation(t: int) -> trifinger_object_tracking.py_tricamera_types.TriCameraObjectObservation
+
+                Get camera observation of robot time step t.
+)XXX")
         .def("get_desired_action",
              &TriFingerPlatformLog::get_desired_action,
-             pybind11::call_guard<pybind11::gil_scoped_release>())
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             "t"_a,
+             R"XXX(
+                get_desired_action(t: int) -> Action
+
+                Get desired action of time step t.
+)XXX")
         .def("get_applied_action",
              &TriFingerPlatformLog::get_applied_action,
-             pybind11::call_guard<pybind11::gil_scoped_release>())
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             "t"_a,
+             R"XXX(
+                get_applied_action(t: int) -> Action
+
+                Get actually applied action of time step t.
+)XXX")
         .def("get_robot_status",
              &TriFingerPlatformLog::get_robot_status,
-             pybind11::call_guard<pybind11::gil_scoped_release>())
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             "t"_a,
+             R"XXX(
+                get_robot_status(t: int) -> Status
+
+                Get robot status of time step t.
+)XXX")
         .def("get_timestamp_ms",
              &TriFingerPlatformLog::get_timestamp_ms,
-             pybind11::call_guard<pybind11::gil_scoped_release>())
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             "t"_a,
+             R"XXX(
+                get_timestamp_ms(t: int) -> float
+
+                Get timestamp (in milliseconds) of time step t.
+)XXX")
         .def("get_first_timeindex",
              &TriFingerPlatformLog::get_first_timeindex,
-             pybind11::call_guard<pybind11::gil_scoped_release>())
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_first_timeindex() -> int
+
+                Get the first time index in the log file.
+)XXX")
         .def("get_last_timeindex",
              &TriFingerPlatformLog::get_last_timeindex,
-             pybind11::call_guard<pybind11::gil_scoped_release>());
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_last_timeindex() -> int
+
+                Get the last time index in the log file.
+)XXX");
 }
