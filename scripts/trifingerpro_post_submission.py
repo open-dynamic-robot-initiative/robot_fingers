@@ -22,15 +22,15 @@ import trifinger_cameras
 
 def run_self_test(robot):
     position_tolerance = 0.2
-    push_sensor_threshold = 0.2
+    push_sensor_threshold = 0.5
 
     initial_pose = [0, 1.1, -1.9] * 3
 
     reachable_goals = [
         [0.75, 1.2, -2.3] * 3,
-        [1.3, 1.5, -2.6] * 3,
+        [0.9, 1.5, -2.6] * 3,
         initial_pose,
-        [-0.8, 1.5, -1.7] * 3,
+        [-0.3, 1.5, -1.7] * 3,
     ]
 
     unreachable_goals = [
