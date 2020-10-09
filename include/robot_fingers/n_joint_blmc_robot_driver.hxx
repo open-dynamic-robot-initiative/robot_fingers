@@ -384,8 +384,8 @@ void NJBRD::shutdown()
     {
         // TODO: report this somehow as this probably means that someone
         // needs to disentangle the robot manually.
-        throw std::runtime_error(
-            "Failed to reach rest position.  Robot may be blocked.");
+        std::cerr << "Failed to reach rest position.  Robot may be blocked."
+                  << std::endl;
     }
 }
 
