@@ -96,7 +96,7 @@ def shuffle_cube(robot):
     trajectory_file = os.path.join(
         rospkg.RosPack().get_path("robot_fingers"),
         "config",
-        "trifingerpro_shuffle_cube_trajectory.csv",
+        "trifingerpro_shuffle_cube_trajectory_fast.csv",
     )
     data = pandas.read_csv(
         trajectory_file, delim_whitespace=True, header=0, low_memory=False
