@@ -17,7 +17,7 @@ import pandas
 import rospkg
 
 import robot_fingers
-import trifinger_cameras
+import trifinger_object_tracking.py_tricamera_types as tricamera
 
 
 def run_self_test(robot):
@@ -96,7 +96,7 @@ def shuffle_cube(robot):
     trajectory_file = os.path.join(
         rospkg.RosPack().get_path("robot_fingers"),
         "config",
-        "trifingerpro_shuffle_cube_trajectory.csv",
+        "trifingerpro_shuffle_cube_trajectory_fast.csv",
     )
     data = pandas.read_csv(
         trajectory_file, delim_whitespace=True, header=0, low_memory=False
@@ -117,18 +117,21 @@ def shuffle_cube(robot):
 
 def check_if_cube_is_there():
     """Verify that the cube is still inside the arena."""
-    camera_data = trifinger_cameras.tricamera.SingleProcessData()
-    camera_driver = trifinger_cameras.tricamera.TriCameraDriver(
+    camera_data = tricamera.SingleProcessData(history_size=5)
+    camera_driver = tricamera.TriCameraObjectTrackerDriver(
         "camera60", "camera180", "camera300"
     )
-    camera_backend = trifinger_cameras.tricamera.Backend(  # noqa
+    camera_backend = tricamera.Backend(  # noqa
         camera_driver, camera_data
     )
-    camera_frontend = trifinger_cameras.tricamera.Frontend(camera_data)
-    observation = camera_frontend.get_latest_observation()  # noqa
+    camera_frontend = tricamera.Frontend(camera_data)
 
-    # TODO check if cube is found in camera image (maybe just see if object
-    # tracking founds something?)
+    observation = camera_frontend.get_latest_observation()
+    if observation.object_pose.confidence == 0:
+        print("Cube not found.")
+        sys.exit(2)
+    else:
+        print("Cube found.")
 
 
 def main():
@@ -137,6 +140,10 @@ def main():
 
     run_self_test(robot)
     shuffle_cube(robot)
+
+    # terminate the robot
+    del robot
+
     check_if_cube_is_there()
 
 
