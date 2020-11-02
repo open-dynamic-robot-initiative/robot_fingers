@@ -2,6 +2,7 @@
 """Run TriFinger back-end using multi-process robot data."""
 import argparse
 import logging
+import math
 import pathlib
 import sys
 
@@ -18,6 +19,15 @@ def main():
         required=True,
         help="""Maximum numbers of actions that are processed.  After this the
             backend shuts down automatically.
+        """,
+    )
+    parser.add_argument(
+        "--first-action-timeout",
+        "-t",
+        type=float,
+        default=math.inf,
+        help="""Timeout (in seconds) for reception of first action after
+            starting the backend.  If not set, the timeout is disabled.
         """,
     )
     parser.add_argument(
@@ -92,6 +102,7 @@ def main():
     backend = robot_fingers.create_trifinger_backend(
         robot_data,
         config_file_path,
+        first_action_timeout=args.first_action_timeout,
         max_number_of_actions=args.max_number_of_actions,
     )
 
