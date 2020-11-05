@@ -137,7 +137,8 @@ def main():
         camera_logger.start()
         logging.info("Start camera logging")
 
-    backend.wait_until_terminated()
+    termination_reason = backend.wait_until_terminated()
+    logging.debug("Backend termination reason: %d", termination_reason)
 
     # delete the ready indicator file to indicate that the backend has shut
     # down
@@ -161,6 +162,13 @@ def main():
             args.robot_logfile, start_index=0, end_index=end_index
         )
 
+    if termination_reason < 0:
+        # negate code as exit codes should be positive
+        return -termination_reason
+    else:
+        return 0
+
 
 if __name__ == "__main__":
-    main()
+    returncode = main()
+    sys.exit(returncode)
