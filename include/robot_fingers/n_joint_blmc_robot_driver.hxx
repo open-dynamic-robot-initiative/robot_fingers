@@ -589,7 +589,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
     const double INDEX_SEARCH_DISTANCE_LIMIT_RAD =
         (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
     //! Absolute step size when moving for encoder index search.
-    constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.001;
+    constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.0003;
 
     //! Distance travelled during homing (useful for home offset calibration)
     Vector travelled_distance = Vector::Zero();
