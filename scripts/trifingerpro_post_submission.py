@@ -211,12 +211,12 @@ def run_self_test(robot):
     print("Test successful.")
 
 
-def shuffle_cube(robot):
-    """Replay a recorded trajectory to shuffle the position of the cube."""
+def reset_object(robot):
+    """Replay a recorded trajectory to reset/randomise the object pose."""
     trajectory_file = os.path.join(
         rospkg.RosPack().get_path("robot_fingers"),
         "config",
-        "trifingerpro_shuffle_cube_trajectory_fast.csv",
+        "trifingerpro_recenter_cuboid_2x2x8.csv",
     )
     data = pandas.read_csv(
         trajectory_file, delim_whitespace=True, header=0, low_memory=False
@@ -268,7 +268,7 @@ def main():
     print("Position reachability test")
     run_self_test(robot)
     print("Reset cube position")
-    shuffle_cube(robot)
+    reset_object(robot)
 
     # terminate the robot
     del robot
