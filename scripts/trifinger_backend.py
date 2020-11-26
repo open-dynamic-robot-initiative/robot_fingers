@@ -32,10 +32,14 @@ def main():
     )
     camera_group = parser.add_mutually_exclusive_group()
     camera_group.add_argument(
-        "--cameras", "-c", action="store_true", help="Run camera backend.",
+        "--cameras",
+        "-c",
+        action="store_true",
+        help="Run camera backend.",
     )
     camera_group.add_argument(
-        "--cameras-with-tracker", action="store_true",
+        "--cameras-with-tracker",
+        action="store_true",
         help="Run camera backend with integrated object tracker.",
     )
     parser.add_argument(
@@ -66,17 +70,19 @@ def main():
     logging.basicConfig(
         format="[TRIFINGER_BACKEND %(levelname)s %(asctime)s] %(message)s",
         level=logging.DEBUG,
-        handlers=[log_handler]
+        handlers=[log_handler],
     )
 
     cameras_enabled = False
     if args.cameras:
         cameras_enabled = True
         from trifinger_cameras import tricamera
+
         CameraDriver = tricamera.TriCameraDriver
     elif args.cameras_with_tracker:
         cameras_enabled = True
         import trifinger_object_tracking.py_tricamera_types as tricamera
+
         CameraDriver = tricamera.TriCameraObjectTrackerDriver
 
     if cameras_enabled:
@@ -89,9 +95,7 @@ def main():
             "tricamera", True, CAMERA_TIME_SERIES_LENGTH
         )
         camera_driver = CameraDriver("camera60", "camera180", "camera300")
-        camera_backend = tricamera.Backend(  # noqa
-            camera_driver, camera_data
-        )
+        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
 
         logging.info("Camera backend ready.")
 
@@ -135,9 +139,7 @@ def main():
         log_size = int(camera_fps * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
-        camera_logger = tricamera.Logger(
-            camera_data, log_size
-        )
+        camera_logger = tricamera.Logger(camera_data, log_size)
 
     # if specified, create the "ready indicator" file to indicate that the
     # backend is ready
