@@ -15,7 +15,7 @@
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Eigen>
 
-#include <yaml_cpp_catkin/yaml_eigen.h>
+#include <yaml_utils/yaml_eigen.hpp>
 #include <robot_interfaces/monitored_robot_driver.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
