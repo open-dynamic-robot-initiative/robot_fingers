@@ -1,22 +1,25 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 project(robot_fingers)
 
 # Specify C++ Standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
 
+# libraries need to be position independent otherwise building Python modules
+# fails
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # stop build on first error
 string(APPEND CMAKE_CXX_FLAGS " -Wfatal-errors -Werror=return-type")
 
 
-find_package(catkin REQUIRED COMPONENTS
-  blmc_robots
-  robot_interfaces
-  mpi_cmake_modules
-  pybind11_catkin
-  trifinger_cameras
-  trifinger_object_tracking
-)
+find_package(ament_cmake REQUIRED)
+find_package(pybind11 REQUIRED)
+find_package(blmc_robots REQUIRED)
+find_package(robot_interfaces REQUIRED)
+find_package(mpi_cmake_modules REQUIRED)
+find_package(trifinger_cameras REQUIRED)
+find_package(trifinger_object_tracking REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -24,77 +27,145 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
 
-catkin_python_setup()
+ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR python/${PROJECT_NAME})
 
-
-## Declare things to be passed to dependent projects
-## INCLUDE_DIRS: uncomment this if your package contains header files
-## LIBRARIES: libraries you create in this project that dependent projects also need
-## CATKIN_DEPENDS: catkin_packages dependent projects also need
-## DEPENDS: system dependencies of this project that dependent projects also need
-catkin_package(
-  INCLUDE_DIRS include ${EIGEN3_INCLUDE_DIR}
-  LIBRARIES
-    trifinger_platform_frontend
-    trifinger_platform_log
-  CATKIN_DEPENDS
-    blmc_robots
-    robot_interfaces
-    trifinger_cameras
-    trifinger_object_tracking
-#  DEPENDS system_lib
-)
 
 ###########
 ## Build ##
 ###########
 
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
-  ${OpenCV_INCLUDE_DIR}
-)
-
 
 add_library(trifinger_platform_frontend
     src/trifinger_platform_frontend.cpp
 )
+target_include_directories(trifinger_platform_frontend PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(trifinger_platform_frontend
-    ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
+    robot_interfaces::robot_interfaces
+    trifinger_object_tracking::cube_detector
 )
 
 add_library(trifinger_platform_log
     src/trifinger_platform_log.cpp
 )
+target_include_directories(trifinger_platform_log PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(trifinger_platform_log
-    ${catkin_LIBRARIES}
     trifinger_platform_frontend
 )
 
 
-
 # Python Bindings
-catkin_add_pybind11_module(py_one_joint)
-catkin_add_pybind11_module(py_two_joint)
-catkin_add_pybind11_module(py_real_finger)
-catkin_add_pybind11_module(py_trifinger
-    trifinger_platform_frontend trifinger_platform_log)
+add_pybind11_module(py_one_joint srcpy/py_one_joint.cpp
+    LINK_LIBRARIES
+        Eigen3::Eigen
+        blmc_robots::blmc_robots
+)
+add_pybind11_module(py_two_joint srcpy/py_two_joint.cpp
+    LINK_LIBRARIES
+        Eigen3::Eigen
+        blmc_robots::blmc_robots
+)
+add_pybind11_module(py_real_finger srcpy/py_real_finger.cpp
+    LINK_LIBRARIES
+        Eigen3::Eigen
+        blmc_robots::blmc_robots
+)
+add_pybind11_module(py_trifinger srcpy/py_trifinger.cpp
+    LINK_LIBRARIES
+        blmc_robots::blmc_robots
+        trifinger_platform_frontend
+        trifinger_platform_log
+)
 
 
 # Demo executable
 add_executable(demo_trifinger_platform src/demo_platform_frontend.cpp)
+target_include_directories(demo_trifinger_platform PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(demo_trifinger_platform
     trifinger_platform_frontend
+)
+
+
+# Installation
+ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION include/${PROJECT_NAME})
+
+install(DIRECTORY config
+        DESTINATION share/${PROJECT_NAME})
+
+install(
+    TARGETS
+        trifinger_platform_frontend
+        trifinger_platform_log
+        demo_trifinger_platform
+    EXPORT export_${PROJECT_NAME}
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+    PROGRAMS
+        demos/demo_data_logging.py
+        demos/demo_fake_finger.py
+        demos/demo_finger_forward_kinematics.py
+        demos/demo_real_finger.py
+        demos/demo_sparse_position_control.py
+        demos/demo_trifingeredu.py
+        demos/demo_trifinger_platform_log.py
+        demos/demo_trifinger_platform.py
+        demos/demo_trifingerpro.py
+        demos/demo_trifinger.py
+
+        scripts/calibrate_home_offset.py
+        scripts/check_finger_position_control_error.py
+        scripts/construct_object_reset_trajectory.py
+        scripts/demonstrate_trajectory.py
+        scripts/evaluate_log.py
+        scripts/fingeredu_endurance_test.py
+        scripts/joint_friction_calibration.py
+        scripts/plot_logged_data.py
+        scripts/position_control_on_off.py
+        scripts/print_position.py
+        scripts/record_and_play_trajectories.py
+        scripts/replay_trajectory.py
+        scripts/robot_log_dat2csv.py
+        scripts/run_onejoint_tests.py
+        scripts/single_finger_test.py
+        scripts/trifinger_backend.py
+        scripts/trifingerpro_offset_calibration.py
+        scripts/trifingerpro_post_submission.py
+        scripts/trifingerpro_print_push_sensor.py
+        scripts/trifingerpro_random.py
+
+    DESTINATION lib/${PROJECT_NAME}
 )
 
 
 # Building documentation
 add_doxygen_documentation()
 
-# Automatic code formatting (set FORMAT_CODE=ON to reformat on build)
-format_code()
 
+ament_export_include_directories(include)
+ament_export_libraries(
+    trifinger_platform_frontend
+    trifinger_platform_log
+)
+ament_export_dependencies(
+    blmc_robots
+    robot_interfaces
+    trifinger_cameras
+    trifinger_object_tracking
+)
+ament_package()

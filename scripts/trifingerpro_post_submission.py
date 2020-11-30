@@ -14,7 +14,7 @@ import sys
 
 import numpy as np
 import pandas
-import rospkg
+from ament_index_python.packages import get_package_share_directory
 import yaml
 
 import robot_interfaces
@@ -214,7 +214,7 @@ def run_self_test(robot):
 def reset_object(robot):
     """Replay a recorded trajectory to reset/randomise the object pose."""
     trajectory_file = os.path.join(
-        rospkg.RosPack().get_path("robot_fingers"),
+        get_package_share_directory("robot_fingers"),
         "config",
         "trifingerpro_recenter_cuboid_2x2x8.csv",
     )

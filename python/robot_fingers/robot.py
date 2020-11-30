@@ -1,6 +1,6 @@
 """Classes and functions to easily set up robot demo scripts."""
 import os
-import rospkg
+from ament_index_python.packages import get_package_share_directory
 
 import robot_interfaces
 import robot_fingers
@@ -108,7 +108,7 @@ class Robot:
             config_file_path = config_file_name
         else:
             config_file_path = os.path.join(
-                rospkg.RosPack().get_path("robot_fingers"),
+                get_package_share_directory("robot_fingers"),
                 "config",
                 config_file_name,
             )

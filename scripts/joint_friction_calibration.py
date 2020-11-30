@@ -15,7 +15,7 @@ import curses
 import os
 import time
 import numpy as np
-import rospkg
+from ament_index_python.packages import get_package_share_directory
 
 from robot_interfaces import one_joint
 import robot_fingers
@@ -182,7 +182,7 @@ def main():
 
     # load the default config file
     config_file_path = os.path.join(
-        rospkg.RosPack().get_path("robot_fingers"),
+        get_package_share_directory("robot_fingers"),
         "config",
         "onejoint_friction_calibration.yml",
     )

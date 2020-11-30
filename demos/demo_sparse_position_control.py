@@ -6,7 +6,7 @@ of the Finger robot while controlling zero-torque on the tip joint.
 """
 import os
 import numpy as np
-import rospkg
+from ament_index_python.packages import get_package_share_directory
 
 import robot_interfaces
 import robot_fingers
@@ -15,7 +15,7 @@ import robot_fingers
 def main():
     # load the default config file
     config_file_path = os.path.join(
-        rospkg.RosPack().get_path("robot_fingers"), "config", "finger.yml"
+        get_package_share_directory("robot_fingers"), "config", "finger.yml"
     )
 
     # Storage for all observations, actions, etc.

@@ -6,7 +6,7 @@ For each goal, compute the error in the end-effector position.
 """
 import os
 import numpy as np
-import rospkg
+from ament_index_python.packages import get_package_share_directory
 import pinocchio
 import robot_interfaces
 import robot_fingers
@@ -36,7 +36,7 @@ def forward_kinematics(joint_positions):
 
 
 if __name__ == "__main__":
-    urdf_pkg_path = rospkg.RosPack().get_path("robot_properties_fingers")
+    urdf_pkg_path = get_package_share_directory("robot_properties_fingers")
     urdf_path = os.path.join(urdf_pkg_path, "urdf", "finger.urdf")
 
     model = pinocchio.buildModelFromUrdf(urdf_path)

@@ -5,13 +5,13 @@ Sends zero-torque commands to the robot and prints finger tip position.
 """
 import os
 import numpy as np
-import rospkg
+from ament_index_python.packages import get_package_share_directory
 import pinocchio
 import robot_interfaces
 import robot_fingers
 
 if __name__ == "__main__":
-    urdf_pkg_path = rospkg.RosPack().get_path("robot_properties_manipulator")
+    urdf_pkg_path = get_package_share_directory("robot_properties_manipulator")
     urdf_path = os.path.join(urdf_pkg_path, "urdf", "finger.urdf")
 
     model = pinocchio.buildModelFromUrdf(urdf_path)
