@@ -13,7 +13,7 @@
   <url type="website">https://open-dynamic-robot-initiative.github.io/code_documentation/robot_fingers</url>
   <url type="repository">https://github.com/open-dynamic-robot-initiative/robot_fingers</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>blmc_robots</depend>
   <depend>robot_interfaces</depend>
@@ -21,7 +21,12 @@
   <depend>trifinger_object_tracking</depend>
 
   <build_depend>mpi_cmake_modules</build_depend>
-  <build_depend>pybind11_catkin</build_depend>
+  <build_depend>pybind11_vendor</build_depend>
+  <build_depend>pybind11</build_depend>
 
-  <export></export>
+  <exec_depend>ament_index_python</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

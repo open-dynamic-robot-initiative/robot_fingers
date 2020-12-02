@@ -4,7 +4,7 @@ import os
 import curses
 import numpy as np
 
-import rospkg
+from ament_index_python.packages import get_package_share_directory
 
 from robot_interfaces import finger
 import robot_fingers
@@ -246,7 +246,7 @@ def main():
     else:
         # load the default config file
         config_file_path = os.path.join(
-            rospkg.RosPack().get_path("robot_fingers"),
+            get_package_share_directory("robot_fingers"),
             "config",
             "single_finger_test.yml",
         )
