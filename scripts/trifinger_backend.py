@@ -30,8 +30,17 @@ def main():
             starting the backend.  If not set, the timeout is disabled.
         """,
     )
-    parser.add_argument(
-        "--cameras", "-c", action="store_true", help="Run camera backend.",
+    camera_group = parser.add_mutually_exclusive_group()
+    camera_group.add_argument(
+        "--cameras",
+        "-c",
+        action="store_true",
+        help="Run camera backend.",
+    )
+    camera_group.add_argument(
+        "--cameras-with-tracker",
+        action="store_true",
+        help="Run camera backend with integrated object tracker.",
     )
     parser.add_argument(
         "--robot-logfile",
@@ -61,12 +70,23 @@ def main():
     logging.basicConfig(
         format="[TRIFINGER_BACKEND %(levelname)s %(asctime)s] %(message)s",
         level=logging.DEBUG,
-        handlers=[log_handler]
+        handlers=[log_handler],
     )
 
+    cameras_enabled = False
     if args.cameras:
-        logging.info("Start camera backend")
+        cameras_enabled = True
+        from trifinger_cameras import tricamera
+
+        CameraDriver = tricamera.TriCameraDriver
+    elif args.cameras_with_tracker:
+        cameras_enabled = True
         import trifinger_object_tracking.py_tricamera_types as tricamera
+
+        CameraDriver = tricamera.TriCameraObjectTrackerDriver
+
+    if cameras_enabled:
+        logging.info("Start camera backend")
 
         # make sure camera time series covers at least one second
         CAMERA_TIME_SERIES_LENGTH = 15
@@ -74,12 +94,8 @@ def main():
         camera_data = tricamera.MultiProcessData(
             "tricamera", True, CAMERA_TIME_SERIES_LENGTH
         )
-        camera_driver = tricamera.TriCameraObjectTrackerDriver(
-            "camera60", "camera180", "camera300"
-        )
-        camera_backend = tricamera.Backend(  # noqa
-            camera_driver, camera_data
-        )
+        camera_driver = CameraDriver("camera60", "camera180", "camera300")
+        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
 
         logging.info("Camera backend ready.")
 
@@ -111,7 +127,7 @@ def main():
 
     logging.info("Robot backend is ready")
 
-    if args.cameras and args.camera_logfile:
+    if cameras_enabled and args.camera_logfile:
         camera_fps = 10
         robot_rate_hz = 1000
         # make the logger buffer a bit bigger as needed to be on the safe side
@@ -123,16 +139,14 @@ def main():
         log_size = int(camera_fps * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
-        camera_logger = tricamera.Logger(
-            camera_data, log_size
-        )
+        camera_logger = tricamera.Logger(camera_data, log_size)
 
     # if specified, create the "ready indicator" file to indicate that the
     # backend is ready
     if args.ready_indicator:
         pathlib.Path(args.ready_indicator).touch()
 
-    if args.cameras and args.camera_logfile:
+    if cameras_enabled and args.camera_logfile:
         backend.wait_until_first_action()
         camera_logger.start()
         logging.info("Start camera logging")
@@ -145,7 +159,7 @@ def main():
     if args.ready_indicator:
         pathlib.Path(args.ready_indicator).unlink()
 
-    if args.cameras and args.camera_logfile:
+    if cameras_enabled and args.camera_logfile:
         logging.info(
             "Save recorded camera data to file %s", args.camera_logfile
         )
