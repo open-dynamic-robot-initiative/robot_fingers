@@ -82,6 +82,11 @@ add_pybind11_module(py_trifinger srcpy/py_trifinger.cpp
         trifinger_platform_frontend
         trifinger_platform_log
 )
+add_pybind11_module(pybullet_drivers srcpy/pybullet_drivers.cpp
+    LINK_LIBRARIES
+        robot_interfaces::robot_interfaces
+)
+
 
 
 # Demo executable
@@ -120,12 +125,13 @@ install_scripts(
     demos/demo_fake_finger.py
     demos/demo_finger_forward_kinematics.py
     demos/demo_real_finger.py
+    demos/demo_simulation_driver.py
+    demos/demo_simulation_object_tracker.py
     demos/demo_sparse_position_control.py
-    demos/demo_trifingeredu.py
-    demos/demo_trifinger_platform_log.py
-    demos/demo_trifinger_platform.py
-    demos/demo_trifingerpro.py
     demos/demo_trifinger.py
+    demos/demo_trifinger_platform_log.py
+    demos/demo_trifingeredu.py
+    demos/demo_trifingerpro.py
 
     scripts/calibrate_home_offset.py
     scripts/check_finger_position_control_error.py
@@ -137,6 +143,7 @@ install_scripts(
     scripts/plot_logged_data.py
     scripts/position_control_on_off.py
     scripts/print_position.py
+    scripts/pybullet_backend.py
     scripts/record_and_play_trajectories.py
     scripts/replay_trajectory.py
     scripts/robot_log_dat2csv.py
@@ -150,6 +157,34 @@ install_scripts(
 
     DESTINATION lib/${PROJECT_NAME}
 )
+
+# install this demo _with_ file extension to avoid collision with C++ executable
+# with same name
+install(
+    PROGRAMS demos/demo_trifinger_platform.py
+    DESTINATION lib/${PROJECT_NAME}
+)
+
+
+# Tests
+if (BUILD_TESTING)
+    find_package(ament_cmake_nose REQUIRED)
+    find_package(ament_cmake_gtest REQUIRED)
+
+    # Python tests
+    ament_add_nose_test(test_pybullet_backend_py test/test_pybullet_backend.py)
+
+    # C++ tests
+    ament_add_gtest(test_pybullet_backend
+      test/test_pybullet_backend.cpp
+    )
+    target_include_directories(test_pybullet_backend PRIVATE include)
+    target_link_libraries(test_pybullet_backend
+        pybind11::pybind11
+        robot_interfaces::robot_interfaces
+    )
+
+endif()
 
 
 # Building documentation
