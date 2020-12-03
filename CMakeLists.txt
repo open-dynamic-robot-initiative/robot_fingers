@@ -115,39 +115,38 @@ install(
     RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
-install(
-    PROGRAMS
-        demos/demo_data_logging.py
-        demos/demo_fake_finger.py
-        demos/demo_finger_forward_kinematics.py
-        demos/demo_real_finger.py
-        demos/demo_sparse_position_control.py
-        demos/demo_trifingeredu.py
-        demos/demo_trifinger_platform_log.py
-        demos/demo_trifinger_platform.py
-        demos/demo_trifingerpro.py
-        demos/demo_trifinger.py
+install_scripts(
+    demos/demo_data_logging.py
+    demos/demo_fake_finger.py
+    demos/demo_finger_forward_kinematics.py
+    demos/demo_real_finger.py
+    demos/demo_sparse_position_control.py
+    demos/demo_trifingeredu.py
+    demos/demo_trifinger_platform_log.py
+    demos/demo_trifinger_platform.py
+    demos/demo_trifingerpro.py
+    demos/demo_trifinger.py
 
-        scripts/calibrate_home_offset.py
-        scripts/check_finger_position_control_error.py
-        scripts/construct_object_reset_trajectory.py
-        scripts/demonstrate_trajectory.py
-        scripts/evaluate_log.py
-        scripts/fingeredu_endurance_test.py
-        scripts/joint_friction_calibration.py
-        scripts/plot_logged_data.py
-        scripts/position_control_on_off.py
-        scripts/print_position.py
-        scripts/record_and_play_trajectories.py
-        scripts/replay_trajectory.py
-        scripts/robot_log_dat2csv.py
-        scripts/run_onejoint_tests.py
-        scripts/single_finger_test.py
-        scripts/trifinger_backend.py
-        scripts/trifingerpro_offset_calibration.py
-        scripts/trifingerpro_post_submission.py
-        scripts/trifingerpro_print_push_sensor.py
-        scripts/trifingerpro_random.py
+    scripts/calibrate_home_offset.py
+    scripts/check_finger_position_control_error.py
+    scripts/construct_object_reset_trajectory.py
+    scripts/demonstrate_trajectory.py
+    scripts/evaluate_log.py
+    scripts/fingeredu_endurance_test.py
+    scripts/joint_friction_calibration.py
+    scripts/plot_logged_data.py
+    scripts/position_control_on_off.py
+    scripts/print_position.py
+    scripts/record_and_play_trajectories.py
+    scripts/replay_trajectory.py
+    scripts/robot_log_dat2csv.py
+    scripts/run_onejoint_tests.py
+    scripts/single_finger_test.py
+    scripts/trifinger_backend.py
+    scripts/trifingerpro_offset_calibration.py
+    scripts/trifingerpro_post_submission.py
+    scripts/trifingerpro_print_push_sensor.py
+    scripts/trifingerpro_random.py
 
     DESTINATION lib/${PROJECT_NAME}
 )
