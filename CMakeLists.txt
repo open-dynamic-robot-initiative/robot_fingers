@@ -86,6 +86,9 @@ add_pybind11_module(pybullet_drivers srcpy/pybullet_drivers.cpp
     LINK_LIBRARIES
         robot_interfaces::robot_interfaces
 )
+# using pybind11 types, therefore visibility needs to be hidden
+set_target_properties(pybullet_drivers
+    PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 
 
@@ -183,6 +186,9 @@ if (BUILD_TESTING)
         pybind11::pybind11
         robot_interfaces::robot_interfaces
     )
+    # using pybind11 types, therefore visibility needs to be hidden
+    set_target_properties(test_pybullet_backend
+        PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
 endif()
 
