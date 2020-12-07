@@ -24,7 +24,8 @@ TriFingerPlatformLog::TriFingerPlatformLog(const std::string &robot_log_file,
     // missing
     for (size_t i = 0; i < robot_log_.data.size(); i++)
     {
-        if (i + robot_log_start_index_ != robot_log_.data[i].timeindex)
+        if (i + robot_log_start_index_ !=
+            static_cast<size_t>(robot_log_.data[i].timeindex))
         {
             throw std::runtime_error("Robot log is incomplete.");
         }
@@ -37,7 +38,7 @@ TriFingerPlatformLog::TriFingerPlatformLog(const std::string &robot_log_file,
         // timestamp in robot log is in seconds, convert to milliseconds
         auto stamp_robot_ms = robot_log_.data[i_robot].timestamp * 1000;
 
-        while (i_camera < camera_log_.timestamps.size() &&
+        while (static_cast<size_t>(i_camera) < camera_log_.timestamps.size() &&
                stamp_robot_ms >= camera_log_.timestamps[i_camera])
         {
             i_camera++;
