@@ -127,7 +127,8 @@ install_scripts(
     demos/demo_data_logging.py
     demos/demo_fake_finger.py
     demos/demo_finger_forward_kinematics.py
-    demos/demo_real_finger.py
+    demos/demo_single_finger_position_control.py
+    demos/demo_single_finger_torque_control.py
     demos/demo_simulation_driver.py
     demos/demo_simulation_object_tracker.py
     demos/demo_sparse_position_control.py
