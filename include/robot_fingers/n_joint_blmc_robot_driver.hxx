@@ -663,7 +663,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
         }
     }
 
-    HomingReturnCode homing_status =
+    blmc_drivers::HomingReturnCode homing_status =
         joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
                                       home_offset_rad,
                                       index_search_step_sizes);
@@ -678,7 +678,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
     }
     rt_printf("\n");
 
-    return homing_status == HomingReturnCode::SUCCEEDED;
+    return homing_status == blmc_drivers::HomingReturnCode::SUCCEEDED;
 }
 
 TPL_NJBRD

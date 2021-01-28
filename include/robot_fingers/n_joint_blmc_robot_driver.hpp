@@ -20,9 +20,9 @@
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
 
-#include <blmc_robots/blmc_joint_module.hpp>
+#include <blmc_drivers/blmc_joint_module.hpp>
 #include <blmc_robots/clamp.hpp>
-#include <blmc_robots/common_header.hpp>
+//#include <blmc_robots/common_header.hpp>
 
 namespace blmc_robots
 {
@@ -200,7 +200,7 @@ public:
     bool is_within_hard_position_limits(const Observation &observation) const;
 
 protected:
-    BlmcJointModules<N_JOINTS> joint_modules_;
+    blmc_drivers::BlmcJointModules<N_JOINTS> joint_modules_;
     MotorBoards motor_boards_;
 
     //! \brief Fixed motor parameters (assuming all joints use same setup).
