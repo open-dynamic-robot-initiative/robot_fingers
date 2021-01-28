@@ -5,8 +5,6 @@
 
 #include <Eigen/Eigen>
 
-#include <blmc_robots/blmc_joint_module.hpp>
-#include <blmc_robots/common_header.hpp>
 #include <blmc_robots/n_joint_blmc_robot_driver.hpp>
 #include <robot_interfaces/finger_types.hpp>
 
