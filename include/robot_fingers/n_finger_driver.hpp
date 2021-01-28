@@ -6,7 +6,7 @@
  */
 #pragma once
 
-#include <blmc_robots/n_joint_blmc_robot_driver.hpp>
+#include <robot_fingers/n_joint_blmc_robot_driver.hpp>
 #include <robot_interfaces/finger_types.hpp>
 
 namespace robot_fingers
@@ -20,21 +20,21 @@ namespace robot_fingers
  * @tparam N_FINGERS  Number of fingers on the robot.
  */
 template <size_t N_FINGERS>
-class NFingerDriver : public blmc_robots::NJointBlmcRobotDriver<
+class NFingerDriver : public NJointBlmcRobotDriver<
                           robot_interfaces::NFingerObservation<N_FINGERS>,
                           N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
                           N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
 {
 public:
-    typedef blmc_robots::NJointBlmcRobotDriver<
+    typedef NJointBlmcRobotDriver<
         robot_interfaces::NFingerObservation<N_FINGERS>,
         N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
         N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
-        NJointBlmcRobotDriver;
+        Base;
     typedef robot_interfaces::NFingerObservation<N_FINGERS> Observation;
-    using typename NJointBlmcRobotDriver::Vector;
+    using typename Base::Vector;
 
-    using NJointBlmcRobotDriver::NJointBlmcRobotDriver;
+    using Base::NJointBlmcRobotDriver;
 
     Observation get_latest_observation() override
     {

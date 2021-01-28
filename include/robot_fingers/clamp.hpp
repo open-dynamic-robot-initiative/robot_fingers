@@ -4,7 +4,7 @@
  */
 #pragma once
 
-namespace blmc_robots
+namespace robot_fingers
 {
 /**
  * @brief Clamp an arbitrary Eigen vector.
@@ -24,4 +24,4 @@ Vector clamp(const Vector &vector,
     return vector.cwiseMin(upper_limit).cwiseMax(lower_limit);
 }
 
-}  // namespace blmc_robots
+}  // namespace robot_fingers

@@ -21,10 +21,10 @@
 #include <robot_interfaces/robot_driver.hpp>
 
 #include <blmc_drivers/blmc_joint_module.hpp>
-#include <blmc_robots/clamp.hpp>
-//#include <blmc_robots/common_header.hpp>
+#include <robot_fingers/clamp.hpp>
 
-namespace blmc_robots
+
+namespace robot_fingers
 {
 /**
  * @brief Parameters related to the motor.
@@ -510,6 +510,6 @@ typename Driver::Types::BackendPtr create_backend(
     return backend;
 }
 
-}  // namespace blmc_robots
+}  // namespace robot_fingers
 
 #include "n_joint_blmc_robot_driver.hxx"

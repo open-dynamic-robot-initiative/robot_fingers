@@ -6,7 +6,7 @@
 #include <gtest/gtest.h>
 #include <robot_fingers/n_joint_blmc_robot_driver.hpp>
 
-using Driver = blmc_robots::SimpleNJointBlmcRobotDriver<2>;
+using Driver = robot_fingers::SimpleNJointBlmcRobotDriver<2>;
 
 TEST(TestNJointBlmcRobotDriverConfig, is_within_joint_limits)
 {
@@ -37,4 +37,10 @@ TEST(TestNJointBlmcRobotDriverConfig, is_within_joint_limits)
         config.is_within_hard_position_limits(Driver::Vector(-0.5, 2)));
     ASSERT_FALSE(config.is_within_hard_position_limits(Driver::Vector(1, 2)));
     ASSERT_FALSE(config.is_within_hard_position_limits(Driver::Vector(1, 0.5)));
+}
+
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

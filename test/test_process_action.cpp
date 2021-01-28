@@ -15,7 +15,7 @@ class TestProcessDesiredAction : public ::testing::Test
 {
 protected:
     using Types = robot_interfaces::SimpleNJointRobotTypes<2>;
-    using Driver = blmc_robots::SimpleNJointBlmcRobotDriver<2>;
+    using Driver = robot_fingers::SimpleNJointBlmcRobotDriver<2>;
     using Vector = Types::Action::Vector;
 
     Types::Observation observation;
@@ -520,4 +520,10 @@ TEST_F(TestProcessDesiredAction, position_one_above_one_below_limit)
     EXPECT_EQ(default_position_control_kp[1], resulting_action.position_kp[1]);
     EXPECT_EQ(default_position_control_kd[0], resulting_action.position_kd[0]);
     EXPECT_EQ(default_position_control_kd[1], resulting_action.position_kd[1]);
+}
+
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

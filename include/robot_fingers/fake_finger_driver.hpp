@@ -5,7 +5,7 @@
 
 #include <Eigen/Eigen>
 
-#include <blmc_robots/n_joint_blmc_robot_driver.hpp>
+#include <robot_fingers/n_joint_blmc_robot_driver.hpp>
 #include <robot_interfaces/finger_types.hpp>
 
 namespace robot_fingers
