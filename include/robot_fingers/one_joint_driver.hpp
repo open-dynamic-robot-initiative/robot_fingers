@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include <blmc_robots/n_joint_blmc_robot_driver.hpp>
+#include <robot_fingers/n_joint_blmc_robot_driver.hpp>
 
 namespace robot_fingers
 {
@@ -16,7 +16,7 @@ namespace robot_fingers
  *
  * Driver for a single BLMC joint.  Mostly intended for testing purposes.
  */
-class OneJointDriver : public blmc_robots::SimpleNJointBlmcRobotDriver<1, 1>
+class OneJointDriver : public SimpleNJointBlmcRobotDriver<1, 1>
 {
 public:
     OneJointDriver(const Config &config)
@@ -26,7 +26,7 @@ public:
 
 private:
     OneJointDriver(const MotorBoards &motor_boards, const Config &config)
-        : blmc_robots::SimpleNJointBlmcRobotDriver<1, 1>(
+        : SimpleNJointBlmcRobotDriver<1, 1>(
               motor_boards,
               create_motors(motor_boards),
               {

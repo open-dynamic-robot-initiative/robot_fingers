@@ -24,7 +24,6 @@
 
 using namespace pybind11::literals;
 using namespace robot_fingers;
-using namespace blmc_robots;
 
 PYBIND11_MODULE(py_two_joint, m)
 {

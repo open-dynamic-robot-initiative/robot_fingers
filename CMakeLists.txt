@@ -15,9 +15,10 @@ string(APPEND CMAKE_CXX_FLAGS " -Wfatal-errors -Werror=return-type")
 
 find_package(ament_cmake REQUIRED)
 find_package(pybind11 REQUIRED)
-find_package(blmc_robots REQUIRED)
-find_package(robot_interfaces REQUIRED)
 find_package(mpi_cmake_modules REQUIRED)
+find_package(yaml_utils REQUIRED)
+find_package(blmc_drivers REQUIRED)
+find_package(robot_interfaces REQUIRED)
 find_package(trifinger_cameras REQUIRED)
 find_package(trifinger_object_tracking REQUIRED)
 
@@ -33,6 +34,18 @@ ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR python/${PROJECT_NAME})
 ###########
 ## Build ##
 ###########
+
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(
+    ${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+                              $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(${PROJECT_NAME} INTERFACE
+    Eigen3::Eigen
+    yaml_utils::yaml_utils
+    blmc_drivers::blmc_drivers
+    robot_interfaces::robot_interfaces
+)
 
 
 add_library(trifinger_platform_frontend
@@ -62,23 +75,16 @@ target_link_libraries(trifinger_platform_log
 
 # Python Bindings
 add_pybind11_module(py_one_joint srcpy/py_one_joint.cpp
-    LINK_LIBRARIES
-        Eigen3::Eigen
-        blmc_robots::blmc_robots
+    LINK_LIBRARIES ${PROJECT_NAME}
 )
 add_pybind11_module(py_two_joint srcpy/py_two_joint.cpp
-    LINK_LIBRARIES
-        Eigen3::Eigen
-        blmc_robots::blmc_robots
+    LINK_LIBRARIES ${PROJECT_NAME}
 )
 add_pybind11_module(py_real_finger srcpy/py_real_finger.cpp
-    LINK_LIBRARIES
-        Eigen3::Eigen
-        blmc_robots::blmc_robots
+    LINK_LIBRARIES ${PROJECT_NAME}
 )
 add_pybind11_module(py_trifinger srcpy/py_trifinger.cpp
-    LINK_LIBRARIES
-        blmc_robots::blmc_robots
+    LINK_LIBRARIES ${PROJECT_NAME}
         trifinger_platform_frontend
         trifinger_platform_log
 )
@@ -191,6 +197,28 @@ if (BUILD_TESTING)
     set_target_properties(test_pybullet_backend
         PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
+
+    # Create a usefull macro to build different unit tests suits.
+    macro(add_cpp_test test_name)
+
+      set(test_target_name test_${test_name})
+
+      # create the executable
+      ament_add_gtest(${test_target_name} test/${test_target_name}.cpp)
+      # Add the include dependencies.
+      target_include_directories(
+        ${test_target_name}
+        PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+               $<INSTALL_INTERFACE:include>)
+      # link the dependecies to it
+      target_link_libraries(${test_target_name} ${PROJECT_NAME})
+
+    endmacro()
+
+    add_cpp_test(process_action)
+    add_cpp_test(n_joint_blmc_robot_driver)
+    add_cpp_test(clamp)
+
 endif()
 
 
@@ -204,7 +232,7 @@ ament_export_libraries(
     trifinger_platform_log
 )
 ament_export_dependencies(
-    blmc_robots
+    blmc_drivers
     robot_interfaces
     trifinger_cameras
     trifinger_object_tracking

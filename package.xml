@@ -15,10 +15,11 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>blmc_robots</depend>
+  <depend>blmc_drivers</depend>
   <depend>robot_interfaces</depend>
   <depend>trifinger_cameras</depend>
   <depend>trifinger_object_tracking</depend>
+  <depend>yaml_utils</depend>
 
   <build_depend>mpi_cmake_modules</build_depend>
   <build_depend>pybind11_vendor</build_depend>
