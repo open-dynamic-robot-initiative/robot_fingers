@@ -167,6 +167,8 @@ install_scripts(
     scripts/run_onejoint_tests.py
     scripts/single_finger_test.py
     scripts/trifinger_backend.py
+    scripts/trifinger_data_backend.py
+    scripts/trifinger_robot_backend.py
     scripts/trifingerpro_offset_calibration.py
     scripts/trifingerpro_post_submission.py
     scripts/trifingerpro_print_push_sensor.py
