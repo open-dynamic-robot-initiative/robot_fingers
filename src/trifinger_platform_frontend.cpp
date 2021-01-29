@@ -12,8 +12,7 @@ TriFingerPlatformFrontend::TriFingerPlatformFrontend(
     robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
     std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
         camera_data)
-    : robot_frontend_(robot_data),
-      camera_frontend_(camera_data)
+    : robot_frontend_(robot_data), camera_frontend_(camera_data)
 {
 }
 

@@ -185,7 +185,8 @@ PYBIND11_MODULE(py_trifinger, m)
 
     pybind11::class_<TriFingerPlatformLog,
                      std::shared_ptr<TriFingerPlatformLog>>(
-        m, "TriFingerPlatformLog",
+        m,
+        "TriFingerPlatformLog",
         R"XXX(
         TriFingerPlatformLog(robot_log_file: str, camera_log_file: str)
 

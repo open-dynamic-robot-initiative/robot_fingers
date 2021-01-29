@@ -6,9 +6,9 @@
 
 #include <memory>
 
+#include <robot_fingers/pybullet_driver.hpp>
 #include <robot_interfaces/finger_types.hpp>
 #include <robot_interfaces/robot_frontend.hpp>
-#include <robot_fingers/pybullet_driver.hpp>
 
 constexpr bool VISUALIZE = false;
 constexpr double POSITION_TOLERANCE = 0.05;
@@ -80,8 +80,8 @@ TEST(TestPyBulletDriver, trifinger)
 
     std::array<Action::Vector, 3> goals;
     goals[0] << 0, 0.9, -1.7, 0, 0.9, -1.7, 0, 0.9, -1.7;
-    goals[1] << -0.05,  0.82, -1.2 , -0.06,  0.83, -1.2 , -0.07,  0.84, -1.2;
-    goals[2] << 0.5 ,  1.18, -2.39,  0.5 ,  1.18, -2.4 ,  0.5 ,  1.18, -2.4;
+    goals[1] << -0.05, 0.82, -1.2, -0.06, 0.83, -1.2, -0.07, 0.84, -1.2;
+    goals[2] << 0.5, 1.18, -2.39, 0.5, 1.18, -2.4, 0.5, 1.18, -2.4;
 
     for (Action::Vector goal : goals)
     {
@@ -97,8 +97,7 @@ TEST(TestPyBulletDriver, trifinger)
         auto actual_position = frontend.get_observation(t).position;
         // std::cout << actual_position.transpose() << std::endl;
         ASSERT_TRUE(actual_position.isApprox(goal, POSITION_TOLERANCE))
-            << std::setprecision(3)
-            << "Expected position: " << goal.transpose()
+            << std::setprecision(3) << "Expected position: " << goal.transpose()
             << "\nActual position: " << actual_position.transpose();
     }
 }

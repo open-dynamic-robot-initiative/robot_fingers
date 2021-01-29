@@ -29,18 +29,18 @@ def play(trajectory, factor):
 
 
 if __name__ == "__main__":
-    robot = robot_fingers.Robot.create_by_name('trifingerpro')
+    robot = robot_fingers.Robot.create_by_name("trifingerpro")
     robot.initialize()
 
     trajectory = []
     while True:
-        print('enter key')
+        print("enter key")
         key = input()
-        if key == 'r':
-            print('recording')
+        if key == "r":
+            print("recording")
             record(trajectory)
         elif key in list(map(str, range(1, 20))):
-            print('playing with factor ' + key)
+            print("playing with factor " + key)
             play(trajectory, int(key))
         else:
-            print('invalid key')
+            print("invalid key")

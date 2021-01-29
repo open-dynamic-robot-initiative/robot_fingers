@@ -19,7 +19,9 @@ def main():
     robot = robot_fingers.TriFingerPlatformFrontend()
 
     while True:
-        action = robot_interfaces.trifinger.Action(position=get_random_position())
+        action = robot_interfaces.trifinger.Action(
+            position=get_random_position()
+        )
         for _ in range(1000):
             t = robot.append_desired_action(action)
             robot.wait_until_timeindex(t)

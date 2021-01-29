@@ -26,15 +26,14 @@ public:
 
 private:
     TwoJointDriver(const MotorBoards &motor_boards, const Config &config)
-        : SimpleNJointBlmcRobotDriver<2, 1>(
-              motor_boards,
-              create_motors(motor_boards),
-              {
-                  // MotorParameters
-                  .torque_constant_NmpA = 0.02,
-                  .gear_ratio = 9.0,
-              },
-              config)
+        : SimpleNJointBlmcRobotDriver<2, 1>(motor_boards,
+                                            create_motors(motor_boards),
+                                            {
+                                                // MotorParameters
+                                                .torque_constant_NmpA = 0.02,
+                                                .gear_ratio = 9.0,
+                                            },
+                                            config)
     {
     }
 

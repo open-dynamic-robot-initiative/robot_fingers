@@ -162,7 +162,9 @@ def loop(win, robot):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("robot_type", choices=robot_fingers.Robot.get_supported_robots())
+    parser.add_argument(
+        "robot_type", choices=robot_fingers.Robot.get_supported_robots()
+    )
     args = parser.parse_args()
 
     robot = robot_fingers.Robot.create_by_name(args.robot_type)

@@ -50,7 +50,12 @@ def min_jerk_trajectory(current, setpoint, frequency, avg_speed):
 
 
 def compute_single_swipe_trajectory(
-    start_xy, end_xy, quicktravel_height, swipe_height, max_speed_mps, rate_hz=1000
+    start_xy,
+    end_xy,
+    quicktravel_height,
+    swipe_height,
+    max_speed_mps,
+    rate_hz=1000,
 ):
     """Compute end-effector-trajectory of a single swipe.
 
@@ -196,7 +201,12 @@ def trajectory_ik(traj_0, traj_120, traj_240, visualize):
 
 
 def compute_all_finger_multi_swipe(
-    start_xy, end_xy, quicktravel_height, swipe_height, max_speed_mps, angle_range
+    start_xy,
+    end_xy,
+    quicktravel_height,
+    swipe_height,
+    max_speed_mps,
+    angle_range,
 ):
     """Compute a "swipe towards centre" trajectory using all three fingers.
 
@@ -245,7 +255,12 @@ def main():
     angle_range = range(-70, 61, 10)
 
     outer_swipes = compute_all_finger_multi_swipe(
-        start_xy, end_xy, quicktravel_height, swipe_height, max_speed_mps, angle_range
+        start_xy,
+        end_xy,
+        quicktravel_height,
+        swipe_height,
+        max_speed_mps,
+        angle_range,
     )
 
     # compute a inner swipe trajectory
@@ -255,7 +270,12 @@ def main():
     angle_range = range(60, -61, -15)
 
     inner_swipes = compute_all_finger_multi_swipe(
-        start_xy, end_xy, quicktravel_height, swipe_height, max_speed_mps, angle_range
+        start_xy,
+        end_xy,
+        quicktravel_height,
+        swipe_height,
+        max_speed_mps,
+        angle_range,
     )
 
     swipes_0 = outer_swipes[0] + inner_swipes[0]
@@ -263,19 +283,30 @@ def main():
     swipes_240 = outer_swipes[2] + inner_swipes[2]
 
     initial_pos_0 = [0.08457, 0.059190205160135, 0.07725789413684458]
-    initial_pos_120 = [0.008975221324218269, -0.10283487097808879, 0.07725789413684458]
-    initial_pos_240 = [-0.09354522132373216, 0.043644665818320084, 0.07725789413684458]
+    initial_pos_120 = [
+        0.008975221324218269,
+        -0.10283487097808879,
+        0.07725789413684458,
+    ]
+    initial_pos_240 = [
+        -0.09354522132373216,
+        0.043644665818320084,
+        0.07725789413684458,
+    ]
 
     jump_speed_mps = 0.5
     swipes_0 = connect_swipes(initial_pos_0, swipes_0, jump_speed_mps)
     swipes_120 = connect_swipes(initial_pos_120, swipes_120, jump_speed_mps)
     swipes_240 = connect_swipes(initial_pos_240, swipes_240, jump_speed_mps)
 
-    joint_trajectory = trajectory_ik(swipes_0, swipes_120, swipes_240,
-                                     args.visualize)
+    joint_trajectory = trajectory_ik(
+        swipes_0, swipes_120, swipes_240, args.visualize
+    )
 
     header = ["observation_position_%d" % i for i in range(9)]
-    np.savetxt(args.out_file, joint_trajectory, header=" ".join(header), comments="")
+    np.savetxt(
+        args.out_file, joint_trajectory, header=" ".join(header), comments=""
+    )
 
 
 if __name__ == "__main__":

@@ -17,7 +17,8 @@ def run_choreography(frontend):
         # one step should take 1 second, so repeat action 1000 times
         for i in range(1000):
             t = frontend.append_desired_action(
-                robot_interfaces.trifinger.Action(position=position))
+                robot_interfaces.trifinger.Action(position=position)
+            )
             frontend.wait_until_timeindex(t)
 
     pose_initial = [0, 0.9, -1.7]
@@ -42,18 +43,22 @@ def run_choreography(frontend):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--multi-process", action="store_true",
-                        help="""If set run only frontend with multi-process
+    parser.add_argument(
+        "--multi-process",
+        action="store_true",
+        help="""If set run only frontend with multi-process
                         robot data.  Otherwise run everything within a single
-                        process.""")
+                        process.""",
+    )
     parser.add_argument("--log", type=str)
     args = parser.parse_args()
 
     if args.multi_process:
         # In multi-process case assume that the backend is running in a
         # separate process and only set up the frontend here.
-        robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger",
-                                                                 False)
+        robot_data = robot_interfaces.trifinger.MultiProcessData(
+            "trifinger", False
+        )
         frontend = robot_interfaces.trifinger.Frontend(robot_data)
     else:
         # In single-process case run both frontend and backend in this process

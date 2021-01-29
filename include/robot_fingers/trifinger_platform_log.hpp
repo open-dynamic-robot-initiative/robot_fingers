@@ -31,7 +31,8 @@ public:
     typedef robot_interfaces::TriFingerTypes::Action Action;
     typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
     typedef robot_interfaces::Status RobotStatus;
-    typedef trifinger_object_tracking::TriCameraObjectObservation CameraObservation;
+    typedef trifinger_object_tracking::TriCameraObjectObservation
+        CameraObservation;
 
     TriFingerPlatformLog(const std::string &robot_log_file,
                          const std::string &camera_log_file);

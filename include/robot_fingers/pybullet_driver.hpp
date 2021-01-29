@@ -8,10 +8,10 @@
 #include <chrono>
 #include <thread>
 
+#include <pybind11/eigen.h>
 #include <pybind11/embed.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
-#include <pybind11/eigen.h>
 
 #include <robot_interfaces/finger_types.hpp>
 
@@ -55,8 +55,7 @@ public:
     typedef typename Observation::JointVector JointVector;
 
     BasePyBulletFingerDriver(bool real_time_mode, bool visualize)
-        : real_time_mode_(real_time_mode),
-          visualize_(visualize)
+        : real_time_mode_(real_time_mode), visualize_(visualize)
     {
         // initialize Python interpreter if not already done
         if (!Py_IsInitialized())

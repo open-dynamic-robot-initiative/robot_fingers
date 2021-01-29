@@ -63,7 +63,6 @@ robot_configs = {
 
 
 class Robot:
-
     @classmethod
     def create_by_name(cls, robot_name):
         """Create a ``Robot`` instance for the specified robot.

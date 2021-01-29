@@ -15,14 +15,13 @@
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Eigen>
 
-#include <yaml_utils/yaml_eigen.hpp>
 #include <robot_interfaces/monitored_robot_driver.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
 #include <robot_interfaces/robot_driver.hpp>
+#include <yaml_utils/yaml_eigen.hpp>
 
 #include <blmc_drivers/blmc_joint_module.hpp>
 #include <robot_fingers/clamp.hpp>
-
 
 namespace robot_fingers
 {
