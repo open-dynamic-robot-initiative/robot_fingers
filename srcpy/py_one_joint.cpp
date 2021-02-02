@@ -27,7 +27,8 @@ using namespace robot_fingers;
 
 PYBIND11_MODULE(py_one_joint, m)
 {
-    m.def("create_one_joint_backend", &create_backend<OneJointDriver>,
+    m.def("create_one_joint_backend",
+          &create_backend<OneJointDriver>,
           "robot_data"_a,
           "config_file"_a,
           "first_action_timeout"_a = std::numeric_limits<double>::infinity(),

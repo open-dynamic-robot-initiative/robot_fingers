@@ -27,11 +27,11 @@ def run_choreography(frontend):
     deg90 = np.pi / 2
 
     # choreography without stage
-    #pose_idle = [0, -deg45, -deg45]
-    #pose_inward = [0, +deg45, +deg45]
-    #pose_side_1 = [-deg45, -deg45, -deg45]
-    #pose_side_2 = [0, -deg45, 0]
-    #pose_side_3 = [deg45, -deg45, -deg45]
+    # pose_idle = [0, -deg45, -deg45]
+    # pose_inward = [0, +deg45, +deg45]
+    # pose_side_1 = [-deg45, -deg45, -deg45]
+    # pose_side_2 = [0, -deg45, 0]
+    # pose_side_3 = [deg45, -deg45, -deg45]
 
     # choreography with stage (limited movement range to avoid collisions)
     pose_idle = [0, -deg45, -deg90]

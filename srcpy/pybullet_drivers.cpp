@@ -2,8 +2,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl_bind.h>
 
-#include <robot_interfaces/finger_types.hpp>
 #include <robot_fingers/pybullet_driver.hpp>
+#include <robot_interfaces/finger_types.hpp>
 
 using namespace pybind11::literals;
 

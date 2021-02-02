@@ -17,9 +17,9 @@ import robot_fingers
 # Distance from the zero position (finger pointing straight down) to the
 # end-stop.  This is independent of the placement of the encoder disc and thus
 # should be the same on all TriFingerPro robots.
-zero_to_endstop = np.array([
-    2.112,  2.399, -2.714,  2.118,  2.471, -2.694,  2.179,  2.456, -2.723
-])
+zero_to_endstop = np.array(
+    [2.112, 2.399, -2.714, 2.118, 2.471, -2.694, 2.179, 2.456, -2.723]
+)
 
 
 def main():
@@ -31,8 +31,10 @@ def main():
     robot.frontend.wait_until_timeindex(t)
 
     print()
-    input("Move fingers to end stops so that it touches without force."
-          " Then press enter.")
+    input(
+        "Move fingers to end stops so that it touches without force."
+        " Then press enter."
+    )
 
     t = robot.frontend.append_desired_action(action)
     obs = robot.frontend.get_observation(t)
