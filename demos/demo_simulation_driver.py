@@ -73,7 +73,7 @@ def main():
         action = finger_types.Action(position=get_random_position(num_fingers))
         for _ in range(300):
             t = frontend.append_desired_action(action)
-            frontend.wait_until_time_index(t)
+            frontend.wait_until_timeindex(t)
 
         # print current position from time to time
         current_position = frontend.get_observation(t).position
