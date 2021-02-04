@@ -6,6 +6,7 @@ import math
 import pathlib
 import sys
 
+
 import robot_interfaces
 import robot_fingers
 
@@ -115,12 +116,7 @@ def main():
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.
-    backend = robot_fingers.create_trifinger_backend(
-        robot_data,
-        config_file_path,
-        first_action_timeout=args.first_action_timeout,
-        max_number_of_actions=args.max_number_of_actions,
-    )
+    backend = robot_fingers.create_trifinger_backend(robot_data, config_file_path, first_action_timeout=args.first_action_timeout, max_number_of_actions=args.max_number_of_actions,)
 
     # Initializes the robot (e.g. performs homing).
     backend.initialize()
