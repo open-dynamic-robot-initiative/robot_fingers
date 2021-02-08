@@ -467,7 +467,7 @@ public:
  *     NJointBlmcRobotDriver.
  *
  * @param robot_data  Instance of RobotData used for communication.
- * @param config_file_path  Path to the driver configuration file.
+ * @param config  Driver configuration.
  * @param first_action_timeout  Duration for which the backend waits for the
  *     first action to arrive.  If exceeded, the backend shuts down.
  * @param max_number_of_actions  Number of actions after which the backend
@@ -478,16 +478,13 @@ public:
 template <typename Driver>
 typename Driver::Types::BackendPtr create_backend(
     typename Driver::Types::BaseDataPtr robot_data,
-    const std::string &config_file_path,
+    const typename Driver::Config &config,
     const double first_action_timeout = std::numeric_limits<double>::infinity(),
     const uint32_t max_number_of_actions = 0)
 {
     constexpr double MAX_ACTION_DURATION_S = 0.003;
     constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
 
-    std::cout << "Load robot driver configuration from file '"
-              << config_file_path << "'" << std::endl;
-    auto config = Driver::Config::load_config(config_file_path);
     config.print();
 
     // wrap the actual robot driver directly in a MonitoredRobotDriver
@@ -507,6 +504,27 @@ typename Driver::Types::BackendPtr create_backend(
     backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
 
     return backend;
+}
+
+/**
+ * @brief Create backend using the specified driver.
+ *
+ * Overloaded version that takes a path to a configuration YAML file instead of
+ * a Config instance.
+ */
+template <typename Driver>
+typename Driver::Types::BackendPtr create_backend(
+    typename Driver::Types::BaseDataPtr robot_data,
+    const std::string &config_file_path,
+    const double first_action_timeout = std::numeric_limits<double>::infinity(),
+    const uint32_t max_number_of_actions = 0)
+{
+    std::cout << "Load robot driver configuration from file '"
+              << config_file_path << "'" << std::endl;
+    auto config = Driver::Config::load_config(config_file_path);
+
+    return create_backend<Driver>(
+        robot_data, config, first_action_timeout, max_number_of_actions);
 }
 
 }  // namespace robot_fingers

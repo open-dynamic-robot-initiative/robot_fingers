@@ -138,7 +138,21 @@ template <typename Driver>
 void bind_create_backend(pybind11::module &m, const std::string &name)
 {
     m.def(name.c_str(),
-          &create_backend<Driver>,
+          pybind11::overload_cast<typename Driver::Types::BaseDataPtr,
+                                  const typename Driver::Config &,
+                                  const double,
+                                  const uint32_t>(&create_backend<Driver>),
+          pybind11::arg("robot_data"),
+          pybind11::arg("config"),
+          pybind11::arg("first_action_timeout") =
+              std::numeric_limits<double>::infinity(),
+          pybind11::arg("max_number_of_actions") = 0);
+
+    m.def(name.c_str(),
+          pybind11::overload_cast<typename Driver::Types::BaseDataPtr,
+                                  const std::string &,
+                                  const double,
+                                  const uint32_t>(&create_backend<Driver>),
           pybind11::arg("robot_data"),
           pybind11::arg("config_file"),
           pybind11::arg("first_action_timeout") =
