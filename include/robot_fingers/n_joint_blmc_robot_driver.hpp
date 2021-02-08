@@ -318,7 +318,7 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
     bool has_endstop = false;
 
     //! @brief Parameters related to calibration.
-    struct
+    struct CalibrationParameters
     {
         //! @brief Torque that is used to find the end stop.
         Vector endstop_search_torques_Nm = Vector::Zero();
@@ -335,7 +335,7 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
     Vector safety_kd = Vector::Constant(0.1);
 
     //! @brief Default control gains for the position PD controller.
-    struct
+    struct PositionControlGains
     {
         Vector kp = Vector::Zero();
         Vector kd = Vector::Zero();
