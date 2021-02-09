@@ -17,25 +17,35 @@ import robot_fingers
 # Distance from the zero position (finger pointing straight down) to the
 # end-stop.  This is independent of the placement of the encoder disc and thus
 # should be the same on all TriFingerPro robots.
-zero_to_endstop = np.array(
-    [2.112, 2.399, -2.714, 2.118, 2.471, -2.694, 2.179, 2.456, -2.723]
-)
+_zero_to_endstop = np.array([2.136, 2.442, -2.710] * 3)
+
+
+# Torque used to find end-stop during homing
+# TODO: this could be read from the config file
+_homing_torque = [+0.3, +0.3, -0.2] * 3
 
 
 def main():
     robot = robot_fingers.Robot.create_by_name("trifingerpro_calib")
     robot.initialize()
 
+    # move back to "homing" end-stop
+    action = robot.Action(torque=_homing_torque)
+    for _ in range(1000):
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t)
+
+    # release motors, so the joints are not actively pushing against the
+    # end-stop anymore
     action = robot.Action()
-    t = robot.frontend.append_desired_action(action)
-    robot.frontend.wait_until_timeindex(t)
+    for _ in range(1000):
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t)
 
     print()
-    input(
-        "Move fingers to end stops so that it touches without force."
-        " Then press enter."
-    )
+    input("Verify all joints are touching their end-stop. Then press enter.")
 
+    action = robot.Action()
     t = robot.frontend.append_desired_action(action)
     obs = robot.frontend.get_observation(t)
 
@@ -43,7 +53,7 @@ def main():
     format_string = ", ".join(["{: 6.3f}"] * n_joints)
 
     home_to_endstop = obs.position
-    endstop_to_zero = -zero_to_endstop
+    endstop_to_zero = -_zero_to_endstop
 
     home_to_zero = home_to_endstop + endstop_to_zero
     print("End-stop position:", format_string.format(*obs.position))
