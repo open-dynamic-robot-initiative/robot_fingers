@@ -24,6 +24,8 @@
 #include <robot_fingers/trifinger_platform_frontend.hpp>
 #include <robot_fingers/trifinger_platform_log.hpp>
 
+#include "generic_driver_bindings.hpp"
+
 using namespace pybind11::literals;
 using namespace robot_fingers;
 
@@ -37,12 +39,8 @@ PYBIND11_MODULE(py_trifinger, m)
     // needed for bindings of camera observations
     pybind11::module::import("trifinger_object_tracking.py_tricamera_types");
 
-    m.def("create_trifinger_backend",
-          &create_backend<TriFingerDriver>,
-          "robot_data"_a,
-          "config_file"_a,
-          "first_action_timeout"_a = std::numeric_limits<double>::infinity(),
-          "max_number_of_actions"_a = 0);
+    bind_create_backend<TriFingerDriver>(m, "create_trifinger_backend");
+    bind_driver_config<TriFingerDriver>(m, "TriFingerConfig");
 
     pybind11::class_<TriFingerPlatformFrontend,
                      std::shared_ptr<TriFingerPlatformFrontend>>(
