@@ -145,6 +145,7 @@ install_scripts(
 
     scripts/calibrate_home_offset.py
     scripts/check_finger_position_control_error.py
+    scripts/claw_crane.py
     scripts/construct_object_reset_trajectory.py
     scripts/demonstrate_trajectory.py
     scripts/evaluate_log.py
