@@ -30,6 +30,7 @@ void NJBRD::Config::print() const
     std::cout << "\n"
               << "\t max_current_A: " << max_current_A << "\n"
               << "\t has_endstop: " << has_endstop << "\n"
+              << "\t homing_at_endstop: " << homing_at_endstop << "\n"
               << "\t move_to_position_tolerance_rad: "
               << move_to_position_tolerance_rad << "\n"
               << "\t calibration:\n"
@@ -114,6 +115,7 @@ typename NJBRD::Config NJBRD::Config::load_config(
 
     set_config_value(user_config, "max_current_A", &config.max_current_A);
     set_config_value(user_config, "has_endstop", &config.has_endstop);
+    set_config_value(user_config, "homing_at_endstop", &config.homing_at_endstop);
     set_config_value(user_config,
                      "move_to_position_tolerance_rad",
                      &config.move_to_position_tolerance_rad);
@@ -649,34 +651,49 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             get_latest_observation().position - start_position;
     }
 
-    // Home on encoder index
+    blmc_drivers::HomingReturnCode homing_status = blmc_drivers::HomingReturnCode::NOT_INITIALIZED;
 
-    // Set the search direction for each joint opposite to the end-stop search
-    // direction.
-    Vector index_search_step_sizes;
-    for (unsigned int i = 0; i < N_JOINTS; i++)
+    if (homing_at_endstop_)
     {
-        index_search_step_sizes[i] = INDEX_SEARCH_STEP_SIZE_RAD;
-        if (endstop_search_torques_Nm[i] > 0)
+        // Homeing at endstop
+
+        homing_status =
+            joint_modules_.execute_homing_at_endstop(home_offset_rad);
+
+        rt_printf("Finished homing at endstops");
+
+    }
+    else
+    {
+        // Home on encoder index
+
+        // Set the search direction for each joint opposite to the end-stop search
+        // direction.
+        Vector index_search_step_sizes;
+        for (unsigned int i = 0; i < N_JOINTS; i++)
         {
-            index_search_step_sizes[i] *= -1;
+            index_search_step_sizes[i] = INDEX_SEARCH_STEP_SIZE_RAD;
+            if (endstop_search_torques_Nm[i] > 0)
+            {
+                index_search_step_sizes[i] *= -1;
+            }
         }
-    }
 
-    blmc_drivers::HomingReturnCode homing_status =
-        joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
-                                      home_offset_rad,
-                                      index_search_step_sizes);
+        homing_status =
+            joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
+                                        home_offset_rad,
+                                        index_search_step_sizes);
 
-    rt_printf("Finished homing.  Offset between end and start position: ");
-    travelled_distance += joint_modules_.get_distance_travelled_during_homing();
-    for (size_t i = 0; i < N_JOINTS; i++)
-    {
-        // negate the travelled distance so the output can directly be used as
-        // home offset
-        rt_printf("%.3f, ", -travelled_distance[i]);
+        rt_printf("Finished homing.  Offset between end and start position: ");
+        travelled_distance += joint_modules_.get_distance_travelled_during_homing();
+        for (size_t i = 0; i < N_JOINTS; i++)
+        {
+            // negate the travelled distance so the output can directly be used as
+            // home offset
+            rt_printf("%.3f, ", -travelled_distance[i]);
+        }
+        rt_printf("\n");
     }
-    rt_printf("\n");
 
     return homing_status == blmc_drivers::HomingReturnCode::SUCCEEDED;
 }
