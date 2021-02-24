@@ -4,7 +4,7 @@ can_ports: ["can6"]
 
 max_current_A: 2
 has_endstop: true
-# homing_at_endstop: false
+# homing_with_index: false
 move_to_position_tolerance_rad: 0.05
 calibration:
     endstop_search_torques_Nm: [-0.22, -0.22]
