@@ -89,15 +89,9 @@ public:
     const bool has_endstop_;
 
     /**
-     * @brief True if end-stops are used to define zero positions 
-     *
-     * If set to true, has_endstop has to be true as well
-     *
-     * If present, the end stops are used for a fully automated homing procedure
-     * in which the joints move until they hit the end stop. This position
-     * will then be used to define the new zero position.
+     * @brief If true, use next index position to define zero positions 
      */
-    const bool homing_at_endstop_;
+    const bool homing_with_index_;
 
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
                           const Motors &motors,
@@ -105,7 +99,7 @@ public:
                           const Config &config)
         : robot_interfaces::RobotDriver<Action, Observation>(),
           has_endstop_(config.has_endstop),
-          homing_at_endstop_(config.homing_at_endstop),
+          homing_with_index_(config.homing_with_index),
           joint_modules_(motors,
                          motor_parameters.torque_constant_NmpA * Vector::Ones(),
                          motor_parameters.gear_ratio * Vector::Ones(),
@@ -330,14 +324,10 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
     bool has_endstop = false;
 
     /**
-     * @brief Whether the end stop positions should be used to define the zero
+     * @brief Whether the next index position should be used to define the zero
      * position of the joints
-     *
-     * This is for example relevant for homing, where (in case this value
-     * is set to true) all joints move until they hit the end stop to
-     * determine their absolute position.
      */
-    bool homing_at_endstop = false;
+    bool homing_with_index = false;
 
     //! @brief Parameters related to calibration.
     struct CalibrationParameters

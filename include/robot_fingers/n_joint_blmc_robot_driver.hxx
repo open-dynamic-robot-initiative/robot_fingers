@@ -30,7 +30,7 @@ void NJBRD::Config::print() const
     std::cout << "\n"
               << "\t max_current_A: " << max_current_A << "\n"
               << "\t has_endstop: " << has_endstop << "\n"
-              << "\t homing_at_endstop: " << homing_at_endstop << "\n"
+              << "\t homing_with_index: " << homing_with_index << "\n"
               << "\t move_to_position_tolerance_rad: "
               << move_to_position_tolerance_rad << "\n"
               << "\t calibration:\n"
@@ -115,7 +115,12 @@ typename NJBRD::Config NJBRD::Config::load_config(
 
     set_config_value(user_config, "max_current_A", &config.max_current_A);
     set_config_value(user_config, "has_endstop", &config.has_endstop);
-    set_config_value(user_config, "homing_at_endstop", &config.homing_at_endstop);
+
+    if (user_config["homing_with_index"])
+    {
+        set_config_value(user_config, "homing_with_index", &config.homing_with_index);
+    }
+
     set_config_value(user_config,
                      "move_to_position_tolerance_rad",
                      &config.move_to_position_tolerance_rad);
@@ -653,17 +658,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
 
     blmc_drivers::HomingReturnCode homing_status = blmc_drivers::HomingReturnCode::NOT_INITIALIZED;
 
-    if (homing_at_endstop_)
-    {
-        // Homeing at endstop
-
-        homing_status =
-            joint_modules_.execute_homing_at_endstop(home_offset_rad);
-
-        rt_printf("Finished homing at endstops");
-
-    }
-    else
+    if (homing_with_index_)
     {
         // Home on encoder index
 
@@ -693,6 +688,16 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             rt_printf("%.3f, ", -travelled_distance[i]);
         }
         rt_printf("\n");
+    }
+    else
+    {
+        // Homing at endstop
+
+        homing_status =
+            joint_modules_.execute_homing_at_endstop(home_offset_rad);
+
+        rt_printf("Finished homing at endstops");
+
     }
 
     return homing_status == blmc_drivers::HomingReturnCode::SUCCEEDED;
