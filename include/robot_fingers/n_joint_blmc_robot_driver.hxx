@@ -694,7 +694,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
         // Homing at endstop
 
         homing_status =
-            joint_modules_.execute_homing_at_endstop(home_offset_rad);
+            joint_modules_.execute_homing_at_current_position(home_offset_rad);
 
         rt_printf("Finished homing at endstops");
 
