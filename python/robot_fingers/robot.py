@@ -59,6 +59,11 @@ robot_configs = {
         robot_fingers.create_two_joint_backend,
         "twojoint.yml",
     ),
+    "solo8": (
+        robot_interfaces.solo_eight,
+        robot_fingers.create_solo_eight_backend,
+        "soloeight.yml",
+    ),
 }
 
 

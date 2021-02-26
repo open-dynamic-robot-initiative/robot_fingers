@@ -1,0 +1,22 @@
+can_ports: ["can0", "can1", "can2", "can3"]
+
+max_current_A: 2
+has_endstop: true
+homing_with_index: false
+move_to_position_tolerance_rad: 0.05
+calibration:
+    endstop_search_torques_Nm: [0.20, -0.28, -0.20, 0.28, -0.20, 0.28, 0.20, -0.28]
+    move_steps: 500
+safety_kd: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+position_control_gains:
+    kp: [18, 24, 18, 24, 18, 24, 18, 24]
+    kd: [0.02, 0.03, 0.02, 0.03, 0.02, 0.03, 0.02, 0.03]
+
+hard_position_limits_lower: [-.inf, -.inf, -.inf, -.inf, -.inf, -.inf, -.inf, -.inf]
+hard_position_limits_upper: [.inf, .inf, .inf, .inf, .inf, .inf, .inf, .inf]
+
+# Offset between encoder index and zero-position (in radian).
+# Set this such that the zero position is in the center between left and
+# right end stop.
+home_offset_rad: [3.21, -1.55, -3.21, 1.55, -3.21, 1.5, 3.21, -1.555]
+initial_position_rad: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
