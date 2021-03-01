@@ -88,12 +88,18 @@ public:
      */
     const bool has_endstop_;
 
+    /**
+     * @brief If true, use next index position to define zero positions 
+     */
+    const bool homing_with_index_;
+
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
                           const Motors &motors,
                           const MotorParameters &motor_parameters,
                           const Config &config)
         : robot_interfaces::RobotDriver<Action, Observation>(),
           has_endstop_(config.has_endstop),
+          homing_with_index_(config.homing_with_index),
           joint_modules_(motors,
                          motor_parameters.torque_constant_NmpA * Vector::Ones(),
                          motor_parameters.gear_ratio * Vector::Ones(),
@@ -316,6 +322,12 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      * rotate freely in general.
      */
     bool has_endstop = false;
+
+    /**
+     * @brief Whether the next index position should be used to define the zero
+     * position of the joints
+     */
+    bool homing_with_index = true;
 
     //! @brief Parameters related to calibration.
     struct CalibrationParameters
