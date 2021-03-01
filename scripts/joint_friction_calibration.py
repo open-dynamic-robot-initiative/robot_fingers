@@ -10,7 +10,6 @@ See `--help` for options.
 """
 
 import argparse
-import copy
 import curses
 import os
 import time
@@ -165,7 +164,13 @@ def run_application(stdscr, robot, velocity_radps, buffer_size):
 
 
 def main():
-    argparser = argparse.ArgumentParser()
+    argparser = argparse.ArgumentParser(description=__doc__)
+    argparser.add_argument(
+        "--canport",
+        type=str,
+        required=True,
+        help="The CAN port to which the joint is connected (e.g. 'can0').",
+    )
     argparser.add_argument(
         "--velocity",
         type=float,
@@ -187,10 +192,10 @@ def main():
         "onejoint_friction_calibration.yml",
     )
 
+    config = robot_fingers.OneJointConfig.load_config(config_file_path)
+    config.can_ports = [args.canport]
     robot_data = one_joint.SingleProcessData()
-    robot_backend = robot_fingers.create_one_joint_backend(
-        robot_data, config_file_path
-    )
+    robot_backend = robot_fingers.create_one_joint_backend(robot_data, config)
     robot_frontend = one_joint.Frontend(robot_data)
 
     robot_backend.initialize()
