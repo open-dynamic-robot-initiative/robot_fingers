@@ -109,7 +109,7 @@ class CursesGUI:
             )
             line += 1
             self.win.addstr(
-                line, 0, "Error Message: {}".format(status.error_message)
+                line, 0, "Error Message: {}".format(status.get_error_message())
             )
             line += 1
             self.win.addstr(line, 0, "━" * 40)
