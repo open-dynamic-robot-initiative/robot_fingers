@@ -327,7 +327,7 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      * @brief Whether the next index position should be used to define the zero
      * position of the joints
      */
-    bool homing_with_index = false;
+    bool homing_with_index = true;
 
     //! @brief Parameters related to calibration.
     struct CalibrationParameters
