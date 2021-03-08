@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Run Solo8 back-end using multi-process robot data."""
+import os
 import argparse
 import logging
 import math
 import pathlib
 import sys
+from ament_index_python.packages import get_package_share_directory
 
 import robot_interfaces
 import robot_fingers
@@ -57,7 +59,9 @@ def main():
     logging.info("Start robot backend")
 
     # Use robot-dependent config file
-    config_file_path = "/home/robot/workspace/workspace/install/robot_fingers/share/robot_fingers/config/soloeight.yml"
+    config_file_path = os.path.join(
+        get_package_share_directory("robot_fingers"), "config", "soloeight.yml"
+    )
 
     # Storage for all observations, actions, etc.
     history_size = args.max_number_of_actions + 1

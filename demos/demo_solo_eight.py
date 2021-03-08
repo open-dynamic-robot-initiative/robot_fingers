@@ -27,7 +27,7 @@ def run_choreography(frontend):
     t = 0
     offset = np.random.uniform(-0.1, 0.1, size=8)
     while True:
-        action = np.sin(t*0.01+offset) * 0.5 
+        action = np.sin(t * 0.01 + offset) * 0.5
         perform_step(action)
 
         time_printer.update()

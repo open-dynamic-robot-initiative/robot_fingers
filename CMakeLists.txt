@@ -80,6 +80,9 @@ add_pybind11_module(py_one_joint srcpy/py_one_joint.cpp
 add_pybind11_module(py_two_joint srcpy/py_two_joint.cpp
     LINK_LIBRARIES ${PROJECT_NAME}
 )
+add_pybind11_module(py_solo_eight srcpy/py_solo_eight.cpp
+    LINK_LIBRARIES ${PROJECT_NAME}
+)
 add_pybind11_module(py_real_finger srcpy/py_real_finger.cpp
     LINK_LIBRARIES ${PROJECT_NAME}
 )
@@ -142,6 +145,7 @@ install_scripts(
     demos/demo_trifinger_platform_log.py
     demos/demo_trifingeredu.py
     demos/demo_trifingerpro.py
+    demos/demo_solo_eight.py
 
     scripts/calibrate_home_offset.py
     scripts/check_finger_position_control_error.py
@@ -153,6 +157,7 @@ install_scripts(
     scripts/joint_friction_calibration.py
     scripts/plot_logged_data.py
     scripts/position_control_on_off.py
+    scripts/solo_eight_backend.py
     scripts/print_position.py
     scripts/pybullet_backend.py
     scripts/record_and_play_trajectories.py
