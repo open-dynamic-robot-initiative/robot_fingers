@@ -89,7 +89,7 @@ public:
     const bool has_endstop_;
 
     /**
-     * @brief If true, use next index position to define zero positions 
+     * @brief If true, use next index position to define zero positions
      */
     const bool homing_with_index_;
 
@@ -231,6 +231,16 @@ protected:
     void _initialize();
 
     /**
+     * @brief Move with constant torque until all joints are blocking.
+     *
+     * Applies a constant torque until all joints are reporting a velocity close
+     * to zero.  This can be used to move against the end-stops.
+     *
+     * @param torques_Nm Torques that are applied to the joints.
+     */
+    void move_until_blocking(Vector torques_Nm);
+
+    /**
      * @brief Homing using end stops (optional) and encoder indices.
      *
      * Procedure for finding an absolute zero position (or "home" position) when
@@ -242,10 +252,10 @@ protected:
      * positive direction until the next encoder index.  The position of this
      * encoder index is the "home position".
      *
-     * By default, the zero position is the same as the home position.  The
-     * optional argument home_offset_rad provides a means to move the zero
-     * position
-     * relative to the home position.  The zero position is computed as
+     * By default, the zero position after homing is the same as the home
+     * position.  The optional argument home_offset_rad provides a means to move
+     * the zero position relative to the home position.  The zero position is
+     * computed as
      *
      *     zero position = encoder index position + home offset
      *
@@ -257,6 +267,37 @@ protected:
      */
     bool homing(Vector endstop_search_torques_Nm,
                 Vector home_offset_rad = Vector::Zero());
+
+    /**
+     * @brief Homing using stable end stops.
+     *
+     * Alternative homing procedure consisting of the following steps:
+     *
+     * 1. Move to the end stops.
+     * 2. Release joints (i.e. apply zero torque), so they are not actively
+     *    pushing anymore.
+     * 3. Home at the position that has been reached.
+     *
+     * This requires the robot to have "stable" end-stops, i.e. a joint is at
+     * the end-stop and the torque is set to zero, it should not move away on
+     * its own.
+     *
+     * By default, the zero position after homing is the same as the home
+     * position.  The optional argument home_offset_rad provides a means to move
+     * the zero position relative to the home position.  The zero position is
+     * computed as
+     *
+     *     zero position = encoder index position + home offset
+     *
+     *
+     * @see homing()
+     * @param endstop_search_torques_Nm Torques that are used to move the joints
+     *     while searching the end stop.
+     * @param home_offset_rad Offset between the home position and the desired
+     *     zero position.
+     */
+    void home_at_stable_endstop(Vector endstop_search_torques_Nm,
+                                Vector home_offset_rad);
 
     /**
      * @brief Move to given goal position with a minimum jerk trajectory.

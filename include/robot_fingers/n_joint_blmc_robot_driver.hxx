@@ -118,7 +118,8 @@ typename NJBRD::Config NJBRD::Config::load_config(
 
     if (user_config["homing_with_index"])
     {
-        set_config_value(user_config, "homing_with_index", &config.homing_with_index);
+        set_config_value(
+            user_config, "homing_with_index", &config.homing_with_index);
     }
 
     set_config_value(user_config,
@@ -588,6 +589,45 @@ void NJBRD::_initialize()
 }
 
 TPL_NJBRD
+void NJBRD::move_until_blocking(NJBRD::Vector torques_Nm)
+{
+    //! Min. number of steps when moving to the end stop.
+    constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
+    //! Size of the window when computing average velocity.
+    constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
+    //! Velocity limit at which the joints are considered to be stopped.
+    constexpr double STOP_VELOCITY = 0.01;
+
+    static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
+                  "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
+                  " SIZE_VELOCITY_WINDOW to ensure correct computation"
+                  " of average velocity.");
+
+    // Move until velocity drops to almost zero (= joints hit the end
+    // stops) but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
+    // TODO: add timeout to this loop?
+    std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
+    Vector summed_velocities = Vector::Zero();
+    uint32_t step_count = 0;
+    while (
+        step_count < MIN_STEPS_MOVE_TO_END_STOP ||
+        (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW > STOP_VELOCITY))
+    {
+        apply_action_uninitialized(torques_Nm);
+        Vector abs_velocities = get_latest_observation().velocity.cwiseAbs();
+
+        uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
+        if (step_count >= SIZE_VELOCITY_WINDOW)
+        {
+            summed_velocities -= running_velocities[running_index];
+        }
+        running_velocities[running_index] = abs_velocities;
+        summed_velocities += abs_velocities;
+        step_count++;
+    }
+}
+
+TPL_NJBRD
 bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                    NJBRD::Vector home_offset_rad)
 {
@@ -604,51 +644,9 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
     rt_printf("Start homing.\n");
     if (has_endstop_)
     {
-        //! Min. number of steps when moving to the end stop.
-        constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
-        //! Size of the window when computing average velocity.
-        constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
-        //! Velocity limit at which the joints are considered to be stopped.
-        constexpr double STOP_VELOCITY = 0.01;
-
-        static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
-                      "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
-                      " SIZE_VELOCITY_WINDOW to ensure correct computation"
-                      " of average velocity.");
-
-        // Move until velocity drops to almost zero (= joints hit the end
-        // stops) but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
-        // TODO: add timeout to this loop?
-        std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
-        Vector summed_velocities = Vector::Zero();
         Vector start_position = get_latest_observation().position;
-        uint32_t step_count = 0;
-        while (step_count < MIN_STEPS_MOVE_TO_END_STOP ||
-               (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
-                STOP_VELOCITY))
-        {
-            apply_action_uninitialized(endstop_search_torques_Nm);
-            Vector abs_velocities =
-                get_latest_observation().velocity.cwiseAbs();
 
-            uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
-            if (step_count >= SIZE_VELOCITY_WINDOW)
-            {
-                summed_velocities -= running_velocities[running_index];
-            }
-            running_velocities[running_index] = abs_velocities;
-            summed_velocities += abs_velocities;
-            step_count++;
-
-#ifdef VERBOSE
-            Eigen::IOFormat commainitfmt(
-                4, Eigen::DontAlignCols, " ", " ", "", "", "", "");
-            std::cout << ((summed_velocities / SIZE_VELOCITY_WINDOW).array() >
-                          STOP_VELOCITY)
-                             .format(commainitfmt)
-                      << std::endl;
-#endif
-        }
+        move_until_blocking(endstop_search_torques_Nm);
         rt_printf("Reached end stop.\n");
 
         // compute distance travelled during end-stop search
@@ -656,14 +654,15 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             get_latest_observation().position - start_position;
     }
 
-    blmc_drivers::HomingReturnCode homing_status = blmc_drivers::HomingReturnCode::NOT_INITIALIZED;
+    blmc_drivers::HomingReturnCode homing_status =
+        blmc_drivers::HomingReturnCode::NOT_INITIALIZED;
 
     if (homing_with_index_)
     {
         // Home on encoder index
 
-        // Set the search direction for each joint opposite to the end-stop search
-        // direction.
+        // Set the search direction for each joint opposite to the end-stop
+        // search direction.
         Vector index_search_step_sizes;
         for (unsigned int i = 0; i < N_JOINTS; i++)
         {
@@ -676,15 +675,16 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
 
         homing_status =
             joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
-                                        home_offset_rad,
-                                        index_search_step_sizes);
+                                          home_offset_rad,
+                                          index_search_step_sizes);
 
         rt_printf("Finished homing.  Offset between end and start position: ");
-        travelled_distance += joint_modules_.get_distance_travelled_during_homing();
+        travelled_distance +=
+            joint_modules_.get_distance_travelled_during_homing();
         for (size_t i = 0; i < N_JOINTS; i++)
         {
-            // negate the travelled distance so the output can directly be used as
-            // home offset
+            // negate the travelled distance so the output can directly be used
+            // as home offset
             rt_printf("%.3f, ", -travelled_distance[i]);
         }
         rt_printf("\n");
@@ -697,10 +697,40 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             joint_modules_.execute_homing_at_current_position(home_offset_rad);
 
         rt_printf("Finished homing at endstops");
-
     }
 
     return homing_status == blmc_drivers::HomingReturnCode::SUCCEEDED;
+}
+
+TPL_NJBRD
+void NJBRD::home_at_stable_endstop(NJBRD::Vector endstop_search_torques_Nm,
+                                   NJBRD::Vector home_offset_rad)
+{
+    constexpr uint32_t NUM_ZERO_TORQUE_STEPS = 1000;
+
+    if (!has_endstop_)
+    {
+        throw std::runtime_error(
+            "Cannot home at endstop with 'has_endstop = false'.");
+    }
+
+    rt_printf("Start homing at stable endstop.\n");
+
+    // move to end-stop
+    move_until_blocking(endstop_search_torques_Nm);
+
+    // release motors (set torque = 0) for a moment, so it is not actively
+    // pressing against the end-stop anymore.
+    Vector zero = Vector::Zero();
+    for (int i = 0; i < NUM_ZERO_TORQUE_STEPS; i++)
+    {
+        apply_action_uninitialized(zero);
+    }
+
+    // home at the current position (which should be at the end-stop)
+    joint_modules_.execute_homing_at_current_position(home_offset_rad);
+
+    rt_printf("Finished homing");
 }
 
 TPL_NJBRD
