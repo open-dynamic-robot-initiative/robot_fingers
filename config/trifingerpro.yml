@@ -1,6 +1,10 @@
 can_ports: ["can0", "can1", "can2", "can3", "can4", "can5"]
 max_current_A: 2.2
 has_endstop: true
+
+homing_method: endstop_release
+home_offset_rad: [-2.136, -2.442, +2.710, -2.136, -2.442, +2.710, -2.136, -2.442, +2.710]
+
 move_to_position_tolerance_rad: 0.1
 calibration:
     endstop_search_torques_Nm:
@@ -74,8 +78,6 @@ soft_position_limits_upper:
     - 1.0
     - 1.57
     - 0.0
-
-home_offset_rad: [0, 0, 0, 0, 0, 0, 0, 0, 0]
 
 # Set the initial position such that it is still save when the stage is at the
 # highest level.
