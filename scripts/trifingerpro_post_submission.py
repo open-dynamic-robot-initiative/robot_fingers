@@ -216,7 +216,7 @@ def reset_object(robot):
     trajectory_file = os.path.join(
         get_package_share_directory("robot_fingers"),
         "config",
-        "trifingerpro_recenter_cuboid_2x2x8.csv",
+        "trifingerpro_shuffle_cube_trajectory_fast.csv",
     )
     data = pandas.read_csv(
         trajectory_file, delim_whitespace=True, header=0, low_memory=False
