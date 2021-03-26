@@ -88,18 +88,12 @@ public:
      */
     const bool has_endstop_;
 
-    /**
-     * @brief If true, use next index position to define zero positions
-     */
-    const bool homing_with_index_;
-
     NJointBlmcRobotDriver(const MotorBoards &motor_boards,
                           const Motors &motors,
                           const MotorParameters &motor_parameters,
                           const Config &config)
         : robot_interfaces::RobotDriver<Action, Observation>(),
           has_endstop_(config.has_endstop),
-          homing_with_index_(config.homing_with_index),
           joint_modules_(motors,
                          motor_parameters.torque_constant_NmpA * Vector::Ones(),
                          motor_parameters.gear_ratio * Vector::Ones(),
@@ -269,37 +263,6 @@ protected:
                 Vector home_offset_rad = Vector::Zero());
 
     /**
-     * @brief Homing using stable end stops.
-     *
-     * Alternative homing procedure consisting of the following steps:
-     *
-     * 1. Move to the end stops.
-     * 2. Release joints (i.e. apply zero torque), so they are not actively
-     *    pushing anymore.
-     * 3. Home at the position that has been reached.
-     *
-     * This requires the robot to have "stable" end-stops, i.e. a joint is at
-     * the end-stop and the torque is set to zero, it should not move away on
-     * its own.
-     *
-     * By default, the zero position after homing is the same as the home
-     * position.  The optional argument home_offset_rad provides a means to move
-     * the zero position relative to the home position.  The zero position is
-     * computed as
-     *
-     *     zero position = encoder index position + home offset
-     *
-     *
-     * @see homing()
-     * @param endstop_search_torques_Nm Torques that are used to move the joints
-     *     while searching the end stop.
-     * @param home_offset_rad Offset between the home position and the desired
-     *     zero position.
-     */
-    void home_at_stable_endstop(Vector endstop_search_torques_Nm,
-                                Vector home_offset_rad);
-
-    /**
      * @brief Move to given goal position with a minimum jerk trajectory.
      *
      * Use a series of position actions to move to the given goal position on a
@@ -336,6 +299,61 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
         uint32_t move_steps = 0;
     };
 
+    //! @brief Different homing methods that can be selected.
+    enum class HomingMethod
+    {
+        //! Do not perform any homing (i.e. use position as reported by the
+        //! motor board).
+        NONE,
+
+        //! Home at the current position.
+        CURRENT_POSITION,
+
+        /**
+         * @brief Search for next encoder index and home there.
+         *
+         * To determine the search direction, the signs of the values from
+         * @ref endstop_search_torques_Nm are used and negated.  This means even
+         * if not performing any end-stop search, you need to set some values
+         * there that point in the opposite direction as the desired index
+         * search.
+         */
+        NEXT_INDEX,
+
+        /**
+         * @brief Move to end stop and home there.
+         *
+         * Move using the torques defined in @ref endstop_search_torques_Nm
+         * until all joints are blocking (assuming this is due to the end stop)
+         * and home at this position.
+         */
+        ENDSTOP,
+
+        /**
+         * @brief First move to the end stop, then search for encoder index.
+         *
+         * First move to the end stops using the torques defined in @ref
+         * endstop_search_torques_Nm.  From there search for the next encoder
+         * index in opposite direction and use the index position for homing.
+         */
+        ENDSTOP_INDEX,
+
+        /**
+         * @brief First move to the end stop, then release motors and home.
+         *
+         * First move to the end stops using the torques defined in @ref
+         * endstop_search_torques_Nm.  Then release the motors (i.e. send zero
+         * torque commands) for a moment, so that the joints are not actively
+         * pushing against the end stop anymore.  Then home at the reached
+         * position.
+         *
+         * This requires the robot to have "stable" end-stops, i.e. if a joint
+         * is at the end-stop and the torque is set to zero, it should not move
+         * away on its own.
+         */
+        ENDSTOP_RELEASE,
+    };
+
     // All parameters should have default values that should not result in
     // dangerous behaviour in case someone forgets to specify them.
 
@@ -364,11 +382,8 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      */
     bool has_endstop = false;
 
-    /**
-     * @brief Whether the next index position should be used to define the zero
-     * position of the joints
-     */
-    bool homing_with_index = true;
+    //! @brief Which method to use for homing.
+    HomingMethod homing_method = HomingMethod::NONE;
 
     //! @brief Parameters related to calibration.
     struct CalibrationParameters
@@ -470,6 +485,71 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      * @return Configuration
      */
     static Config load_config(const std::string &config_file_name);
+
+    /**
+     * @brief Parse a homing method name.
+     *
+     * @param method_name  Homing method name.
+     * @throws std::invalid_argument if the given string does not represent a
+     *     valid homing method.
+     *
+     * @return The corresponding homing method.
+     */
+    static HomingMethod parse_homing_method_name(const std::string method_name)
+    {
+        if (method_name == "none")
+        {
+            return HomingMethod::NONE;
+        }
+        else if (method_name == "current_position")
+        {
+            return HomingMethod::CURRENT_POSITION;
+        }
+        else if (method_name == "next_index")
+        {
+            return HomingMethod::NEXT_INDEX;
+        }
+        else if (method_name == "endstop")
+        {
+            return HomingMethod::ENDSTOP;
+        }
+        else if (method_name == "endstop_index")
+        {
+            return HomingMethod::ENDSTOP_INDEX;
+        }
+        else if (method_name == "endstop_release")
+        {
+            return HomingMethod::ENDSTOP_RELEASE;
+        }
+        else
+        {
+            throw std::invalid_argument("Invalid homing method " + method_name);
+        }
+    }
+
+    //! @brief Get the name of the specified homing method.
+    static std::string get_homing_method_name(HomingMethod method)
+    {
+        switch (method)
+        {
+            case HomingMethod::NONE:
+                return "none";
+            case HomingMethod::CURRENT_POSITION:
+                return "current_position";
+            case HomingMethod::NEXT_INDEX:
+                return "next_index";
+            case HomingMethod::ENDSTOP:
+                return "endstop";
+            case HomingMethod::ENDSTOP_INDEX:
+                return "endstop_index";
+            case HomingMethod::ENDSTOP_RELEASE:
+                return "endstop_release";
+            default:
+                throw std::runtime_error(
+                    "No name for the given homing method.  This is a bug, "
+                    "please report to the maintainers of this package.");
+        }
+    }
 
 private:
     /**
