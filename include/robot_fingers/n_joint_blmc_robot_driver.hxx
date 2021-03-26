@@ -665,9 +665,6 @@ TPL_NJBRD
 bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                    NJBRD::Vector home_offset_rad)
 {
-    //! Distance travelled during homing (useful for home offset calibration)
-    Vector travelled_distance = Vector::Zero();
-
     rt_printf("Start homing.\n");
 
     // First move to end-stop if this is required by the selected homing method.
@@ -685,14 +682,8 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                 return false;
             }
 
-            Vector start_position = get_latest_observation().position;
-
             move_until_blocking(endstop_search_torques_Nm);
             rt_printf("Reached end stop.\n");
-
-            // compute distance travelled during end-stop search
-            travelled_distance +=
-                get_latest_observation().position - start_position;
 
             break;
         }
@@ -740,18 +731,6 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                                               home_offset_rad,
                                               index_search_step_sizes);
 
-            rt_printf(
-                "Finished homing.  Offset between end and start position: ");
-            travelled_distance +=
-                joint_modules_.get_distance_travelled_during_homing();
-            for (size_t i = 0; i < N_JOINTS; i++)
-            {
-                // negate the travelled distance so the output can directly be
-                // used as home offset
-                rt_printf("%.3f, ", -travelled_distance[i]);
-            }
-            rt_printf("\n");
-
             break;
         }
 
@@ -763,7 +742,6 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             homing_status = joint_modules_.execute_homing_at_current_position(
                 home_offset_rad);
 
-            rt_printf("Finished homing at endstops");
             break;
         }
 
@@ -790,6 +768,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
         }
     }
 
+    rt_printf("Finished homing.");
     return homing_status == blmc_drivers::HomingReturnCode::SUCCEEDED;
 }
 
