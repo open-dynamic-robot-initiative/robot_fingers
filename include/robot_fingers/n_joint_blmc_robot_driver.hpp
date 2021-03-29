@@ -235,23 +235,21 @@ protected:
     void move_until_blocking(Vector torques_Nm);
 
     /**
-     * @brief Homing using end stops (optional) and encoder indices.
+     * @brief Run homing of all joints.
      *
      * Procedure for finding an absolute zero position (or "home" position) when
      * using relative encoders.
      *
-     * If the robot has end stops (according to configuration), all joints first
-     * move in negative direction until they hit the end stop.
-     * Then an encoder index search is started where each joint moves slowly in
-     * positive direction until the next encoder index.  The position of this
-     * encoder index is the "home position".
+     * The method for finding the home position is depending on the
+     * "homing_method" setting in the configuration.  See @ref
+     * Config::HomingMethod for the different options.
      *
      * By default, the zero position after homing is the same as the home
      * position.  The optional argument home_offset_rad provides a means to move
      * the zero position relative to the home position.  The zero position is
      * computed as
      *
-     *     zero position = encoder index position + home offset
+     *     zero position = home position + home offset
      *
      *
      * @param endstop_search_torques_Nm Torques that are used to move the joints
