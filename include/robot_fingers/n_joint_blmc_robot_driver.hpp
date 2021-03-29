@@ -235,30 +235,27 @@ protected:
     void move_until_blocking(Vector torques_Nm);
 
     /**
-     * @brief Run homing of all joints.
+     * @brief Homing of all joints, based on the robot configuration.
      *
-     * Procedure for finding an absolute zero position (or "home" position) when
-     * using relative encoders.
+     * Procedure for finding an absolute zero position when using relative
+     * encoders.
      *
      * The method for finding the home position is depending on the
      * "homing_method" setting in the configuration.  See @ref
      * Config::HomingMethod for the different options.
      *
      * By default, the zero position after homing is the same as the home
-     * position.  The optional argument home_offset_rad provides a means to move
-     * the zero position relative to the home position.  The zero position is
+     * position.  The optional configuration parameter @ref
+     * Config::home_offset_rad provides a means to move the zero position
+     * relative to the home position.  The zero position is
      * computed as
      *
      *     zero position = home position + home offset
      *
-     *
-     * @param endstop_search_torques_Nm Torques that are used to move the joints
-     *     while searching the end stop.
-     * @param home_offset_rad Offset between the home position and the desired
-     *     zero position.
+     * @returns True if the homing was successful, false if not.  In case of a
+     *     failure, an error message with more information is printed to stdout.
      */
-    bool homing(Vector endstop_search_torques_Nm,
-                Vector home_offset_rad = Vector::Zero());
+    bool homing();
 
     /**
      * @brief Move to given goal position with a minimum jerk trajectory.

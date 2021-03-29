@@ -590,8 +590,7 @@ void NJBRD::_initialize()
     joint_modules_.set_position_control_gains(
         config_.position_control_gains.kp, config_.position_control_gains.kd);
 
-    bool homing_succeeded = homing(
-        config_.calibration.endstop_search_torques_Nm, config_.home_offset_rad);
+    bool homing_succeeded = homing();
     pause_motors();
 
     // NOTE: do not set is_initialized_ yet as we want to allow move_to_position
@@ -662,8 +661,7 @@ void NJBRD::move_until_blocking(NJBRD::Vector torques_Nm)
 }
 
 TPL_NJBRD
-bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
-                   NJBRD::Vector home_offset_rad)
+bool NJBRD::homing()
 {
     rt_printf("Start homing.\n");
 
@@ -682,7 +680,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                 return false;
             }
 
-            if (endstop_search_torques_Nm.isZero())
+            if (config_.calibration.endstop_search_torques_Nm.isZero())
             {
                 rt_printf(
                     "Invalid config: A homing method with end-stop search is "
@@ -690,7 +688,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                 return false;
             }
 
-            move_until_blocking(endstop_search_torques_Nm);
+            move_until_blocking(config_.calibration.endstop_search_torques_Nm);
             rt_printf("Reached end stop.\n");
 
             break;
@@ -722,7 +720,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             //! Absolute step size when moving for encoder index search.
             constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.0003;
 
-            if (endstop_search_torques_Nm.isZero())
+            if (config_.calibration.endstop_search_torques_Nm.isZero())
             {
                 rt_printf(
                     "Invalid config: A homing method with index search is "
@@ -739,7 +737,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             for (unsigned int i = 0; i < N_JOINTS; i++)
             {
                 index_search_step_sizes[i] = INDEX_SEARCH_STEP_SIZE_RAD;
-                if (endstop_search_torques_Nm[i] > 0)
+                if (config_.calibration.endstop_search_torques_Nm[i] > 0)
                 {
                     index_search_step_sizes[i] *= -1;
                 }
@@ -747,7 +745,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
 
             homing_status =
                 joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
-                                              home_offset_rad,
+                                              config_.home_offset_rad,
                                               index_search_step_sizes);
 
             break;
@@ -759,7 +757,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             // Home at current position
 
             homing_status = joint_modules_.execute_homing_at_current_position(
-                home_offset_rad);
+                config_.home_offset_rad);
 
             break;
         }
@@ -781,7 +779,7 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
 
             // home at the current position (which should be at the end-stop)
             homing_status = joint_modules_.execute_homing_at_current_position(
-                home_offset_rad);
+                config_.home_offset_rad);
 
             break;
         }
