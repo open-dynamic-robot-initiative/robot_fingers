@@ -677,8 +677,16 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
             if (!has_endstop_)
             {
                 rt_printf(
-                    "Selected homing method needs endstop but 'has_endstop' is "
-                    "false.");
+                    "Invalid config: Selected homing method needs endstop but "
+                    "'has_endstop' is false.");
+                return false;
+            }
+
+            if (endstop_search_torques_Nm.isZero())
+            {
+                rt_printf(
+                    "Invalid config: A homing method with end-stop search is "
+                    "selected but 'endstop_search_torques_Nm' is zero.");
                 return false;
             }
 
@@ -713,6 +721,17 @@ bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
                 (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
             //! Absolute step size when moving for encoder index search.
             constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.0003;
+
+            if (endstop_search_torques_Nm.isZero())
+            {
+                rt_printf(
+                    "Invalid config: A homing method with index search is "
+                    "selected but 'endstop_search_torques_Nm' is zero.  The "
+                    "sign of 'endstop_search_torques_Nm' is used to determine "
+                    "the index search direction (opposite direction to end "
+                    "stop search).");
+                return false;
+            }
 
             // Set the search direction for each joint opposite to the end-stop
             // search direction.
