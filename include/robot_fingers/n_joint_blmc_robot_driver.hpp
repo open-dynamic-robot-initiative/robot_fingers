@@ -224,6 +224,10 @@ protected:
 
     bool is_initialized_ = false;
 
+    //! \brief Counter for the number of actions sent to the robot.
+    uint32_t action_counter_ = 0;
+
+
     Action apply_action_uninitialized(const Action &desired_action);
 
     //! \brief Actual initialization that is called in a real-time thread in
@@ -400,6 +404,17 @@ struct NJointBlmcRobotDriver<Observation, N_JOINTS, N_MOTOR_BOARDS>::Config
      * to not move during shutdown.
      */
     std::vector<TrajectoryStep> shutdown_trajectory;
+
+    /**
+     * @brief List of file to which run duration logs are written.
+     *
+     * You can specify multiple files here if you want to log the runtime of
+     * different independent components separately.  For example on a robot with
+     * multiple manipulators, you can have a separate log for each manipulator,
+     * so if one of them is replaced, only the log file of this manipulator
+     * needs to be changed.
+     */
+    std::vector<std::string> run_duration_logfiles;
 
     /**
      * @brief Check if the given position is within the hard limits.

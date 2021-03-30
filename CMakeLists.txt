@@ -156,6 +156,7 @@ install_scripts(
     scripts/fingeredu_endurance_test.py
     scripts/joint_friction_calibration.py
     scripts/plot_logged_data.py
+    scripts/plot_run_duration_log.py
     scripts/position_control_on_off.py
     scripts/solo_eight_backend.py
     scripts/print_position.py

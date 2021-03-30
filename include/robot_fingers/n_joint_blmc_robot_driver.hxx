@@ -70,6 +70,19 @@ void NJBRD::Config::print() const
         }
     }
 
+    std::cout << "\t run_duration_logfiles:\n";
+    if (run_duration_logfiles.empty())
+    {
+        std::cout << "\t\t None\n";
+    }
+    else
+    {
+        for (const std::string &filename : run_duration_logfiles)
+        {
+            std::cout << "\t\t - " << filename << "\n";
+        }
+    }
+
     std::cout << std::endl;
 }
 
@@ -190,6 +203,35 @@ typename NJBRD::Config NJBRD::Config::load_config(
                              &step.target_position_rad);
             set_config_value(trajectory[i], "move_steps", &step.move_steps);
             config.shutdown_trajectory.push_back(step);
+        }
+    }
+
+    if (user_config["run_duration_logfiles"])
+    {
+        YAML::Node logfiles = user_config["run_duration_logfiles"];
+
+        if (!logfiles.IsSequence())
+        {
+            std::cerr << "FATAL: Parameter 'run_duration_logfiles' from "
+                         "configuration file is not a list."
+                      << std::endl;
+            std::exit(1);
+        }
+
+        for (size_t i = 0; i < logfiles.size(); i++)
+        {
+            try
+            {
+                config.run_duration_logfiles.push_back(
+                    logfiles[i].as<std::string>());
+            }
+            catch (const YAML::Exception &e)
+            {
+                std::cerr
+                    << "FATAL: Failed to load run_duration_logfiles entry " << i
+                    << " from configuration file" << std::endl;
+                std::exit(1);
+            };
         }
     }
 
@@ -394,6 +436,24 @@ void NJBRD::shutdown()
         std::cerr << "Failed to reach rest position.  Robot may be blocked."
                   << std::endl;
     }
+
+    // write number of actions to the run duration logs
+    std::cout << "Write run duration logs." << std::endl;
+    int timestamp =
+        static_cast<int>(real_time_tools::Timer::get_current_time_sec());
+    for (const std::string &logfile_name : config_.run_duration_logfiles)
+    {
+        std::ofstream file(logfile_name, std::ios_base::app);
+        if (!file)
+        {
+            std::cerr << "Failed to open file " << logfile_name
+                      << " for writing." << std::endl;
+        }
+        else
+        {
+            file << timestamp << "\t" << action_counter_ << std::endl;
+        }
+    }
 }
 
 TPL_NJBRD
@@ -543,6 +603,8 @@ typename NJBRD::Action NJBRD::apply_action_uninitialized(
 
     joint_modules_.set_torques(applied_action.torque);
     joint_modules_.send_torques();
+
+    action_counter_++;
 
     real_time_tools::Timer::sleep_until_sec(start_time_sec + 0.001);
 
