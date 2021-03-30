@@ -40,6 +40,7 @@ needs to work without asking for a password everytime.  To achieve this, run
 
 first.
 
+
 Build
 -----
 
@@ -60,30 +61,15 @@ Inside the container first set up the environment:
 
     Singularity> source /setup.bash
 
-This will source the ROS `setup.bash` and create an alias `catbuild` for catkin
-that already contains the argument to set the Python executable to python3
-(needed to get Python 3 bindings).
+This will source the ROS `setup.bash` and some other environment setup.
 
 Now you can build by using this alias:
 
-    Singularity> catbuild
+    Singularity> colcon build
 
 
 ### Without Singularity
 
 To build, cd into the `workspace` directory and build with
 
-    catkin build
-
-
-### Python Bindings
-
-With the above command Python bindings will be build for the default python
-version of your system (see `python --version`).  If you want to use a
-different version (e.g. python3), you can specify as follows:
-
-    catkin build -DPYTHON_EXECUTABLE=/usr/bin/python3
-
-Note that all our scripts are implemented for Python 3, so if your default
-version is not already 3, you need to specify this in order to use these
-scripts.
+    colcon build
