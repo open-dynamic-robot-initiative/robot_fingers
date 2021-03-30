@@ -30,9 +30,10 @@ void NJBRD::Config::print() const
     std::cout << "\n"
               << "\t max_current_A: " << max_current_A << "\n"
               << "\t has_endstop: " << has_endstop << "\n"
-              << "\t homing_with_index: " << homing_with_index << "\n"
               << "\t move_to_position_tolerance_rad: "
               << move_to_position_tolerance_rad << "\n"
+              << "\t homing_method: " << get_homing_method_name(homing_method)
+              << "\n"
               << "\t calibration:\n"
               << "\t\t endstop_search_torques_Nm: "
               << calibration.endstop_search_torques_Nm.transpose() << "\n"
@@ -131,7 +132,41 @@ typename NJBRD::Config NJBRD::Config::load_config(
 
     if (user_config["homing_with_index"])
     {
-        set_config_value(user_config, "homing_with_index", &config.homing_with_index);
+        std::cout << "FATAL: The configuration option 'homing_with_index' is "
+                     "obsolete.  Use 'homing_method' instead."
+                  << std::endl;
+        std::exit(1);
+    }
+
+    if (user_config["homing_method"])
+    {
+        std::string method_name;
+        set_config_value(user_config, "homing_method", &method_name);
+        try
+        {
+            config.homing_method = parse_homing_method_name(method_name);
+        }
+        catch (const std::invalid_argument &e)
+        {
+            std::cout << "FATAL: " << e.what() << std::endl;
+            std::exit(1);
+        }
+    }
+    else
+    {
+        std::cerr << "WARNING: 'homing_method' is not specified.  Using "
+                     "backward-compatible default.  Explicitly specify a "
+                     "homing method to silence this warning."
+                  << std::endl;
+
+        if (config.has_endstop)
+        {
+            config.homing_method = HomingMethod::ENDSTOP_INDEX;
+        }
+        else
+        {
+            config.homing_method = HomingMethod::NEXT_INDEX;
+        }
     }
 
     set_config_value(user_config,
@@ -617,8 +652,7 @@ void NJBRD::_initialize()
     joint_modules_.set_position_control_gains(
         config_.position_control_gains.kp, config_.position_control_gains.kd);
 
-    bool homing_succeeded = homing(
-        config_.calibration.endstop_search_torques_Nm, config_.home_offset_rad);
+    bool homing_succeeded = homing();
     pause_motors();
 
     // NOTE: do not set is_initialized_ yet as we want to allow move_to_position
@@ -650,118 +684,170 @@ void NJBRD::_initialize()
 }
 
 TPL_NJBRD
-bool NJBRD::homing(NJBRD::Vector endstop_search_torques_Nm,
-                   NJBRD::Vector home_offset_rad)
+void NJBRD::move_until_blocking(NJBRD::Vector torques_Nm)
 {
-    //! Distance after which encoder index search is aborted.
-    //! Computed based on gear ratio to be 1.5 motor revolutions.
-    const double INDEX_SEARCH_DISTANCE_LIMIT_RAD =
-        (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
-    //! Absolute step size when moving for encoder index search.
-    constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.0003;
+    //! Min. number of steps when moving to the end stop.
+    constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
+    //! Size of the window when computing average velocity.
+    constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
+    //! Velocity limit at which the joints are considered to be stopped.
+    constexpr double STOP_VELOCITY = 0.01;
 
-    //! Distance travelled during homing (useful for home offset calibration)
-    Vector travelled_distance = Vector::Zero();
+    static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
+                  "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
+                  " SIZE_VELOCITY_WINDOW to ensure correct computation"
+                  " of average velocity.");
 
+    // Move until velocity drops to almost zero (= joints hit the end
+    // stops) but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
+    // TODO: add timeout to this loop?
+    std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
+    Vector summed_velocities = Vector::Zero();
+    uint32_t step_count = 0;
+    while (
+        step_count < MIN_STEPS_MOVE_TO_END_STOP ||
+        (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW > STOP_VELOCITY))
+    {
+        apply_action_uninitialized(torques_Nm);
+        Vector abs_velocities = get_latest_observation().velocity.cwiseAbs();
+
+        uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
+        if (step_count >= SIZE_VELOCITY_WINDOW)
+        {
+            summed_velocities -= running_velocities[running_index];
+        }
+        running_velocities[running_index] = abs_velocities;
+        summed_velocities += abs_velocities;
+        step_count++;
+    }
+}
+
+TPL_NJBRD
+bool NJBRD::homing()
+{
     rt_printf("Start homing.\n");
-    if (has_endstop_)
+
+    // First move to end-stop if this is required by the selected homing method.
+    switch (config_.homing_method)
     {
-        //! Min. number of steps when moving to the end stop.
-        constexpr uint32_t MIN_STEPS_MOVE_TO_END_STOP = 1000;
-        //! Size of the window when computing average velocity.
-        constexpr uint32_t SIZE_VELOCITY_WINDOW = 100;
-        //! Velocity limit at which the joints are considered to be stopped.
-        constexpr double STOP_VELOCITY = 0.01;
-
-        static_assert(MIN_STEPS_MOVE_TO_END_STOP > SIZE_VELOCITY_WINDOW,
-                      "MIN_STEPS_MOVE_TO_END_STOP has to be bigger than"
-                      " SIZE_VELOCITY_WINDOW to ensure correct computation"
-                      " of average velocity.");
-
-        // Move until velocity drops to almost zero (= joints hit the end
-        // stops) but at least for MIN_STEPS_MOVE_TO_END_STOP time steps.
-        // TODO: add timeout to this loop?
-        std::vector<Vector> running_velocities(SIZE_VELOCITY_WINDOW);
-        Vector summed_velocities = Vector::Zero();
-        Vector start_position = get_latest_observation().position;
-        uint32_t step_count = 0;
-        while (step_count < MIN_STEPS_MOVE_TO_END_STOP ||
-               (summed_velocities.maxCoeff() / SIZE_VELOCITY_WINDOW >
-                STOP_VELOCITY))
+        case Config::HomingMethod::ENDSTOP:
+        case Config::HomingMethod::ENDSTOP_INDEX:
+        case Config::HomingMethod::ENDSTOP_RELEASE:
         {
-            apply_action_uninitialized(endstop_search_torques_Nm);
-            Vector abs_velocities =
-                get_latest_observation().velocity.cwiseAbs();
-
-            uint32_t running_index = step_count % SIZE_VELOCITY_WINDOW;
-            if (step_count >= SIZE_VELOCITY_WINDOW)
+            if (!has_endstop_)
             {
-                summed_velocities -= running_velocities[running_index];
+                rt_printf(
+                    "Invalid config: Selected homing method needs endstop but "
+                    "'has_endstop' is false.");
+                return false;
             }
-            running_velocities[running_index] = abs_velocities;
-            summed_velocities += abs_velocities;
-            step_count++;
 
-#ifdef VERBOSE
-            Eigen::IOFormat commainitfmt(
-                4, Eigen::DontAlignCols, " ", " ", "", "", "", "");
-            std::cout << ((summed_velocities / SIZE_VELOCITY_WINDOW).array() >
-                          STOP_VELOCITY)
-                             .format(commainitfmt)
-                      << std::endl;
-#endif
-        }
-        rt_printf("Reached end stop.\n");
-
-        // compute distance travelled during end-stop search
-        travelled_distance +=
-            get_latest_observation().position - start_position;
-    }
-
-    blmc_drivers::HomingReturnCode homing_status = blmc_drivers::HomingReturnCode::NOT_INITIALIZED;
-
-    if (homing_with_index_)
-    {
-        // Home on encoder index
-
-        // Set the search direction for each joint opposite to the end-stop search
-        // direction.
-        Vector index_search_step_sizes;
-        for (unsigned int i = 0; i < N_JOINTS; i++)
-        {
-            index_search_step_sizes[i] = INDEX_SEARCH_STEP_SIZE_RAD;
-            if (endstop_search_torques_Nm[i] > 0)
+            if (config_.calibration.endstop_search_torques_Nm.isZero())
             {
-                index_search_step_sizes[i] *= -1;
+                rt_printf(
+                    "Invalid config: A homing method with end-stop search is "
+                    "selected but 'endstop_search_torques_Nm' is zero.");
+                return false;
             }
-        }
 
-        homing_status =
-            joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
-                                        home_offset_rad,
-                                        index_search_step_sizes);
+            move_until_blocking(config_.calibration.endstop_search_torques_Nm);
+            rt_printf("Reached end stop.\n");
 
-        rt_printf("Finished homing.  Offset between end and start position: ");
-        travelled_distance += joint_modules_.get_distance_travelled_during_homing();
-        for (size_t i = 0; i < N_JOINTS; i++)
-        {
-            // negate the travelled distance so the output can directly be used as
-            // home offset
-            rt_printf("%.3f, ", -travelled_distance[i]);
+            break;
         }
-        rt_printf("\n");
+        default:
+            // other homing methods do nothing here
+            break;
     }
-    else
+
+    blmc_drivers::HomingReturnCode homing_status =
+        blmc_drivers::HomingReturnCode::NOT_INITIALIZED;
+
+    // Now do the actual homing
+    switch (config_.homing_method)
     {
-        // Homing at endstop
+        case Config::HomingMethod::NONE:
+            homing_status = blmc_drivers::HomingReturnCode::SUCCEEDED;
+            break;  // nothing to do here
 
-        homing_status =
-            joint_modules_.execute_homing_at_current_position(home_offset_rad);
+        case Config::HomingMethod::NEXT_INDEX:
+        case Config::HomingMethod::ENDSTOP_INDEX:
+        {
+            // Home on encoder index
 
-        rt_printf("Finished homing at endstops");
+            //! Distance after which encoder index search is aborted.
+            //! Computed based on gear ratio to be 1.5 motor revolutions.
+            const double INDEX_SEARCH_DISTANCE_LIMIT_RAD =
+                (1.5 / motor_parameters_.gear_ratio) * 2 * M_PI;
+            //! Absolute step size when moving for encoder index search.
+            constexpr double INDEX_SEARCH_STEP_SIZE_RAD = 0.0003;
 
+            if (config_.calibration.endstop_search_torques_Nm.isZero())
+            {
+                rt_printf(
+                    "Invalid config: A homing method with index search is "
+                    "selected but 'endstop_search_torques_Nm' is zero.  The "
+                    "sign of 'endstop_search_torques_Nm' is used to determine "
+                    "the index search direction (opposite direction to end "
+                    "stop search).");
+                return false;
+            }
+
+            // Set the search direction for each joint opposite to the end-stop
+            // search direction.
+            Vector index_search_step_sizes;
+            for (unsigned int i = 0; i < N_JOINTS; i++)
+            {
+                index_search_step_sizes[i] = INDEX_SEARCH_STEP_SIZE_RAD;
+                if (config_.calibration.endstop_search_torques_Nm[i] > 0)
+                {
+                    index_search_step_sizes[i] *= -1;
+                }
+            }
+
+            homing_status =
+                joint_modules_.execute_homing(INDEX_SEARCH_DISTANCE_LIMIT_RAD,
+                                              config_.home_offset_rad,
+                                              index_search_step_sizes);
+
+            break;
+        }
+
+        case Config::HomingMethod::CURRENT_POSITION:
+        case Config::HomingMethod::ENDSTOP:
+        {
+            // Home at current position
+
+            homing_status = joint_modules_.execute_homing_at_current_position(
+                config_.home_offset_rad);
+
+            break;
+        }
+
+        case Config::HomingMethod::ENDSTOP_RELEASE:
+        {
+            // First set motors to zero torque (so they are not actively pushing
+            // anymore), then home at current position.
+
+            constexpr uint32_t NUM_ZERO_TORQUE_STEPS = 1000;
+
+            // release motors (set torque = 0) for a moment, so it is not
+            // actively pressing against the end-stop anymore.
+            Vector zero = Vector::Zero();
+            for (uint32_t i = 0; i < NUM_ZERO_TORQUE_STEPS; i++)
+            {
+                apply_action_uninitialized(zero);
+            }
+
+            // home at the current position (which should be at the end-stop)
+            homing_status = joint_modules_.execute_homing_at_current_position(
+                config_.home_offset_rad);
+
+            break;
+        }
     }
 
+    rt_printf("Finished homing.");
     return homing_status == blmc_drivers::HomingReturnCode::SUCCEEDED;
 }
 
@@ -775,7 +861,7 @@ bool NJBRD::move_to_position(const NJBRD::Vector &goal_pos,
 
     const auto initial_position = get_latest_observation().position;
 
-    for (int t = 0; t < time_steps; t++)
+    for (uint32_t t = 0; t < time_steps; t++)
     {
         double alpha = (double)t / (double)time_steps;
         auto step_goal = initial_position + (goal_pos - initial_position) *
