@@ -473,11 +473,11 @@ void NJBRD::shutdown()
     }
 
     // write number of actions to the run duration logs
-    std::cout << "Write run duration logs." << std::endl;
     int timestamp =
         static_cast<int>(real_time_tools::Timer::get_current_time_sec());
     for (const std::string &logfile_name : config_.run_duration_logfiles)
     {
+        std::cout << "Write run duration log " << logfile_name << std::endl;
         std::ofstream file(logfile_name, std::ios_base::app);
         if (!file)
         {
