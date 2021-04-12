@@ -1,6 +1,7 @@
 """ROS-related classes/functions."""
 import rclpy
 import rclpy.node
+import rclpy.qos
 from std_msgs.msg import String
 from std_srvs.srv import Empty
 
@@ -10,7 +11,19 @@ class NotificationNode(rclpy.node.Node):
 
     def __init__(self, name):
         super().__init__(name)
-        self._status_publisher = self.create_publisher(String, "~/status", 1)
+
+        # quality of service profile keep the last published message for late
+        # subscribers (like "latched" in ROS 1).
+        qos_profile = rclpy.qos.QoSProfile(
+            depth=1,
+            durability=rclpy.qos.DurabilityPolicy.TRANSIENT_LOCAL,
+            history=rclpy.qos.HistoryPolicy.KEEP_LAST,
+            reliability=rclpy.qos.ReliabilityPolicy.RELIABLE,
+        )
+
+        self._status_publisher = self.create_publisher(
+            String, "~/status", qos_profile
+        )
 
         self.shutdown_requested = False
         self._shutdown_srv = self.create_service(
