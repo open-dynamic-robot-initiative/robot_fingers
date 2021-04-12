@@ -84,7 +84,10 @@ def main():
     )
 
     if args.robot_logfile:
-        robot_logger = robot_interfaces.trifinger.Logger(robot_data)
+        robot_logger = robot_interfaces.trifinger.Logger(
+            robot_data, buffer_limit=args.max_number_of_actions
+        )
+        robot_logger.start()
 
     if cameras_enabled and args.camera_logfile:
         camera_fps = 10
@@ -125,13 +128,8 @@ def main():
 
     if args.robot_logfile:
         logger.info("Save robot data to file %s" % args.robot_logfile)
-        if args.max_number_of_actions:
-            end_index = args.max_number_of_actions
-        else:
-            end_index = -1
-
-        robot_logger.write_current_buffer_binary(
-            args.robot_logfile, start_index=0, end_index=end_index
+        robot_logger.stop_and_save(
+            args.robot_logfile, robot_interfaces.trifinger.Logger.Format.BINARY
         )
 
     rclpy.shutdown()
