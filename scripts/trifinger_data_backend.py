@@ -13,6 +13,12 @@ import robot_interfaces
 from robot_fingers.ros import NotificationNode
 
 
+# make sure camera time series covers at least one second
+CAMERA_TIME_SERIES_LENGTH = 15
+
+ROBOT_TIME_SERIES_LENGTH = 1000
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -68,9 +74,6 @@ def main():
     if cameras_enabled:
         logger.info("Start camera data")
 
-        # make sure camera time series covers at least one second
-        CAMERA_TIME_SERIES_LENGTH = 15
-
         camera_data = tricamera.MultiProcessData(
             "tricamera", True, CAMERA_TIME_SERIES_LENGTH
         )
@@ -78,9 +81,8 @@ def main():
     logger.info("Start robot data")
 
     # Storage for all observations, actions, etc.
-    history_size = args.max_number_of_actions + 1
     robot_data = robot_interfaces.trifinger.MultiProcessData(
-        "trifinger", True, history_size=history_size
+        "trifinger", True, history_size=ROBOT_TIME_SERIES_LENGTH
     )
 
     if args.robot_logfile:
