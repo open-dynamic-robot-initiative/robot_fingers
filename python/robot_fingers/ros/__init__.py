@@ -9,6 +9,9 @@ from std_srvs.srv import Empty
 class NotificationNode(rclpy.node.Node):
     """Simple ROS node for communication with other processes."""
 
+    _status_topic_name = "~/status"
+    _shutdown_service_name = "~/shutdown"
+
     def __init__(self, name):
         super().__init__(name)
 
@@ -22,12 +25,12 @@ class NotificationNode(rclpy.node.Node):
         )
 
         self._status_publisher = self.create_publisher(
-            String, "~/status", qos_profile
+            String, self._status_topic_name, qos_profile
         )
 
         self.shutdown_requested = False
         self._shutdown_srv = self.create_service(
-            Empty, "~/shutdown", self.shutdown_callback
+            Empty, self._shutdown_service_name, self.shutdown_callback
         )
 
     def shutdown_callback(self, request, response):
