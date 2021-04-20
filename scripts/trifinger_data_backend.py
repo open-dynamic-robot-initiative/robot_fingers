@@ -13,6 +13,12 @@ import robot_interfaces
 from robot_fingers.ros import NotificationNode
 
 
+# make sure camera time series covers at least one second
+CAMERA_TIME_SERIES_LENGTH = 15
+
+ROBOT_TIME_SERIES_LENGTH = 1000
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -68,9 +74,6 @@ def main():
     if cameras_enabled:
         logger.info("Start camera data")
 
-        # make sure camera time series covers at least one second
-        CAMERA_TIME_SERIES_LENGTH = 15
-
         camera_data = tricamera.MultiProcessData(
             "tricamera", True, CAMERA_TIME_SERIES_LENGTH
         )
@@ -78,13 +81,15 @@ def main():
     logger.info("Start robot data")
 
     # Storage for all observations, actions, etc.
-    history_size = args.max_number_of_actions + 1
     robot_data = robot_interfaces.trifinger.MultiProcessData(
-        "trifinger", True, history_size=history_size
+        "trifinger", True, history_size=ROBOT_TIME_SERIES_LENGTH
     )
 
     if args.robot_logfile:
-        robot_logger = robot_interfaces.trifinger.Logger(robot_data)
+        robot_logger = robot_interfaces.trifinger.Logger(
+            robot_data, buffer_limit=args.max_number_of_actions
+        )
+        robot_logger.start()
 
     if cameras_enabled and args.camera_logfile:
         camera_fps = 10
@@ -125,13 +130,8 @@ def main():
 
     if args.robot_logfile:
         logger.info("Save robot data to file %s" % args.robot_logfile)
-        if args.max_number_of_actions:
-            end_index = args.max_number_of_actions
-        else:
-            end_index = -1
-
-        robot_logger.write_current_buffer_binary(
-            args.robot_logfile, start_index=0, end_index=end_index
+        robot_logger.stop_and_save(
+            args.robot_logfile, robot_interfaces.trifinger.Logger.Format.BINARY
         )
 
     rclpy.shutdown()
