@@ -111,8 +111,15 @@ def main():
     node.publish_status("READY")
 
     if cameras_enabled and args.camera_logfile:
-        # wait for first action to be sent by the user
-        robot_data.desired_action.wait_for_timeindex(0)
+        # wait for first action to be sent by the user (but make sure to not
+        # block when shutdown is requested)
+        while (
+            not robot_data.desired_action.wait_for_timeindex(
+                0, max_duration_s=1
+            )
+            and not node.shutdown_requested
+        ):
+            rclpy.spin_once(node, timeout_sec=0)
 
         camera_logger.start()
         logger.info("Start camera logging")
