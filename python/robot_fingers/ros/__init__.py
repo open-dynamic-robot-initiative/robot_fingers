@@ -34,6 +34,9 @@ class NotificationNode(rclpy.node.Node):
         )
 
     def shutdown_callback(self, request, response):
+        self.get_logger().info(
+            "Node {} received shutdown request.".format(self.get_name())
+        )
         self.shutdown_requested = True
         return response
 
