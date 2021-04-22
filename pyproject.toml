@@ -1,0 +1,5 @@
+[tool.black]
+line-length = 79
+
+[tool.pylint.messages_control]
+disable = "C0330, C0326"
