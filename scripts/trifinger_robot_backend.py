@@ -105,6 +105,7 @@ def main():
 
     # wait until backend terminates or shutdown request is received
     while backend.is_running():
+        rclpy.spin_once(node, timeout_sec=1)
         if node.shutdown_requested:
             backend.request_shutdown()
             backend.wait_until_terminated()
