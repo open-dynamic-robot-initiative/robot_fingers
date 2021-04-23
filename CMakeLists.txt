@@ -99,6 +99,11 @@ add_pybind11_module(pybullet_drivers srcpy/pybullet_drivers.cpp
 set_target_properties(pybullet_drivers
     PROPERTIES CXX_VISIBILITY_PRESET hidden)
 
+add_pybind11_module(log_replay_driver srcpy/log_replay_driver.cpp
+    LINK_LIBRARIES ${PROJECT_NAME}
+        trifinger_platform_log
+)
+
 
 
 # Demo executable
