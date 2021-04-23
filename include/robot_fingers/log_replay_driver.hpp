@@ -88,6 +88,8 @@ public:
         // sleep for 100 ms to replicate camera rate of 10 Hz
         real_time_tools::Timer::sleep_ms(100.0);
 
+        // FIXME should check if t_ is valid here
+
         return log_.get_camera_observation(t_);
     }
 

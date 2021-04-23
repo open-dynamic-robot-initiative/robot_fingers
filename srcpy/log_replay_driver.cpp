@@ -13,7 +13,9 @@ using namespace robot_fingers;
 PYBIND11_MODULE(log_replay_driver, m)
 {
     pybind11::class_<TriFingerPlatformLogReplayDriver,
-                     std::shared_ptr<TriFingerPlatformLogReplayDriver>>(
+                     std::shared_ptr<TriFingerPlatformLogReplayDriver>,
+                     robot_interfaces::SensorDriver<
+                         TriFingerPlatformLog::CameraObservation> >(
         m, "TriFingerPlatformLogReplayDriver")
         .def(pybind11::init<const std::string&, const std::string&>());
 
