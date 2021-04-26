@@ -78,6 +78,13 @@ public:
     //! @brief Get the time index of the last time step in the log.
     time_series::Index get_last_timeindex() const;
 
+    //! @brief Get the raw camera log (not synchronised with the robot).
+    const robot_interfaces::SensorLogReader<CameraObservation>
+        &get_raw_camera_log() const;
+
+    //! @brief Get raw camera log index for a given time step.
+    int map_robot_to_camera_index(const time_series::Index t) const;
+
 private:
     robot_interfaces::TriFingerTypes::BinaryLogReader robot_log_;
     robot_interfaces::SensorLogReader<CameraObservation> camera_log_;

@@ -100,4 +100,16 @@ time_series::Index TriFingerPlatformLog::get_last_timeindex() const
     return robot_log_.data.back().timeindex;
 }
 
+const robot_interfaces::SensorLogReader<TriFingerPlatformLog::CameraObservation>
+    &TriFingerPlatformLog::get_raw_camera_log() const
+{
+    return camera_log_;
+}
+
+int TriFingerPlatformLog::map_robot_to_camera_index(
+    const time_series::Index t) const
+{
+    return map_robot_to_camera_index_.at(t - robot_log_start_index_);
+}
+
 }  // namespace robot_fingers
