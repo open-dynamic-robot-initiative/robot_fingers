@@ -33,8 +33,7 @@ public:
     TriFingerPlatformLogReplayDriver(const std::string &robot_log_file,
                                      const std::string &camera_log_file)
         : robot_interfaces::RobotDriver<Action, RobotObservation>(),
-          log_(robot_log_file, camera_log_file),
-          t_(0)
+          log_(robot_log_file, camera_log_file)
     {
     }
 
@@ -42,6 +41,10 @@ public:
     virtual RobotObservation get_latest_observation() override
     {
         time_series::Index t = t_;
+        // If the current time step is not contained in the log, return the
+        // first/last message of the log to have some meaningful return value
+        // but also set an error.  This will cause the robot back end to
+        // shut down.
         if (t_ < log_.get_first_timeindex())
         {
             t = log_.get_first_timeindex();
@@ -54,6 +57,10 @@ public:
             error_ = "Reached end of log (t = " + std::to_string(t) + ").";
         }
 
+        // set the "current" timestamp w.r.t. the log (used to determine when to
+        // publish the next camera observation)
+        robot_timestamp_ms_ = log_.get_timestamp_ms(t);
+
         return log_.get_robot_observation(t);
     }
 
@@ -61,7 +68,7 @@ public:
     {
         t_++;
 
-        // sleep for 1 ms to replicate timing behaviour of real robot driver
+        // sleep for 1 ms to replicate timing behaviour of the robot
         real_time_tools::Timer::sleep_ms(1.0);
 
         return desired_action;
@@ -74,29 +81,65 @@ public:
 
     void shutdown() override
     {
-        return;
+        is_shutdown_requested_ = true;
     }
 
     void initialize() override
     {
-        // reset the time index
-        t_ = 0;
+        // nothing to do here
+        return;
     }
 
     virtual CameraObservation get_observation() override
     {
-        // sleep for 100 ms to replicate camera rate of 10 Hz
-        real_time_tools::Timer::sleep_ms(100.0);
+        static int t =
+            log_.map_robot_to_camera_index(log_.get_first_timeindex());
+        static bool first_call = true;
 
-        // FIXME should check if t_ is valid here
+        // NOTE: log_.get_raw_camera_log().timestamps[t] is in ms
 
-        return log_.get_camera_observation(t_);
+        // Sleep until it's time to provide the next camera observation (using
+        // the robot log timestamp as reference)
+        // However, do not sleep in the first call of this method as the first
+        // camera observation should be provided immediately.
+        while (!is_shutdown_requested_ and !first_call and
+               robot_timestamp_ms_ < log_.get_raw_camera_log().timestamps[t])
+        {
+            real_time_tools::Timer::sleep_ms(1.0);
+        }
+        // TODO: the above results in no sleep happening anymore once the robot
+        // log reached it's end.  This is not really an issue but a bit ugly.
+
+        CameraObservation observation = log_.get_raw_camera_log().data.at(t);
+
+        // adjust frame timestamps so they roughly match with the observation
+        // timestamp (which is created when adding the observation to the time
+        // series)
+        double time_offset_ms = real_time_tools::Timer::get_current_time_ms() -
+                                log_.get_raw_camera_log().timestamps[t];
+        for (auto &frame : observation.cameras)
+        {
+            frame.timestamp += time_offset_ms / 1000.0;
+        }
+
+        if (t_ < log_.get_last_timeindex() &&
+            t < log_.get_raw_camera_log().data.size() - 1)
+        {
+            t++;
+        }
+
+        first_call = false;
+
+        return observation;
     }
 
 private:
     TriFingerPlatformLog log_;
-    time_series::Index t_;
+    time_series::Index t_ = 0;
+    double robot_timestamp_ms_ = 0.0;  // s or ms?
     std::string error_;
+
+    std::atomic<bool> is_shutdown_requested_ = false;
 };
 
 /**

@@ -51,11 +51,11 @@ def main():
     camera_backend = tricamera.Backend(driver, camera_data)
     camera_backend  # to silence unused warning
     camera_frontend = tricamera.Frontend(camera_data)
-    # camera_log_size = num_steps / 100 * 1.2
-    # camera_logger = tricamera.Logger(camera_data, camera_log_size)
+    camera_log_size = int(num_steps / 100 * 1.2)
+    camera_logger = tricamera.Logger(camera_data, camera_log_size)
 
     robot_backend.initialize()
-    # camera_logger.start()
+    camera_logger.start()
 
     Action = robot_interfaces.trifinger.Action
     try:
@@ -72,11 +72,11 @@ def main():
     except Exception as e:
         print("Error:", e)
 
+    if args.output_camera_log:
+        camera_logger.stop_and_save(args.output_camera_log)
     if args.output_robot_log:
-        robot_logger.save_current_robot_data(args.output_robot_log)
-
-    # if args.output_camera_log:
-    #     camera_logger.stop_and_save(args.output_camera_log)
+        robot_logger.save_current_robot_data(args.output_robot_log + ".csv")
+        robot_logger.save_current_robot_data_binary(args.output_robot_log)
 
 
 if __name__ == "__main__":
