@@ -15,23 +15,25 @@ def main():
 
     log = robot_fingers.TriFingerPlatformLog(args.robot_log, args.camera_log)
 
-    robot_timestamps = []
-    camera_timestamps = []
+    robot_timestamps_ms = []
+    camera_timestamps_ms = []
 
     # iterate over all robot time steps in the log
     for t in range(log.get_first_timeindex(), log.get_last_timeindex() + 1):
-        robot_timestamps.append(log.get_timestamp_ms(t))
+        robot_timestamps_ms.append(log.get_timestamp_ms(t))
 
         # show images of camera180
         try:
             camera_observation = log.get_camera_observation(t)
-            camera_timestamps.append(camera_observation.cameras[0].timestamp)
+            camera_timestamps_ms.append(
+                camera_observation.cameras[0].timestamp * 1000.0
+            )
         except Exception as e:
             print(e)
-            camera_timestamps.append(0)
+            camera_timestamps_ms.append(0)
 
-    plt.plot(robot_timestamps, label="robot")
-    plt.plot(camera_timestamps, label="camera")
+    plt.plot(robot_timestamps_ms, label="robot")
+    plt.plot(camera_timestamps_ms, label="camera")
     plt.legend()
     plt.show()
 
