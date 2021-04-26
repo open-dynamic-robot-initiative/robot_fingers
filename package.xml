@@ -22,7 +22,6 @@
   <depend>yaml_utils</depend>
 
   <build_depend>mpi_cmake_modules</build_depend>
-  <build_depend>pybind11_vendor</build_depend>
   <build_depend>pybind11</build_depend>
 
   <exec_depend>ament_index_python</exec_depend>
