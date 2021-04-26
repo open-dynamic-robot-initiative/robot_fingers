@@ -19,11 +19,11 @@
 namespace robot_fingers
 {
 class TriFingerPlatformLogReplayDriver
-    : public robot_interfaces::RobotDriver<
+    : public robot_interfaces::SensorDriver<
+          TriFingerPlatformLog::CameraObservation>,
+      public robot_interfaces::RobotDriver<
           TriFingerPlatformLog::Action,
-          TriFingerPlatformLog::RobotObservation>,
-      public robot_interfaces::SensorDriver<
-          TriFingerPlatformLog::CameraObservation>
+          TriFingerPlatformLog::RobotObservation>
 {
 public:
     typedef TriFingerPlatformLog::Action Action;
