@@ -9,5 +9,3 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
       - uses: psf/black@master
-        with:
-            black_args: "--check --diff --line-length=79"
