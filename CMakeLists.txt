@@ -232,7 +232,7 @@ endif()
 
 
 # Building documentation
-add_doxygen_documentation()
+add_documentation()
 
 
 ament_export_include_directories(include)
