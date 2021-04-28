@@ -14,21 +14,21 @@ system (as it is happening when building a mounted workspace).
 Get our Singularity Image
 -------------------------
 
-We provide a Singularity image with Ubuntu 18.04 with all dependencies needed to
+We provide a Singularity image with Ubuntu 20.04 with all dependencies needed to
 build and run the software here:
 
-- [Download Singularity Image](https://drive.google.com/file/d/1yJ_RI1GpnPcs_fxcNYYUXZtQPHvhlGNH/view?usp=sharing)
+- [Download Singularity Image](https://owncloud.tuebingen.mpg.de/index.php/s/ZimcR7p2PPWq4Nr)
 
 
 Install Singularity
 -------------------
 
-We are using Singularity version 3.6. Other recent versions are probably
+We are using Singularity version 3.7. Other recent versions are probably
 also so fine, however, we cannot guarantee compatibility for those.
 Unfortunately, most versions of Ubuntu still provide Singularity version
 2.x in their official repositories. A newer version can be installed
 from source in this case. For this you may follow the [official installation
-instructions](https://sylabs.io/guides/3.6/user-guide/quick_start.html#quick-installation-steps)
+instructions](https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps)
 or use the following, slightly simplified instructions (assuming you are working
 with Ubuntu).
 
@@ -58,8 +58,8 @@ see below).
 
 Now download and unpack the singularity source:
 
-    wget https://github.com/sylabs/singularity/releases/download/v3.6.1/singularity-3.6.1.tar.gz
-    tar -xzf singularity-3.6.1.tar.gz
+    wget https://github.com/sylabs/singularity/releases/download/v3.7.1/singularity-3.7.1.tar.gz
+    tar -xzf singularity-3.7.1.tar.gz
 
 And finally build and install it:
 
@@ -72,9 +72,9 @@ And finally build and install it:
 
 Now you should be able to use Singularity. You can test this, for
 example, by running `singularity --version` which should print
-"singularity version 3.6.1". For more information on how to use
+"singularity version 3.7.1". For more information on how to use
 Singularity, see the [official
-documentation](https://sylabs.io/guides/3.6/user-guide/index.html).
+documentation](https://sylabs.io/guides/3.7/user-guide/index.html).
 
 
 Run Something in the Container
@@ -107,10 +107,9 @@ The arguments explained:
 - `-e` (short for `--cleanenv`) prevents environment variables to be
   exported.
 - `--no-home` prevents your home directory from being bound.
-- `-B $(pwd)` explicitly binds the current working directory.  This should
-  normally not be necessary but Singularity 3.6 seems to have a bug that the PWD
-  is not bound automatically if it is somewhere inside your home directory and
-  `--no-home` is used.
+- `-B $(pwd)` explicitly binds the current working directory.  This is needed if
+  the working directory is inside your home directory as otherwise it is
+  excluded by the `--no-home`.
 
 Note that with the above the current working directory is still bound in the
 image, so it is possible to build/modify the workspace from the host-system when
@@ -147,7 +146,7 @@ To extend the image, create *definition file* like the following:
         apt-get install -y package_name
 
 See the official [Documentation for Definition
-Files](https://sylabs.io/guides/3.6/user-guide/definition_files.html)
+Files](https://sylabs.io/guides/3.7/user-guide/definition_files.html)
 for all options in the definition file.
 
 Assuming you called your definition file `user_image.def`, use the
