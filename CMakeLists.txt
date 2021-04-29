@@ -174,6 +174,7 @@ install_scripts(
     scripts/trifinger_backend.py
     scripts/trifinger_data_backend.py
     scripts/trifinger_robot_backend.py
+    scripts/trifinger_log_replay_backend.py
     scripts/trifingerpro_offset_calibration.py
     scripts/trifingerpro_post_submission.py
     scripts/trifingerpro_print_push_sensor.py
