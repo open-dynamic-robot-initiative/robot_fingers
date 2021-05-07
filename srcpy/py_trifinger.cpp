@@ -38,14 +38,18 @@ PYBIND11_MODULE(py_trifinger, m)
 
     // needed for bindings of camera observations
     pybind11::module::import("trifinger_object_tracking.py_tricamera_types");
+    auto trifinger_types =
+        pybind11::module::import("robot_interfaces.py_trifinger_types");
 
     bind_create_backend<TriFingerDriver>(m, "create_trifinger_backend");
     bind_driver_config<TriFingerDriver>(m, "TriFingerConfig");
 
     pybind11::class_<TriFingerPlatformFrontend,
-                     std::shared_ptr<TriFingerPlatformFrontend>>(
-        m, "TriFingerPlatformFrontend")
-        .def(pybind11::init<>())
+                     std::shared_ptr<TriFingerPlatformFrontend>>
+        PyTriFingerPlatformFrontend(m, "TriFingerPlatformFrontend");
+    // expose the "Action" typedef to Python
+    PyTriFingerPlatformFrontend.attr("Action") = trifinger_types.attr("Action");
+    PyTriFingerPlatformFrontend.def(pybind11::init<>())
         .def("append_desired_action",
              &TriFingerPlatformFrontend::append_desired_action,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
