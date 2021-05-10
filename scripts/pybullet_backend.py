@@ -1,27 +1,24 @@
 #!/usr/bin/env python3
-"""Run robot_interfaces Backend for pyBullet using multi-process robot data."""
+"""Run robot_interfaces Backend for pyBullet using multi-process robot data.
+
+This is intended to be used together with trifinger_data_backend.py and can
+serve as a replacement for the real robot backend.
+"""
 import argparse
 import logging
 import math
-import pathlib
 import sys
 
+import rclpy
+
 import robot_interfaces
-from trifinger_simulation import (
-    collision_objects,
-    finger_types_data,
-)
+from trifinger_simulation import collision_objects
 import robot_fingers.pybullet_drivers as drivers
+from robot_fingers.ros import NotificationNode
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--finger-type",
-        choices=finger_types_data.get_valid_finger_types(),
-        required=True,
-        help="""Pass a valid finger type.""",
-    )
     parser.add_argument(
         "--real-time-mode",
         "-r",
@@ -49,29 +46,6 @@ def main():
         """,
     )
     parser.add_argument(
-        "--robot-logfile",
-        "-l",
-        type=str,
-        help="""Path to a file to which the robot data log is written.  If not
-            specified, no log is generated.
-        """,
-    )
-    parser.add_argument(
-        "--camera-logfile",
-        type=str,
-        help="""Path to a file to which the camera data log is written.  If not
-            specified, no log is generated.
-        """,
-    )
-    parser.add_argument(
-        "--ready-indicator",
-        type=str,
-        metavar="READY_INDICATOR_FILE",
-        help="""Path to a file that will be created once the backend is ready
-            and will be deleted again when it stops (before storing the logs).
-        """,
-    )
-    parser.add_argument(
         "--add-cube",
         action="store_true",
         help="""Spawn a cube and run the object tracker backend.""",
@@ -89,40 +63,15 @@ def main():
     )
     args = parser.parse_args()
 
-    # configure the logging module
-    log_handler = logging.StreamHandler(sys.stdout)
-    logging.basicConfig(
-        format="[SIM_TRIFINGER_BACKEND %(levelname)s %(asctime)s] %(message)s",
-        level=logging.DEBUG,
-        handlers=[log_handler],
+    rclpy.init()
+    node = NotificationNode("trifinger_backend")
+    logger = node.get_logger()
+
+    robot_data = robot_interfaces.trifinger.MultiProcessData(
+        "trifinger", False
     )
 
-    # select the correct types/functions based on which robot is used
-    num_fingers = finger_types_data.get_number_of_fingers(args.finger_type)
-    if num_fingers == 1:
-        shared_memory_id = "finger"
-        finger_types = robot_interfaces.finger
-        create_backend = drivers.create_single_finger_backend
-    elif num_fingers == 3:
-        shared_memory_id = "trifinger"
-        finger_types = robot_interfaces.trifinger
-        create_backend = drivers.create_trifinger_backend
-
-    # If max_number_of_actions is set, choose the history size of the time
-    # series such that the whole episode fits in (+1 for the status message
-    # containing the "limit exceeded" error).
-    if args.max_number_of_actions:
-        history_size = args.max_number_of_actions + 1
-    else:
-        history_size = 1000
-
-    robot_data = finger_types.MultiProcessData(
-        shared_memory_id, True, history_size=history_size
-    )
-
-    robot_logger = finger_types.Logger(robot_data)
-
-    backend = create_backend(
+    backend = drivers.create_trifinger_backend(
         robot_data,
         args.real_time_mode,
         args.visualize,
@@ -141,7 +90,7 @@ def main():
         # PyBulletTriCameraDriver.
         from trifinger_cameras import tricamera
 
-        camera_data = tricamera.MultiProcessData("tricamera", True, 10)
+        camera_data = tricamera.MultiProcessData("tricamera", False)
         camera_driver = tricamera.PyBulletTriCameraDriver()
         camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
 
@@ -152,90 +101,51 @@ def main():
         import trifinger_object_tracking.py_tricamera_types as tricamera
 
         # spawn a cube in the centre of the arena
-        cube = collision_objects.Cuboid(
-            position=[0.0, 0.0, 0.01],
+        cube = collision_objects.ColoredCubeV2(
+            position=[0.0, 0.0, 0.0325],
             orientation=[0, 0, 0, 1],
-            half_extents=[0.01, 0.04, 0.01],
-            mass=0.016,
         )
 
         render_images = args.cameras
 
-        camera_data = tricamera.MultiProcessData("tricamera", True, 10)
+        camera_data = tricamera.MultiProcessData("tricamera", False)
         camera_driver = tricamera.PyBulletTriCameraObjectTrackerDriver(
             cube, robot_data, render_images
         )
         camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
 
-    #
-    # Camera/Object Logger
-    #
-    camera_logger = None
-    if args.camera_logfile:
-        try:
-            camera_data
-        except NameError:
-            logging.critical("Cannot create camera log camera is not running.")
-            return
+    logger.info("Robot Simulation backend is ready")
 
-        # TODO
-        camera_fps = 10
-        robot_rate_hz = 1000
-        buffer_length_factor = 1.5
-        episode_length_s = args.max_number_of_actions / robot_rate_hz
-        # Compute camera log size based on number of robot actions plus some
-        # safety buffer
-        log_size = int(camera_fps * episode_length_s * buffer_length_factor)
+    # send ready signal
+    node.publish_status("READY")
 
-        logging.info("Initialize camera logger with buffer size %d", log_size)
-        camera_logger = tricamera.Logger(camera_data, log_size)
-
-    # if specified, create the "ready indicator" file to indicate that the
-    # backend is ready
-    if args.ready_indicator:
-        pathlib.Path(args.ready_indicator).touch()
-
-    backend.wait_until_first_action()
-
-    if camera_logger:
-        camera_logger.start()
-        logging.info("Start camera logging")
-
-    backend.wait_until_terminated()
-
-    # delete the ready indicator file to indicate that the backend has shut
-    # down
-    if args.ready_indicator:
-        pathlib.Path(args.ready_indicator).unlink()
-
-    if camera_logger:
-        logging.info(
-            "Save recorded camera data to file %s", args.camera_logfile
-        )
-        camera_logger.stop_and_save(args.camera_logfile)
+    # wait until backend terminates or shutdown request is received
+    while backend.is_running():
+        rclpy.spin_once(node, timeout_sec=1)
+        if node.shutdown_requested:
+            backend.request_shutdown()
+            backend.wait_until_terminated()
+            break
 
     if camera_data:
         # stop the camera backend
         logging.info("Stop camera backend")
         camera_backend.shutdown()
 
-    if args.robot_logfile:
-        logging.info("Save robot data to file %s", args.robot_logfile)
-        if args.max_number_of_actions:
-            end_index = args.max_number_of_actions
-        else:
-            end_index = -1
-
-        robot_logger.write_current_buffer_binary(
-            args.robot_logfile, start_index=0, end_index=end_index
-        )
+    termination_reason = backend.get_termination_reason()
+    logger.debug("Backend termination reason: %d" % termination_reason)
 
     # cleanup stuff before the simulation (backend) is terminated
     if args.add_cube:
         del cube
 
-    logging.info("Done.")
+    rclpy.shutdown()
+    if termination_reason < 0:
+        # negate code as exit codes should be positive
+        return -termination_reason
+    else:
+        return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
