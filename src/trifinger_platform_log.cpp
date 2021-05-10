@@ -74,7 +74,8 @@ TriFingerPlatformLog::RobotStatus TriFingerPlatformLog::get_robot_status(
 time_series::Timestamp TriFingerPlatformLog::get_timestamp_ms(
     const time_series::Index &t) const
 {
-    return robot_log_.data.at(t - robot_log_start_index_).timestamp;
+    // the timestamp in the log is in seconds
+    return robot_log_.data.at(t - robot_log_start_index_).timestamp * 1000.0;
 }
 
 TriFingerPlatformLog::CameraObservation
