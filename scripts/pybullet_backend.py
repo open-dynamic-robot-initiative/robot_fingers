@@ -46,9 +46,12 @@ def main():
         """,
     )
     parser.add_argument(
-        "--add-cube",
-        action="store_true",
-        help="""Spawn a cube and run the object tracker backend.""",
+        "--object",
+        type=str,
+        choices=["cube", "dice", "none"],
+        default="cube",
+        metavar="OBJECT_TYPE",
+        help="Which type of object to use (if any).",
     )
     parser.add_argument(
         "--cameras",
@@ -85,7 +88,7 @@ def main():
     # Important:  These objects need to be created _after_ the simulation is
     # initialized (i.e. after the SimFinger instance is created).
     #
-    if args.cameras and not args.add_cube:
+    if args.cameras and args.object != "cube":
         # If cameras are enabled but not the object, use the normal
         # PyBulletTriCameraDriver.
         from trifinger_cameras import tricamera
@@ -94,7 +97,7 @@ def main():
         camera_driver = tricamera.PyBulletTriCameraDriver()
         camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
 
-    elif args.add_cube:
+    elif args.object == "cube":
         # If the cube is enabled, use the PyBulletTriCameraObjectTrackerDriver.
         # In case the cameras are not requested, disable rendering of the
         # images to save time.
@@ -113,6 +116,22 @@ def main():
             cube, robot_data, render_images
         )
         camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
+
+    if args.object == "dice":
+        from trifinger_simulation.tasks import rearrange_dice
+        from trifinger_simulation.sim_finger import int_to_rgba
+        die_mass = 0.012
+        # use a random goal for initial positions
+        initial_positions = rearrange_dice.sample_goal()
+        dice = [
+            collision_objects.Cube(
+                position=pos,
+                half_width=rearrange_dice.DIE_WIDTH / 2,
+                mass=die_mass,
+                color_rgba=int_to_rgba(0x0A7DCF),
+            )
+            for pos in initial_positions
+        ]
 
     logger.info("Robot Simulation backend is ready")
 
@@ -136,8 +155,10 @@ def main():
     logger.debug("Backend termination reason: %d" % termination_reason)
 
     # cleanup stuff before the simulation (backend) is terminated
-    if args.add_cube:
+    if args.object == "cube":
         del cube
+    elif args.object == "dice":
+        del dice[:]
 
     rclpy.shutdown()
     if termination_reason < 0:
