@@ -48,17 +48,17 @@ target_link_libraries(${PROJECT_NAME} INTERFACE
 )
 
 
-add_library(trifinger_platform_frontend
-    src/trifinger_platform_frontend.cpp
-)
-target_include_directories(trifinger_platform_frontend PUBLIC
+add_library(trifinger_platform_frontend INTERFACE)
+target_include_directories(trifinger_platform_frontend INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(trifinger_platform_frontend
+target_link_libraries(trifinger_platform_frontend INTERFACE
     ${OpenCV_LIBRARIES}
     robot_interfaces::robot_interfaces
+    # FIXME linking against whole detector, only for observation?
     trifinger_object_tracking::cube_detector
+    trifinger_cameras::camera_observations
 )
 
 add_library(trifinger_platform_log
@@ -113,8 +113,6 @@ target_link_libraries(demo_trifinger_platform
 
 
 # Installation
-ament_export_interfaces(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
-
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION include/${PROJECT_NAME})
 
@@ -235,9 +233,10 @@ endif()
 add_documentation()
 
 
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_export_include_directories(include)
 ament_export_libraries(
-    trifinger_platform_frontend
+    # trifinger_platform_frontend
     trifinger_platform_log
 )
 ament_export_dependencies(
