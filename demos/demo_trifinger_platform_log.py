@@ -5,7 +5,6 @@ import argparse
 import cv2
 
 import robot_fingers
-import trifinger_cameras  # noqa  -- needed for camera observation
 from trifinger_cameras import utils
 
 
@@ -23,8 +22,8 @@ def main():
         # TriFingerPlatformFrontend:
 
         robot_observation = log.get_robot_observation(t)
-        # print position of the first finger
-        print(robot_observation.position[:3])
+        # print time index and position of the first finger
+        print("%d - %s" % (t, robot_observation.position[:3]))
 
         # show images of camera180
         try:
@@ -33,7 +32,10 @@ def main():
                 "camera180",
                 utils.convert_image(camera_observation.cameras[1].image),
             )
-            cv2.waitKey(1)
+            key = cv2.waitKey(1)
+
+            if key == ord("q"):
+                return
         except Exception as e:
             print(e)
 
