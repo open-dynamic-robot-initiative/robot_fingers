@@ -12,9 +12,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("robot_log", type=str, help="Robot log file")
     parser.add_argument("camera_log", type=str, help="Camera log file")
+    parser.add_argument(
+        "--with-object",
+        action="store_true",
+        help="Set this if the camera observations contain an object pose.",
+    )
     args = parser.parse_args()
 
-    log = robot_fingers.TriFingerPlatformLog(args.robot_log, args.camera_log)
+    if args.with_object:
+        Log = robot_fingers.TriFingerPlatformWithObjectLog
+    else:
+        Log = robot_fingers.TriFingerPlatformLog
+
+    log = Log(args.robot_log, args.camera_log)
 
     # iterate over all robot time steps in the log
     for t in range(log.get_first_timeindex(), log.get_last_timeindex() + 1):

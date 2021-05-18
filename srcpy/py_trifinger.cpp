@@ -82,7 +82,7 @@ void pybind_trifinger_platform_frontend(pybind11::module &m,
              &T::get_camera_observation,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              R"XXX(
-                get_camera_observation(t: int) -> trifinger_object_tracking.py_tricamera_types.TriCameraObjectObservation
+                get_camera_observation(t: int)
 
                 Get camera images of time step t.
 
@@ -167,29 +167,12 @@ void pybind_trifinger_platform_frontend(pybind11::module &m,
 )XXX");
 }
 
-PYBIND11_MODULE(py_trifinger, m)
+template <typename T>
+void pybind_trifinger_platform_log(pybind11::module &m, const std::string &name)
 {
-    pybind11::options options;
-    // disable automatic function signature generation as this does not look too
-    // nice in the Sphinx documentation.
-    options.disable_function_signatures();
-
-    // needed for bindings of camera observations
-    pybind11::module::import("trifinger_object_tracking.py_tricamera_types");
-
-    bind_create_backend<TriFingerDriver>(m, "create_trifinger_backend");
-    bind_driver_config<TriFingerDriver>(m, "TriFingerConfig");
-
-    pybind_trifinger_platform_frontend<TriFingerPlatformFrontend>(
-        m, "TriFingerPlatformFrontend");
-    pybind_trifinger_platform_frontend<TriFingerPlatformWithObjectFrontend>(
-        m, "TriFingerPlatformWithObjectFrontend");
-
-    pybind11::class_<TriFingerPlatformLog,
-                     std::shared_ptr<TriFingerPlatformLog>>(
-        m,
-        "TriFingerPlatformLog",
-        R"XXX(
+    pybind11::class_<T, std::shared_ptr<T>>(m,
+                                            name.c_str(),
+                                            R"XXX(
         TriFingerPlatformLog(robot_log_file: str, camera_log_file: str)
 
         Load robot and camera log and match observations like during runtime.
@@ -212,7 +195,7 @@ PYBIND11_MODULE(py_trifinger, m)
              "robot_log_file"_a,
              "camera_log_file"_a)
         .def("get_robot_observation",
-             &TriFingerPlatformLog::get_robot_observation,
+             &T::get_robot_observation,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              "t"_a,
              R"XXX(
@@ -221,16 +204,16 @@ PYBIND11_MODULE(py_trifinger, m)
                 Get robot observation of time step t.
 )XXX")
         .def("get_camera_observation",
-             &TriFingerPlatformLog::get_camera_observation,
+             &T::get_camera_observation,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              "t"_a,
              R"XXX(
-                get_camera_observation(t: int) -> trifinger_object_tracking.py_tricamera_types.TriCameraObjectObservation
+                get_camera_observation(t: int)
 
                 Get camera observation of robot time step t.
 )XXX")
         .def("get_desired_action",
-             &TriFingerPlatformLog::get_desired_action,
+             &T::get_desired_action,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              "t"_a,
              R"XXX(
@@ -239,7 +222,7 @@ PYBIND11_MODULE(py_trifinger, m)
                 Get desired action of time step t.
 )XXX")
         .def("get_applied_action",
-             &TriFingerPlatformLog::get_applied_action,
+             &T::get_applied_action,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              "t"_a,
              R"XXX(
@@ -248,7 +231,7 @@ PYBIND11_MODULE(py_trifinger, m)
                 Get actually applied action of time step t.
 )XXX")
         .def("get_robot_status",
-             &TriFingerPlatformLog::get_robot_status,
+             &T::get_robot_status,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              "t"_a,
              R"XXX(
@@ -257,7 +240,7 @@ PYBIND11_MODULE(py_trifinger, m)
                 Get robot status of time step t.
 )XXX")
         .def("get_timestamp_ms",
-             &TriFingerPlatformLog::get_timestamp_ms,
+             &T::get_timestamp_ms,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              "t"_a,
              R"XXX(
@@ -266,7 +249,7 @@ PYBIND11_MODULE(py_trifinger, m)
                 Get timestamp (in milliseconds) of time step t.
 )XXX")
         .def("get_first_timeindex",
-             &TriFingerPlatformLog::get_first_timeindex,
+             &T::get_first_timeindex,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              R"XXX(
                 get_first_timeindex() -> int
@@ -274,11 +257,35 @@ PYBIND11_MODULE(py_trifinger, m)
                 Get the first time index in the log file.
 )XXX")
         .def("get_last_timeindex",
-             &TriFingerPlatformLog::get_last_timeindex,
+             &T::get_last_timeindex,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              R"XXX(
                 get_last_timeindex() -> int
 
                 Get the last time index in the log file.
 )XXX");
+}
+
+PYBIND11_MODULE(py_trifinger, m)
+{
+    pybind11::options options;
+    // disable automatic function signature generation as this does not look too
+    // nice in the Sphinx documentation.
+    options.disable_function_signatures();
+
+    // needed for bindings of camera observations
+    pybind11::module::import("trifinger_object_tracking.py_tricamera_types");
+
+    bind_create_backend<TriFingerDriver>(m, "create_trifinger_backend");
+    bind_driver_config<TriFingerDriver>(m, "TriFingerConfig");
+
+    pybind_trifinger_platform_frontend<TriFingerPlatformFrontend>(
+        m, "TriFingerPlatformFrontend");
+    pybind_trifinger_platform_frontend<TriFingerPlatformWithObjectFrontend>(
+        m, "TriFingerPlatformWithObjectFrontend");
+
+    pybind_trifinger_platform_log<TriFingerPlatformLog>(m,
+                                                        "TriFingerPlatformLog");
+    pybind_trifinger_platform_log<TriFingerPlatformWithObjectLog>(
+        m, "TriFingerPlatformWithObjectLog");
 }
