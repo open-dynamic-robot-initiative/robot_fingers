@@ -56,7 +56,21 @@ def main():
     parser.add_argument(
         "--cameras",
         action="store_true",
-        help="""Run camera backend using rendered images.""",
+        help="""Run camera backend providing observations.  Note that by
+            default images in the observations are not rendered for performance
+            reasons.  To enable rendering set --render-images.  If
+            --object=cube is set, TriCameraObjectObservations are provided
+            (which include the object pose), otherwise normal
+            TriCameraObservations are used.""",
+    )
+    parser.add_argument(
+        "--render-images",
+        action="store_true",
+        help="""Render camera images.  If cameras are enabled without this
+            being set, camera observations are provided but the actual images
+            in the observations will be uninitialised.  Rendering is rather
+            slow, so don't enable this if you need the simulation to run in
+            more or less real-time.""",
     )
     parser.add_argument(
         "--visualize",
@@ -84,42 +98,18 @@ def main():
     backend.initialize()
 
     #
-    # Camera and Object Tracker Interface
-    # Important:  These objects need to be created _after_ the simulation is
-    # initialized (i.e. after the SimFinger instance is created).
+    # Add object to simulation
     #
-    if args.cameras and args.object != "cube":
-        # If cameras are enabled but not the object, use the normal
-        # PyBulletTriCameraDriver.
-        from trifinger_cameras import tricamera
-
-        camera_data = tricamera.MultiProcessData("tricamera", False)
-        camera_driver = tricamera.PyBulletTriCameraDriver()
-        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
-
-    elif args.object == "cube":
-        # If the cube is enabled, use the PyBulletTriCameraObjectTrackerDriver.
-        # In case the cameras are not requested, disable rendering of the
-        # images to save time.
-        import trifinger_object_tracking.py_tricamera_types as tricamera
-
+    if args.object == "cube":
         # spawn a cube in the centre of the arena
         cube = collision_objects.ColoredCubeV2(
             position=[0.0, 0.0, 0.0325],
             orientation=[0, 0, 0, 1],
         )
-
-        render_images = args.cameras
-
-        camera_data = tricamera.MultiProcessData("tricamera", False)
-        camera_driver = tricamera.PyBulletTriCameraObjectTrackerDriver(
-            cube, robot_data, render_images
-        )
-        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
-
-    if args.object == "dice":
+    elif args.object == "dice":
         from trifinger_simulation.tasks import rearrange_dice
         from trifinger_simulation.sim_finger import int_to_rgba
+
         die_mass = 0.012
         # use a random goal for initial positions
         initial_positions = rearrange_dice.sample_goal()
@@ -132,6 +122,34 @@ def main():
             )
             for pos in initial_positions
         ]
+
+    #
+    # Camera and Object Tracker Interface
+    # Important:  These objects need to be created _after_ the simulation is
+    # initialized (i.e. after the SimFinger instance is created).
+    #
+    if args.cameras:
+        if args.object == "cube":
+            # If the cube is enabled, use the
+            # PyBulletTriCameraObjectTrackerDriver.
+            import trifinger_object_tracking.py_tricamera_types as tricamera
+
+            camera_data = tricamera.MultiProcessData("tricamera", False)
+            camera_driver = tricamera.PyBulletTriCameraObjectTrackerDriver(
+                cube, robot_data, args.render_images
+            )
+            camera_backend = tricamera.Backend(camera_driver, camera_data)
+
+        else:
+            # If cameras are enabled but not the object, use the normal
+            # PyBulletTriCameraDriver.
+            from trifinger_cameras import tricamera
+
+            camera_data = tricamera.MultiProcessData("tricamera", False)
+            camera_driver = tricamera.PyBulletTriCameraDriver(
+                robot_data, render_images=args.render_images
+            )
+            camera_backend = tricamera.Backend(camera_driver, camera_data)
 
     logger.info("Robot Simulation backend is ready")
 
@@ -146,7 +164,7 @@ def main():
             backend.wait_until_terminated()
             break
 
-    if camera_data:
+    if args.cameras:
         # stop the camera backend
         logging.info("Stop camera backend")
         camera_backend.shutdown()
