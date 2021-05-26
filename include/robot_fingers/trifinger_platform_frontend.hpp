@@ -6,10 +6,9 @@
  */
 #pragma once
 
-// TODO move to a separate package to not add unnecessary dependencies to
-// robot_fingers?
 #include <robot_interfaces/finger_types.hpp>
 #include <robot_interfaces/sensors/sensor_frontend.hpp>
+#include <trifinger_cameras/tricamera_observation.hpp>
 #include <trifinger_object_tracking/tricamera_object_observation.hpp>
 
 namespace robot_fingers
@@ -17,8 +16,8 @@ namespace robot_fingers
 /**
  * @brief Combined frontend for the TriFinger Platform
  *
- * This class combines the frontends for robot, cameras and object tracking in
- * one class using unified time indices.
+ * This class combines the frontends for robot and cameras in one class using
+ * unified time indices.
  *
  * Internally the different frontends all have their own time indices which are
  * unrelated to each other.  In this combined class, the time index used is the
@@ -28,15 +27,17 @@ namespace robot_fingers
  *
  * @todo Methods to get timestamp from camera or object tracker?
  */
-class TriFingerPlatformFrontend
+template <typename CameraObservation_t>
+class T_TriFingerPlatformFrontend
 {
 public:
     // typedefs for easy access
     typedef robot_interfaces::TriFingerTypes::Action Action;
     typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
     typedef robot_interfaces::Status RobotStatus;
-    typedef trifinger_object_tracking::TriCameraObjectObservation
-        CameraObservation;
+    // typedef trifinger_object_tracking::TriCameraObjectObservation
+    //    CameraObservation;
+    typedef CameraObservation_t CameraObservation;
 
     /**
      * @brief Initialize with data instances for all internal frontends.
@@ -46,10 +47,13 @@ public:
      *     tracker frontend.
      * @param camera_data SensorData instance, used by the camera frontend.
      */
-    TriFingerPlatformFrontend(
+    T_TriFingerPlatformFrontend(
         robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
         std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
-            camera_data);
+            camera_data)
+        : robot_frontend_(robot_data), camera_frontend_(camera_data)
+    {
+    }
 
     /**
      * @brief Initialize with default data instances.
@@ -58,7 +62,17 @@ public:
      * instance with the default shared memory ID for the corresponding data
      * type.
      */
-    TriFingerPlatformFrontend();
+    T_TriFingerPlatformFrontend()
+        : robot_frontend_(std::make_shared<
+                          robot_interfaces::TriFingerTypes::MultiProcessData>(
+              "trifinger", false)),
+          camera_frontend_(
+              std::make_shared<
+                  robot_interfaces::MultiProcessSensorData<CameraObservation>>(
+                  "tricamera", false))
+
+    {
+    }
 
     /**
      * @brief Append a desired robot action to the action queue.
@@ -67,49 +81,73 @@ public:
      * @return The index of the time step at which this action is going to be
      *     executed.
      */
-    time_series::Index append_desired_action(const Action &desired_action);
+    time_series::Index append_desired_action(const Action &desired_action)
+    {
+        return robot_frontend_.append_desired_action(desired_action);
+    }
 
     /**
      * @brief Get robot observation of the time step t.
      * @see robot_interfaces::TriFingerTypes::Frontend::get_observation
      */
-    RobotObservation get_robot_observation(const time_series::Index &t) const;
+    RobotObservation get_robot_observation(const time_series::Index &t) const
+    {
+        return robot_frontend_.get_observation(t);
+    }
 
     /**
      * @brief Get desired action of time step t.
      * @see robot_interfaces::TriFingerTypes::Frontend::get_desired_action
      */
-    Action get_desired_action(const time_series::Index &t) const;
+    Action get_desired_action(const time_series::Index &t) const
+    {
+        return robot_frontend_.get_desired_action(t);
+    }
 
     /**
      * @brief Get actually applied action of time step t.
      * @see robot_interfaces::TriFingerTypes::Frontend::get_applied_action
      */
-    Action get_applied_action(const time_series::Index &t) const;
+    Action get_applied_action(const time_series::Index &t) const
+    {
+        return robot_frontend_.get_applied_action(t);
+    }
 
     /**
      * @brief Get robot status of time step t.
      * @see robot_interfaces::TriFingerTypes::Frontend::get_status
      */
-    RobotStatus get_robot_status(const time_series::Index &t) const;
+    RobotStatus get_robot_status(const time_series::Index &t) const
+    {
+        return robot_frontend_.get_status(t);
+    }
 
     /**
      * @brief Get timestamp (in milliseconds) of time step t.
      * @see robot_interfaces::TriFingerTypes::Frontend::get_timestamp_ms
      */
-    time_series::Timestamp get_timestamp_ms(const time_series::Index &t) const;
+    time_series::Timestamp get_timestamp_ms(const time_series::Index &t) const
+    {
+        return robot_frontend_.get_timestamp_ms(t);
+    }
 
     /**
      * @brief Get the current time index.
      * @see robot_interfaces::TriFingerTypes::Frontend::get_current_timeindex
      */
-    time_series::Index get_current_timeindex() const;
+    time_series::Index get_current_timeindex() const
+    {
+        return robot_frontend_.get_current_timeindex();
+    }
 
     /**
      * @brief Wait until time step t.
      * @see robot_interfaces::TriFingerTypes::Frontend::wait_until_timeindex
      */
-    void wait_until_timeindex(const time_series::Index &t) const;
+    void wait_until_timeindex(const time_series::Index &t) const
+    {
+        robot_frontend_.wait_until_timeindex(t);
+    }
 
     /**
      * @brief Get camera images of time step t.
@@ -119,7 +157,11 @@ public:
      *
      * @return Camera images of time step t.
      */
-    CameraObservation get_camera_observation(const time_series::Index t) const;
+    CameraObservation get_camera_observation(const time_series::Index t) const
+    {
+        auto t_camera = find_matching_timeindex(camera_frontend_, t);
+        return camera_frontend_.get_observation(t_camera);
+    }
 
 private:
     robot_interfaces::TriFingerTypes::Frontend robot_frontend_;
@@ -192,4 +234,12 @@ private:
         return t_other;
     }
 };
+
+// typedefs for easier use
+typedef T_TriFingerPlatformFrontend<
+    trifinger_object_tracking::TriCameraObjectObservation>
+    TriFingerPlatformWithObjectFrontend;
+typedef T_TriFingerPlatformFrontend<
+    trifinger_cameras::TriCameraObservation>
+    TriFingerPlatformFrontend;
 }  // namespace robot_fingers
