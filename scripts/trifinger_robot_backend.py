@@ -28,6 +28,13 @@ def main():
         """,
     )
     parser.add_argument(
+        "--fail-on-incomplete-run",
+        action="store_true",
+        help="""Exit with non-zero return code if the backend is terminated
+            before reaching `--max-number-of-actions`.
+        """,
+    )
+    parser.add_argument(
         "--first-action-timeout",
         "-t",
         type=float,
@@ -118,7 +125,27 @@ def main():
     logger.debug("Backend termination reason: %d" % termination_reason)
 
     rclpy.shutdown()
-    if termination_reason < 0:
+
+    TermReason = robot_interfaces.RobotBackendTerminationReason
+    if (
+        args.fail_on_incomplete_run
+        and termination_reason != TermReason.MAXIMUM_NUMBER_OF_ACTIONS_REACHED
+    ):
+        # if --fail-on-incomplete-run is set any reason other than having
+        # reached the action limit is considered a failure.
+        logger.fatal(
+            "Expected termination reason %d (%s) but got %d"
+            % (
+                TermReason.MAXIMUM_NUMBER_OF_ACTIONS_REACHED,
+                TermReason.MAXIMUM_NUMBER_OF_ACTIONS_REACHED.name,
+                termination_reason,
+            )
+        )
+
+        return 20
+    elif termination_reason < 0:
+        # negative termination reason means there was an error
+
         # negate code as exit codes should be positive
         return -termination_reason
     else:
