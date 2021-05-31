@@ -72,7 +72,7 @@ def main():
 
         camera_data = tricamera.MultiProcessData("tricamera", False)
         camera_driver = CameraDriver("camera60", "camera180", "camera300")
-        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
+        camera_backend = tricamera.Backend(camera_driver, camera_data)
 
         logger.info("Camera backend ready.")
 
@@ -110,6 +110,9 @@ def main():
             backend.request_shutdown()
             backend.wait_until_terminated()
             break
+
+    if cameras_enabled:
+        camera_backend.shutdown()
 
     termination_reason = backend.get_termination_reason()
     logger.debug("Backend termination reason: %d" % termination_reason)
