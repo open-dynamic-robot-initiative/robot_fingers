@@ -15,7 +15,7 @@ from trifinger_simulation.camera import load_camera_parameters
 
 def compute_reward_move_cube(task, log, t, goal):
     camera_observation = log.get_camera_observation(t)
-    cube_pose = camera_observation.object_pose
+    cube_pose = camera_observation.filtered_object_pose
     reward = -task.evaluate_state(
         goal["goal"], cube_pose, int(goal["difficulty"])
     )
@@ -24,7 +24,7 @@ def compute_reward_move_cube(task, log, t, goal):
 
 def compute_reward_move_cube_on_trajectory(task, log, t, goal):
     camera_observation = log.get_camera_observation(t)
-    cube_pose = camera_observation.object_pose
+    cube_pose = camera_observation.filtered_object_pose
     reward = -task.evaluate_state(goal["goal"], t, cube_pose.position)
     return reward
 
