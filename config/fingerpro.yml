@@ -1,0 +1,51 @@
+can_ports: ["can0", "can1"]
+max_current_A: 2.2
+has_endstop: true
+
+homing_method: endstop_release
+home_offset_rad: [-2.136, -2.442, +2.710]
+
+move_to_position_tolerance_rad: 0.1
+calibration:
+    endstop_search_torques_Nm:
+        - +0.3
+        - +0.3
+        - -0.2
+    move_steps: 500
+safety_kd:
+    - 0.09
+    - 0.09
+    - 0.05
+position_control_gains:
+    kp: [9, 9, 9]
+    kd: [0.01, 0.01, 0.01]
+
+
+#hard_position_limits_lower: [-.inf, -.inf, -.inf]
+#hard_position_limits_upper: [.inf, .inf, .inf]
+
+hard_position_limits_lower:
+    - -1.0
+    - -1.67
+    - -2.8
+hard_position_limits_upper:
+    - 1.5
+    - 1.67
+    - 2.8
+
+# Set limits such that the motors cannot collide with the middle links
+soft_position_limits_lower:
+    - -0.33
+    - 0.0
+    - -2.7
+soft_position_limits_upper:
+    - 1.0
+    - 1.57
+    - 0.0
+
+# Set the initial position such that it is still save when the stage is at the
+# highest level.
+initial_position_rad:
+    - 0
+    - 0.9
+    - -1.7

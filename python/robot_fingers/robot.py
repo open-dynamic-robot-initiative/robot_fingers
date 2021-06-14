@@ -34,6 +34,11 @@ robot_configs = {
         robot_fingers.create_trifinger_backend,
         "trifingeredu.yml",
     ),
+    "fingerpro": (
+        robot_interfaces.finger,
+        robot_fingers.create_real_finger_backend,
+        "fingerpro.yml",
+    ),
     "trifingerpro": (
         robot_interfaces.trifinger,
         robot_fingers.create_trifinger_backend,
