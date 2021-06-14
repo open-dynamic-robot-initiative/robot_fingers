@@ -1,5 +1,7 @@
 """Classes and functions to easily set up robot demo scripts."""
 import os
+
+import yaml
 from ament_index_python.packages import get_package_share_directory
 
 import robot_interfaces
@@ -121,6 +123,10 @@ class Robot:
                 "config",
                 config_file_name,
             )
+        # load the config and store parameters here, so they can easily be
+        # accessed at runtime
+        with open(config_file_path, "r") as f:
+            self.config = yaml.safe_load(f)
 
         # Storage for all observations, actions, etc.
         self.robot_data = robot_module.SingleProcessData()
