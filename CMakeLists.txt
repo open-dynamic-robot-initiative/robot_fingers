@@ -150,6 +150,7 @@ install_scripts(
     scripts/demonstrate_trajectory.py
     scripts/evaluate_log.py
     scripts/fingeredu_endurance_test.py
+    scripts/fingerpro_endurance_test.py
     scripts/joint_friction_calibration.py
     scripts/plot_logged_data.py
     scripts/plot_run_duration_log.py
