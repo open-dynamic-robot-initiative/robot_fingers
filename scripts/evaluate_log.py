@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
-"""
-Compute accumulated reward for a given log file.
-"""
+"""Compute cumulative reward for a given log file."""
 import argparse
 import json
 import pathlib
@@ -52,6 +50,11 @@ def main():
         required=True,
         type=pathlib.Path,
         help="Directory containing the log files.",
+    )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Produce JSON-encoded output.",
     )
     args = parser.parse_args()
 
@@ -111,17 +114,15 @@ def main():
 
     if t_first != 0:
         print(
-            "Invalid log: First time index in robot log is {}. Expected 0.".format(
-                t_first
-            )
+            "Invalid log: First time index in robot log is {}."
+            " Expected 0.".format(t_first)
         )
         sys.exit(1)
 
     if t_last != task.EPISODE_LENGTH - 1:
         print(
-            "Invalid log: Last time index in robot log is {}. Expected {}.".format(
-                t_last, task.EPISODE_LENGTH - 1
-            )
+            "Invalid log: Last time index in robot log is {}."
+            " Expected {}.".format(t_last, task.EPISODE_LENGTH - 1)
         )
         sys.exit(1)
 
@@ -130,7 +131,11 @@ def main():
         reward = compute_reward(task, log, t, goal, **additional_data)
         cumulative_reward += reward
 
-    print("Cumulative Reward:", cumulative_reward)
+    if args.json:
+        output_dict = {"cumulative_reward": cumulative_reward}
+        print(json.dumps(output_dict))
+    else:
+        print("Cumulative Reward:", cumulative_reward)
 
 
 if __name__ == "__main__":
