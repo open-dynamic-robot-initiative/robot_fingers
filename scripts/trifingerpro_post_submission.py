@@ -62,7 +62,7 @@ def get_robot_config(
         return robot_config_file
     else:
         with open(robot_config_file, "r") as fh:
-            config = yaml.load(fh)
+            config = yaml.safe_load(fh)
 
         # remove position limits
         config["hard_position_limits_lower"] = [-np.inf] * 9
@@ -253,6 +253,8 @@ def check_if_cube_is_there():
 
 
 def main():
+    # TODO: instead of using a temporary config file, use the new option to
+    # create a backend with a config object instead of a file.
     config_file = get_robot_config(position_limits=False)
 
     # robot = robot_fingers.Robot.create_by_name("trifingerpro")
