@@ -76,6 +76,35 @@ public:
     }
 
     /**
+     * @brief Access the robot log.
+     */
+    const robot_interfaces::TriFingerTypes::BinaryLogReader &get_robot_log()
+        const
+    {
+        return robot_log_;
+    }
+
+    /**
+     * @brief Access the camera log.
+     */
+    const robot_interfaces::SensorLogReader<CameraObservation> &get_camera_log()
+        const
+    {
+        return camera_log_;
+    }
+
+    /**
+     * @brief Access the index mapping from robot to camera log.
+     *
+     * Note that the robot observation index does not necessarily match with the
+     * time index!
+     */
+    const std::vector<int> &get_map_robot_to_camera_index() const
+    {
+        return map_robot_to_camera_index_;
+    }
+
+    /**
      * @brief Get robot observation of the time step t.
      */
     RobotObservation get_robot_observation(const time_series::Index &t) const
