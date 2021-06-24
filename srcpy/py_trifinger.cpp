@@ -194,6 +194,15 @@ void pybind_trifinger_platform_log(pybind11::module &m, const std::string &name)
         .def(pybind11::init<const std::string &, const std::string &>(),
              "robot_log_file"_a,
              "camera_log_file"_a)
+        .def("get_robot_log",
+             &T::get_robot_log,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_camera_log",
+             &T::get_camera_log,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
+        .def("get_map_robot_to_camera_index",
+             &T::get_map_robot_to_camera_index,
+             pybind11::call_guard<pybind11::gil_scoped_release>())
         .def("get_robot_observation",
              &T::get_robot_observation,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
