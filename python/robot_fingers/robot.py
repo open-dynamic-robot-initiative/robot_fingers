@@ -1,4 +1,5 @@
 """Classes and functions to easily set up robot demo scripts."""
+import pathlib
 import os
 
 import yaml
@@ -74,6 +75,14 @@ robot_configs = {
 }
 
 
+def get_config_dir() -> pathlib.PurePath:
+    """Get path to the configuration directory."""
+    return pathlib.PurePath(
+        get_package_share_directory("robot_fingers"),
+        "config",
+    )
+
+
 class Robot:
     @classmethod
     def create_by_name(cls, robot_name):
@@ -112,17 +121,8 @@ class Robot:
         # convenience mapping of the Action type
         self.Action = robot_module.Action
 
-        # If config_file_name starts with "/" assume it is an absolute path and
-        # use it as is.  Otherwise interpret it relative to the config
-        # directory of the robot_fingers package.
-        if config_file_name.startswith("/"):
-            config_file_path = config_file_name
-        else:
-            config_file_path = os.path.join(
-                get_package_share_directory("robot_fingers"),
-                "config",
-                config_file_name,
-            )
+        config_file_path = get_config_dir() / config_file_name
+
         # load the config and store parameters here, so they can easily be
         # accessed at runtime
         with open(config_file_path, "r") as f:
@@ -134,7 +134,7 @@ class Robot:
         # The backend sends actions from the data to the robot and writes
         # observations from the robot to the data.
         self.backend = create_backend_function(
-            self.robot_data, config_file_path
+            self.robot_data, os.fspath(config_file_path)
         )
 
         #: The frontend is used to send actions and get observations.
