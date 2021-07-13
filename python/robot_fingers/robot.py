@@ -1,6 +1,8 @@
 """Classes and functions to easily set up robot demo scripts."""
-import pathlib
+import json
 import os
+import pathlib
+import types
 
 import yaml
 from ament_index_python.packages import get_package_share_directory
@@ -106,36 +108,50 @@ class Robot:
         """
         return robot_configs.keys()
 
-    def __init__(
-        self, robot_module, create_backend_function, config_file_name
-    ):
+    def __init__(self, robot_module, create_backend_function, config):
         """Initialize the robot environment (backend and frontend).
 
         :param robot_module: The module that defines the robot classes (i.e.
             `Data`, `Frontend`, `Backend`, ...)
         :param create_backend_function: Function to create the robot backend.
-        :param config_file_name: Either an absolute path to a config file
-            (needs to start with "/" in this case) or the name of a config
-            file located in robot_fingers/config.
+        :param config: Either a config object or a path to a config file.
+            In the latter case, paths need to be absolute or relative to the
+            config directory of the robot_fingers package.
         """
         # convenience mapping of the Action type
         self.Action = robot_module.Action
 
-        config_file_path = get_config_dir() / config_file_name
+        try:
+            config = os.fspath(get_config_dir() / config)
+        except TypeError:
+            # if os.fspath failed with TypeError, assume that config is already
+            # a config object
+            self.config = config
+        else:
+            # if it didn't fail, self.config is not yet set, so load the config
+            # from the file and save it.
+            with open(config, "r") as f:
+                config_dict = yaml.safe_load(f)
 
-        # load the config and store parameters here, so they can easily be
-        # accessed at runtime
-        with open(config_file_path, "r") as f:
-            self.config = yaml.safe_load(f)
+            # In the except case, self.config is expected to be a *FingerConfig
+            # object where elements can be accessed as attributes.  Loading
+            # from yaml gives a dictionary, so to be consistent, it needs to be
+            # converted to a structure that allows access via attributes.
+            # Unfortunately, there doesn't seem to be a nice solution to do
+            # this with _nested_ dictionaries.  The easiest I could find (that
+            # does not need thrid-party packages) is to serialise and
+            # deserialise with json (see https://stackoverflow.com/a/63389458).
+            self.config = json.loads(
+                json.dumps(config_dict),
+                object_hook=lambda d: types.SimpleNamespace(**d),
+            )
 
         # Storage for all observations, actions, etc.
         self.robot_data = robot_module.SingleProcessData()
 
         # The backend sends actions from the data to the robot and writes
         # observations from the robot to the data.
-        self.backend = create_backend_function(
-            self.robot_data, os.fspath(config_file_path)
-        )
+        self.backend = create_backend_function(self.robot_data, config)
 
         #: The frontend is used to send actions and get observations.
         self.frontend = robot_module.Frontend(self.robot_data)
