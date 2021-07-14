@@ -79,7 +79,9 @@ def loop(win, args):
     title = "Demonstration Recorder"
     status_line = " q: quit | space: start/stop recording"
 
-    robot = robot_fingers.Robot.create_by_name(args.robot_type)
+    robot = robot_fingers.Robot.create_by_name(
+        args.robot_type, logger_buffer_size=300000
+    )
     robot.initialize()
 
     gui = SimpleCursesGUI(win, title, status_line)
@@ -101,9 +103,11 @@ def loop(win, args):
                 return
             elif pressed_key == ord(" "):
                 if is_recording:
-                    robot.logger.stop()
+                    robot.logger.stop_and_save(
+                        args.outfile, robot.logger.Format.CSV
+                    )
                 else:
-                    robot.logger.start(args.outfile)
+                    robot.logger.start()
 
                 is_recording = not is_recording
 
