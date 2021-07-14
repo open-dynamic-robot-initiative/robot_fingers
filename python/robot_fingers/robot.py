@@ -87,17 +87,20 @@ def get_config_dir() -> pathlib.PurePath:
 
 class Robot:
     @classmethod
-    def create_by_name(cls, robot_name):
+    def create_by_name(cls, robot_name: str, logger_buffer_size: int = 0):
         """Create a ``Robot`` instance for the specified robot.
 
         Args:
-            robot_name (str):  Name of the robots.  See
+            robot_name:  Name of the robots.  See
             :meth:`Robot.get_supported_robots` for a list of supported robots.
+            logger_buffer_size:  See :meth:`Robot.__init__`.
 
         Returns:
             Robot: A ``Robot`` instance for the specified robot.
         """
-        return cls(*robot_configs[robot_name])
+        return cls(
+            *robot_configs[robot_name], logger_buffer_size=logger_buffer_size
+        )
 
     @staticmethod
     def get_supported_robots():
@@ -108,7 +111,13 @@ class Robot:
         """
         return robot_configs.keys()
 
-    def __init__(self, robot_module, create_backend_function, config):
+    def __init__(
+        self,
+        robot_module,
+        create_backend_function,
+        config,
+        logger_buffer_size=0,
+    ):
         """Initialize the robot environment (backend and frontend).
 
         :param robot_module: The module that defines the robot classes (i.e.
@@ -117,6 +126,9 @@ class Robot:
         :param config: Either a config object or a path to a config file.
             In the latter case, paths need to be absolute or relative to the
             config directory of the robot_fingers package.
+        :param logger_buffer_size: Size of the buffer used by the logger.
+            Default is 0.  Set this to at least the expected number of time
+            steps when using the logger.
         """
         # convenience mapping of the Action type
         self.Action = robot_module.Action
@@ -157,7 +169,7 @@ class Robot:
         self.frontend = robot_module.Frontend(self.robot_data)
 
         #: The logger can be used to log robot data to a file
-        self.logger = robot_module.Logger(self.robot_data, 100)
+        self.logger = robot_module.Logger(self.robot_data, logger_buffer_size)
 
     def initialize(self):
         """Initialize the robot."""
