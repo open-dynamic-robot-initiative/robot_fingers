@@ -6,7 +6,6 @@ bit to avoid self-collisions with the base.  Apart from this it is assumed that
 the finger can move freely within its valid range without collisions.
 """
 import argparse
-import os
 
 import numpy as np
 
@@ -45,8 +44,8 @@ def move_with_random_positions():
     # initialisation issue
     initialize(robot.frontend)
 
-    limit_low = robot.config["soft_position_limits_lower"]
-    limit_up = robot.config["soft_position_limits_upper"]
+    limit_low = robot.config.soft_position_limits_lower
+    limit_up = robot.config.soft_position_limits_upper
 
     time_printer = robot_fingers.utils.TimePrinter()
 

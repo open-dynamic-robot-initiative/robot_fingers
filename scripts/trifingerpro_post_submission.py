@@ -15,7 +15,6 @@ import sys
 import numpy as np
 import pandas
 from ament_index_python.packages import get_package_share_directory
-import yaml
 
 import robot_interfaces
 import robot_fingers
@@ -23,17 +22,8 @@ import trifinger_object_tracking.py_tricamera_types as tricamera
 
 
 # Distance from the zero position (finger pointing straight down) to the
-# end-stop.  This is independent of the placement of the encoder disc and
-# thus should be the same on all TriFingerPro robots.
-# TODO: this should actually be the same for all three fingers!  Needs to
-#       be fixed in the calibration script, though.
-_zero_to_endstop = np.array(
-    [2.112, 2.399, -2.714, 2.118, 2.471, -2.694, 2.179, 2.456, -2.723]
-)
-
-# Torque used to find end-stop during homing
-# TODO: this could be read from the config file
-_homing_torque = [+0.3, +0.3, -0.2] * 3
+# end-stop.
+_zero_to_endstop = np.array([2.136, 2.442, -2.710] * 3)
 
 # Maximum torque with signs same as for end-stop search
 _max_torque_against_homing_endstop = [+0.4, +0.4, -0.4] * 3
@@ -42,39 +32,27 @@ _max_torque_against_homing_endstop = [+0.4, +0.4, -0.4] * 3
 _position_tolerance = 0.1
 
 
-def get_robot_config(
-    position_limits=True,
-    robot_config_file="/etc/trifingerpro/trifingerpro.yml",
-) -> str:
-    """Get path to robot configuration file.
+def get_robot_config_without_position_limits():
+    """Get TriFingerPro configuration without position limits.
 
-    This may be the file specified by robot_config_file or a temporary copy
-    with modifications, based on other arguments.
-
-    Args:
-        position_limits:  If True, the original configuration is used with the
-            position limits as they are defined there.  If false, a temporary
-            configuration file is created where the position limits are
-            removed.
-        robot_config_file:  Path to the original robot configuration file.
+    Loads the TriFingerPro configuration from the default config file and
+    disables the position limits.
     """
-    if position_limits:
-        return robot_config_file
-    else:
-        with open(robot_config_file, "r") as fh:
-            config = yaml.safe_load(fh)
+    # get the path to the TriFingerPro config file
+    _, _, config_file = robot_fingers.robot.robot_configs["trifingerpro"]
+    config_file_path = robot_fingers.robot.get_config_dir() / config_file
 
-        # remove position limits
-        config["hard_position_limits_lower"] = [-np.inf] * 9
-        config["hard_position_limits_upper"] = [+np.inf] * 9
-        del config["soft_position_limits_lower"]
-        del config["soft_position_limits_upper"]
+    # load the config
+    config = robot_fingers.TriFingerConfig.load_config(str(config_file_path))
 
-        tmp_config_file = "/tmp/trifingerpro.yml"
-        with open(tmp_config_file, "w") as fh:
-            yaml.dump(config, fh)
+    # disable position limits
+    n_joints = 9
+    config.hard_position_limits_lower = [-np.inf] * n_joints
+    config.hard_position_limits_upper = [np.inf] * n_joints
+    config.soft_position_limits_lower = [-np.inf] * n_joints
+    config.soft_position_limits_upper = [np.inf] * n_joints
 
-        return tmp_config_file
+    return config
 
 
 def end_stop_check(robot: robot_fingers.Robot):
@@ -90,8 +68,10 @@ def end_stop_check(robot: robot_fingers.Robot):
     Args:
         robot:  Initialized robot instance of the TriFingerPro.
     """
-    # go to the "homing" end-stop
-    action = robot.Action(torque=_homing_torque)
+    # go to the "homing" end-stop (using the same torque as during homing)
+    action = robot.Action(
+        torque=robot.config.calibration.endstop_search_torques_Nm
+    )
     for _ in range(2000):
         t = robot.frontend.append_desired_action(action)
         robot.frontend.wait_until_timeindex(t)
@@ -241,7 +221,7 @@ def check_if_cube_is_there():
     camera_driver = tricamera.TriCameraObjectTrackerDriver(
         "camera60", "camera180", "camera300"
     )
-    camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
+    camera_backend = tricamera.Backend(camera_driver, camera_data)
     camera_frontend = tricamera.Frontend(camera_data)
 
     observation = camera_frontend.get_latest_observation()
@@ -251,17 +231,15 @@ def check_if_cube_is_there():
     else:
         print("Cube found.")
 
+    camera_backend.shutdown()
+
 
 def main():
-    # TODO: instead of using a temporary config file, use the new option to
-    # create a backend with a config object instead of a file.
-    config_file = get_robot_config(position_limits=False)
-
-    # robot = robot_fingers.Robot.create_by_name("trifingerpro")
+    config = get_robot_config_without_position_limits()
     robot = robot_fingers.Robot(
         robot_interfaces.trifinger,
         robot_fingers.create_trifinger_backend,
-        config_file,
+        config,
     )
     robot.initialize()
 
