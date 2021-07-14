@@ -9,6 +9,7 @@ Performs the following actins:
 - use the cameras to check if the cube is still inside the arena (not
   implemented yet)
 """
+import argparse
 import os
 import sys
 
@@ -191,12 +192,17 @@ def run_self_test(robot):
     print("Test successful.")
 
 
-def reset_object(robot):
-    """Replay a recorded trajectory to reset/randomise the object pose."""
+def reset_object(robot, trajectory_file):
+    """Replay a recorded trajectory to reset/randomise the object pose.
+
+    Args:
+        robot: The robot object.
+        trajectory_file: Path to a CSV file defining the trajectory.
+    """
     trajectory_file = os.path.join(
         get_package_share_directory("robot_fingers"),
         "config",
-        "trifingerpro_shuffle_cube_trajectory_fast.csv",
+        trajectory_file,
     )
     data = pandas.read_csv(
         trajectory_file, delim_whitespace=True, header=0, low_memory=False
@@ -235,6 +241,19 @@ def check_if_cube_is_there():
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--reset",
+        type=str,
+        metavar="OBJECT_TYPE",
+        choices=["cube", "cuboid", "dice"],
+        default="cube",
+        help="""Execute a trajectory to reset the object.  A different
+            trajectory is used depending on the specified object type.
+        """,
+    )
+    args = parser.parse_args()
+
     config = get_robot_config_without_position_limits()
     robot = robot_fingers.Robot(
         robot_interfaces.trifinger,
@@ -247,8 +266,16 @@ def main():
     end_stop_check(robot)
     print("Position reachability test")
     run_self_test(robot)
-    print("Reset cube position")
-    reset_object(robot)
+
+    if args.reset == "cube":
+        print("Reset cube position")
+        reset_object(robot, "trifingerpro_shuffle_cube_trajectory_fast.csv")
+    elif args.reset == "cuboid":
+        print("Reset cuboid position")
+        reset_object(robot, "trifingerpro_recenter_cuboid_2x2x8.csv")
+    elif args.reset == "dice":
+        print("Shuffle dice positions")
+        reset_object(robot, "trifingerpro_shuffle_dice_trajectory.csv")
 
     # terminate the robot
     del robot
