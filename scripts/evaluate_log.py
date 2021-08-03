@@ -27,14 +27,22 @@ def compute_reward_move_cube_on_trajectory(task, log, t, goal):
     return reward
 
 
-def compute_reward_rearrange_dice(task, log, t, goal, goal_masks):
+def compute_reward_rearrange_dice(
+    task, log, t, goal, goal_masks, reward_cache
+):
     camera_observation = log.get_camera_observation(t)
-    masks = tuple(
-        segment_image(convert_image(c.image))
-        for c in camera_observation.cameras
-    )
-    reward = -task.evaluate_state(goal_masks, masks)
-    return reward
+    # use timestamp of the first camera to identify the observation
+    stamp = camera_observation.cameras[0].timestamp
+
+    # only compute the reward if it is not yet in the cache
+    if stamp not in reward_cache:
+        masks = tuple(
+            segment_image(convert_image(c.image))
+            for c in camera_observation.cameras
+        )
+        reward_cache[stamp] = -task.evaluate_state(goal_masks, masks)
+
+    return reward_cache[stamp]
 
 
 def main():
@@ -93,6 +101,10 @@ def main():
         additional_data["goal_masks"] = task.generate_goal_mask(
             camera_params, goal["goal"]
         )
+
+        # dictionary used to cache rewards for camera observations, so they an
+        # be reused
+        additional_data["reward_cache"] = {}
 
     try:
         robot_log = str(args.log_dir / "robot_data.dat")
