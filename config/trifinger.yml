@@ -2,7 +2,7 @@ can_ports: ["can0", "can1", "can2", "can3", "can4", "can5"]
 max_current_A: 2.0
 
 has_endstop: true
-homing_with_index: false
+homing_method: endstop
 
 # Set zero-position according to URDF (finger pointing straight down).
 home_offset_rad: [1.593, 1.380, 2.851, 1.593, 1.380, 2.851, 1.593, 1.380, 2.851]
