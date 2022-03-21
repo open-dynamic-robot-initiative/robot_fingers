@@ -5,9 +5,29 @@ import logging
 import math
 import pathlib
 import sys
+import typing
 
 import robot_interfaces
 import robot_fingers
+
+
+def find_robot_config_file(
+    config_dir: pathlib.Path,
+    filenames: typing.Sequence[str] = ("trifinger.yml", "trifingerpro.yml"),
+) -> pathlib.Path:
+    """Find robot config file using a list of allowed filenames.
+
+    Checks if any of the files listed in ``filenames`` exists in ``config_dir``
+    and returns the first match.  If none of the files exists, a FileNotFound
+    error is thrown.
+    """
+    for file in (config_dir / f for f in filenames):
+        if file.exists():
+            return file
+
+    raise FileNotFoundError(
+        "None of the files %s/{%s} exists" % (config_dir, ",".join(filenames))
+    )
 
 
 def main():
@@ -16,7 +36,7 @@ def main():
         "--max-number-of-actions",
         "-a",
         type=int,
-        required=True,
+        default=0,
         help="""Maximum numbers of actions that are processed.  After this the
             backend shuts down automatically.
         """,
@@ -64,6 +84,14 @@ def main():
             and will be deleted again when it stops (before storing the logs).
         """,
     )
+    parser.add_argument(
+        "--config-dir",
+        type=pathlib.Path,
+        default="/etc/trifingerpro",
+        help="""Path to the directory in which robot and camera configuration
+            are found.  Default: %(default)s
+        """,
+    )
     args = parser.parse_args()
 
     log_handler = logging.StreamHandler(sys.stdout)
@@ -72,6 +100,10 @@ def main():
         level=logging.DEBUG,
         handlers=[log_handler],
     )
+
+    if not args.config_dir.exists():
+        logging.fatal("Config directory %s does not exist")
+        return 1
 
     cameras_enabled = False
     if args.cameras:
@@ -95,14 +127,14 @@ def main():
             "tricamera", True, CAMERA_TIME_SERIES_LENGTH
         )
         camera_driver = CameraDriver("camera60", "camera180", "camera300")
-        camera_backend = tricamera.Backend(camera_driver, camera_data)  # noqa
+        camera_backend = tricamera.Backend(camera_driver, camera_data)
 
         logging.info("Camera backend ready.")
 
     logging.info("Start robot backend")
 
     # Use robot-dependent config file
-    config_file_path = "/etc/trifingerpro/trifingerpro.yml"
+    config_file_path = find_robot_config_file(args.config_dir)
 
     # Storage for all observations, actions, etc.
     history_size = args.max_number_of_actions + 1
@@ -153,6 +185,9 @@ def main():
 
     termination_reason = backend.wait_until_terminated()
     logging.debug("Backend termination reason: %d", termination_reason)
+
+    if cameras_enabled:
+        camera_backend.shutdown()
 
     # delete the ready indicator file to indicate that the backend has shut
     # down
