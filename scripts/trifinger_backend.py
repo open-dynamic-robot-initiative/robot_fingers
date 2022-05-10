@@ -3,6 +3,7 @@
 import argparse
 import logging
 import math
+import os
 import pathlib
 import sys
 import typing
@@ -137,6 +138,8 @@ def main():
     config_file_path = find_robot_config_file(args.config_dir)
 
     # Storage for all observations, actions, etc.
+    # FIXME this is not useful if max_number_of_actions is zero (to disable
+    # limit)
     history_size = args.max_number_of_actions + 1
     robot_data = robot_interfaces.trifinger.MultiProcessData(
         "trifinger", True, history_size=history_size
@@ -149,7 +152,7 @@ def main():
     # observations from the robot to the data.
     backend = robot_fingers.create_trifinger_backend(
         robot_data,
-        config_file_path,
+        os.fspath(config_file_path),
         first_action_timeout=args.first_action_timeout,
         max_number_of_actions=args.max_number_of_actions,
     )
