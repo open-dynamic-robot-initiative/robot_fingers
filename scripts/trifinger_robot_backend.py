@@ -4,6 +4,7 @@
 This requires a leader robot data to be running in a separate process!
 """
 import argparse
+import functools
 import math
 import sys
 
@@ -55,6 +56,14 @@ def main():
         action="store_true",
         help="Run camera backend with integrated object tracker.",
     )
+    parser.add_argument(
+        "--object",
+        type=str,
+        default="cube_v2",
+        help="""Name of the object model used for object tracking.
+            Only used if --cameras-with-tracker is set.  Default: %(default)s.
+        """,
+    )
     args = parser.parse_args()
 
     rclpy.init()
@@ -71,8 +80,14 @@ def main():
     elif args.cameras_with_tracker:
         cameras_enabled = True
         import trifinger_object_tracking.py_tricamera_types as tricamera
+        import trifinger_object_tracking.py_object_tracker
 
-        CameraDriver = tricamera.TriCameraObjectTrackerDriver
+        model = trifinger_object_tracking.py_object_tracker.get_model_by_name(
+            args.object
+        )
+        CameraDriver = functools.partial(
+            tricamera.TriCameraObjectTrackerDriver, cube_model=model
+        )
 
     if cameras_enabled:
         logger.info("Start camera backend")

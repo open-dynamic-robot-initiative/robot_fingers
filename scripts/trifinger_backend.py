@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run TriFinger back-end using multi-process robot data."""
 import argparse
+import functools
 import logging
 import math
 import os
@@ -64,6 +65,14 @@ def main():
         help="Run camera backend with integrated object tracker.",
     )
     parser.add_argument(
+        "--object",
+        type=str,
+        default="cube_v2",
+        help="""Name of the object model used for object tracking.
+            Only used if --cameras-with-tracker is set.  Default: %(default)s.
+        """,
+    )
+    parser.add_argument(
         "--robot-logfile",
         type=str,
         help="""Path to a file to which the robot data log is written.  If not
@@ -115,8 +124,14 @@ def main():
     elif args.cameras_with_tracker:
         cameras_enabled = True
         import trifinger_object_tracking.py_tricamera_types as tricamera
+        import trifinger_object_tracking.py_object_tracker
 
-        CameraDriver = tricamera.TriCameraObjectTrackerDriver
+        model = trifinger_object_tracking.py_object_tracker.get_model_by_name(
+            args.object
+        )
+        CameraDriver = functools.partial(
+            tricamera.TriCameraObjectTrackerDriver, cube_model=model
+        )
 
     if cameras_enabled:
         logging.info("Start camera backend")
