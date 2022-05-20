@@ -12,14 +12,17 @@ Performs the following actins:
 import argparse
 import os
 import sys
+import typing
 
 import numpy as np
 import pandas
 from ament_index_python.packages import get_package_share_directory
+import tomli
 
 import robot_interfaces
 import robot_fingers
 import trifinger_object_tracking.py_tricamera_types as tricamera
+import trifinger_object_tracking.py_object_tracker
 
 
 # Distance from the zero position (finger pointing straight down) to the
@@ -32,8 +35,23 @@ _max_torque_against_homing_endstop = [+0.4, +0.4, -0.4] * 3
 # Tolerance when checking if expected position is reached
 _position_tolerance = 0.1
 
+_submission_system_config_file = "/etc/trifingerpro/submission_system.toml"
 
-def get_robot_config_without_position_limits():
+
+def load_object_type() -> typing.Optional[str]:
+    with open(_submission_system_config_file, "rb") as f:
+        config = tomli.load(f)
+
+    try:
+        return config["post_submission"]["object_type"]
+    except KeyError:
+        print("ERROR: failed to load object from config file.")
+        return None
+
+
+def get_robot_config_without_position_limits() -> (
+    robot_fingers.TriFingerConfig
+):
     """Get TriFingerPro configuration without position limits.
 
     Loads the TriFingerPro configuration from the default config file and
@@ -56,7 +74,7 @@ def get_robot_config_without_position_limits():
     return config
 
 
-def end_stop_check(robot: robot_fingers.Robot):
+def end_stop_check(robot: robot_fingers.Robot) -> None:
     """Move robot to endstop, using constant torque and verify its position.
 
     Applies a constant torque for a fixed time to move to the end-stop.  If
@@ -123,11 +141,11 @@ def end_stop_check(robot: robot_fingers.Robot):
         sys.exit(1)
 
 
-def run_self_test(robot):
+def run_self_test(robot: robot_fingers.Robot) -> None:
     position_tolerance = 0.2
     push_sensor_threshold = 0.5
 
-    initial_pose = [0, 1.1, -1.9] * 3
+    initial_pose = [0.0, 1.1, -1.9] * 3
 
     reachable_goals = [
         [0.9, 1.5, -2.6] * 3,
@@ -135,8 +153,8 @@ def run_self_test(robot):
     ]
 
     unreachable_goals = [
-        [0, 0, 0] * 3,
-        [-0.5, 1.5, 0] * 3,
+        [0.0, 0.0, 0.0] * 3,
+        [-0.5, 1.5, 0.0] * 3,
     ]
 
     for goal in reachable_goals:
@@ -221,11 +239,20 @@ def reset_object(robot, trajectory_file):
         robot.frontend.wait_until_timeindex(t)
 
 
-def check_if_cube_is_there():
+def check_if_cube_is_there(object_type: str):
     """Verify that the cube is still inside the arena."""
+
+    object_models = {
+        "cube": "cube_v2",
+        "cuboid": "cuboid_2x2x8_v2",
+    }
+
     camera_data = tricamera.SingleProcessData(history_size=5)
+    model = trifinger_object_tracking.py_object_tracker.get_model_by_name(
+        object_models[object_type]
+    )
     camera_driver = tricamera.TriCameraObjectTrackerDriver(
-        "camera60", "camera180", "camera300"
+        "camera60", "camera180", "camera300", model
     )
     camera_backend = tricamera.Backend(camera_driver, camera_data)
     camera_frontend = tricamera.Frontend(camera_data)
@@ -243,16 +270,26 @@ def check_if_cube_is_there():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--reset",
+        "--object",
         type=str,
         metavar="OBJECT_TYPE",
-        choices=["cube", "cuboid", "dice"],
-        default="cube",
-        help="""Execute a trajectory to reset the object.  A different
-            trajectory is used depending on the specified object type.
+        choices=["cube", "cuboid", "dice", "auto"],
+        help="""Specify with which object the robot is equipped (if any).  If
+            set to "auto", the object type is read from the submission system
+            configuration.
+        """,
+    )
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="""Execute a trajectory to reset the object.  Only valid if
+            --object is set.
         """,
     )
     args = parser.parse_args()
+
+    if args.object == "auto":
+        args.object = load_object_type()
 
     config = get_robot_config_without_position_limits()
     robot = robot_fingers.Robot(
@@ -267,21 +304,25 @@ def main():
     print("Position reachability test")
     run_self_test(robot)
 
-    if args.reset == "cube":
-        print("Reset cube position")
-        reset_object(robot, "trifingerpro_shuffle_cube_trajectory_fast.csv")
-    elif args.reset == "cuboid":
-        print("Reset cuboid position")
-        reset_object(robot, "trifingerpro_recenter_cuboid_2x2x8.csv")
-    elif args.reset == "dice":
-        print("Shuffle dice positions")
-        reset_object(robot, "trifingerpro_shuffle_dice_trajectory.csv")
+    if args.reset:
+        if args.object == "cube":
+            print("Reset cube position")
+            reset_object(
+                robot, "trifingerpro_shuffle_cube_trajectory_fast.csv"
+            )
+        elif args.object == "cuboid":
+            print("Reset cuboid position")
+            reset_object(robot, "trifingerpro_recenter_cuboid_2x2x8.csv")
+        elif args.object == "dice":
+            print("Shuffle dice positions")
+            reset_object(robot, "trifingerpro_shuffle_dice_trajectory.csv")
 
     # terminate the robot
     del robot
 
-    print("Check if cube is found")
-    check_if_cube_is_there()
+    if args.object in ["cube", "cuboid"]:
+        print("Check if cube/cuboid is found")
+        check_if_cube_is_there(args.object)
 
 
 if __name__ == "__main__":
