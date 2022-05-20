@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import signal
-import time
 import numpy as np
 import copy
 import sys
@@ -70,13 +68,13 @@ def go_to(robot, goal_position, steps, hold):
 
     stepsize = (goal_position - desired_step_position) / steps
 
-    for step in range(steps):
+    for _ in range(steps):
         desired_step_position += stepsize
         t = robot.append_desired_action(Action(position=desired_step_position))
         robot.wait_until_timeindex(t)
 
     action = Action(position=np.ones(N_JOINTS) * goal_position)
-    for step in range(hold):
+    for _ in range(hold):
         t = robot.append_desired_action(action)
         robot.wait_until_timeindex(t)
 
@@ -111,13 +109,13 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000):
 
         step += 1
 
-    for step in range(hold):
+    for _ in range(hold):
         t = robot.append_desired_action(action)
         robot.wait_until_timeindex(t)
 
 
 def test_if_moves(robot, desired_torque, timeout):
-    for i in range(timeout):
+    for _ in range(timeout):
         t = robot.append_desired_action(Action(torque=desired_torque))
         # This is a bit hacky: It is assumed that the joints move if they reach
         # a position > 0 within the given time.  Note that this assumes that
@@ -135,7 +133,7 @@ def determine_start_torque(robot):
     within a given time frame.  If not, the whole procedure is repeated with a
     increasing torque until the joint moves.
     """
-    t = robot.append_desired_action(Action())
+    robot.append_desired_action(Action())
 
     max_torque = 0.4
     stepsize = 0.025
@@ -179,13 +177,12 @@ def hard_direction_change(robot, num_repetitions, torque):
     # even when overshooting (we don't want to break the end stop).
     position_limit = 0.6
 
-    direction = +1
     desired_torque = np.ones(N_JOINTS) * torque
 
     t = robot.append_desired_action(Action())
 
     progress = progressbar.ProgressBar()
-    for i in progress(range(num_repetitions)):
+    for _ in progress(range(num_repetitions)):
         step = 0
         while np.all(robot.get_observation(t).position < position_limit):
             t = robot.append_desired_action(Action(desired_torque))
@@ -231,7 +228,7 @@ def main():
 
     # rotate without end stop
     # goal_position = 60
-    ## move to goal position within 2000 ms and wait there for 100 ms
+    # # move to goal position within 2000 ms and wait there for 100 ms
     # go_to(robot, goal_position, 20000, 100)
 
     finger_backend.initialize()
@@ -304,7 +301,7 @@ def main():
         trq = 1.8
         hit_torque = np.ones(N_JOINTS) * trq
         progress = progressbar.ProgressBar()
-        for i in progress(range(NUM_ENDSTOP_HITS)):
+        for _ in progress(range(NUM_ENDSTOP_HITS)):
             hit_torque *= -1
             hit_endstop(robot, hit_torque, hold=10)
             # hit_endstop(robot, hit_torque)
@@ -330,7 +327,7 @@ def main():
         goal_position = POSITION_LIMIT
 
         progress = progressbar.ProgressBar()
-        for i in progress(range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS)):
+        for _ in progress(range(NUM_FIXED_VELOCITY_MOVEMENT_STEPS)):
             goal_position *= -1
             # move to goal position within 2000 ms and wait there for 100 ms
             go_to(robot, goal_position, 2000, 100)

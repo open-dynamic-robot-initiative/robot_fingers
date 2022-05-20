@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Record data while the user is manually moving the robot."""
-import argparse
-import curses
 import numpy as np
 import robot_fingers
+import typing
 
 
-def record(trajectory):
+def record(trajectory: typing.List[np.ndarray]):
     trajectory[:] = []
     t = 0
     while True:
@@ -19,7 +18,7 @@ def record(trajectory):
                 return
 
 
-def play(trajectory, factor):
+def play(trajectory: typing.List[np.ndarray], factor: int):
     for position in trajectory[::factor]:
         action = robot.Action(position=position)
         t = robot.frontend.append_desired_action(action)
@@ -32,7 +31,7 @@ if __name__ == "__main__":
     robot = robot_fingers.Robot.create_by_name("trifingerpro")
     robot.initialize()
 
-    trajectory = []
+    trajectory: typing.List[np.ndarray] = []
     while True:
         print("enter key")
         key = input()

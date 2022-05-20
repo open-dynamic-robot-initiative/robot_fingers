@@ -16,7 +16,7 @@ def run_choreography(frontend):
 
     def perform_step(position):
         # one step should take 1 second, so repeat action 1000 times
-        for i in range(1000):
+        for _ in range(1000):
             t = frontend.append_desired_action(
                 robot_interfaces.trifinger.Action(position=position)
             )

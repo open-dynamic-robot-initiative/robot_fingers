@@ -2,7 +2,9 @@ import time
 
 
 class TimePrinter:
-    """Regularly print the current date/time and the passed duration in hours."""
+    """
+    Regularly print the current date/time and the passed duration in hours.
+    """
 
     def __init__(self, interval_s: float = 3600.0):
         """Initialise.

@@ -61,7 +61,7 @@ class SimpleCursesGUI:
                 self.win.addstr(2 + i, 0, line)
 
             self.win.refresh()
-        except curses.error as e:
+        except curses.error:
             raise RuntimeError(
                 "GUI rendering error.  Try increasing the terminal window."
             )

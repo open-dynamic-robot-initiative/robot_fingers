@@ -5,7 +5,6 @@ Moves the TriFingerEdu robot with a hard-coded choreography for show-casing and
 testing.
 """
 import argparse
-import numpy as np
 
 import robot_interfaces
 import robot_fingers
@@ -16,19 +15,11 @@ def run_choreography(frontend):
 
     def perform_step(position):
         # one step should take 1 second, so repeat action 1000 times
-        for i in range(1000):
+        for _ in range(1000):
             t = frontend.append_desired_action(
                 robot_interfaces.trifinger.Action(position=position)
             )
             frontend.wait_until_timeindex(t)
-
-    deg45 = np.pi / 4
-
-    pose_idle = [0, -deg45, -deg45]
-    pose_inward = [0, +deg45, +deg45]
-    pose_side_1 = [-deg45, -deg45, -deg45]
-    pose_side_2 = [0, -deg45, 0]
-    pose_side_3 = [deg45, -deg45, -deg45]
 
     pose_initial = [0, 0.9, -1.7]
     pose_intermediate = [0.75, 1.2, -2.3]
