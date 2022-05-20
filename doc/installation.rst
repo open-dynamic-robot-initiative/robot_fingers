@@ -51,7 +51,7 @@ With Singularity
 Go to the root directory of your workspace (the one containing the "src" folder)
 and run the container in shell mode (see :doc:`singularity`)::
 
-    singularity shell -e --no-home -B $(pwd) path/to/image.sif
+    singularity shell -e --no-home --bind=$(pwd) path/to/image.sif
 
 The current working directory gets automatically mounted into the container so
 you can edit all the files from outside the container using your preferred
@@ -76,6 +76,8 @@ Without Singularity
 To build, cd into the ``workspace`` directory and build with::
 
     colcon build
+
+This assumes that `colcon` and all build dependencies are installed.
 
 
 .. _treep: https://pypi.org/project/treep/

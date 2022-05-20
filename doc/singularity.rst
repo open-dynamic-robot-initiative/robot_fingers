@@ -1,79 +1,57 @@
-About Singularity
-=================
+About Apptainer/Singularity
+===========================
 
-What is Singularity?
---------------------
+What is Apptainer?
+------------------
 
-Singularity is a tool to run software inside containers, similar to Docker.
-Compared to Docker it has a higher focus on security and can be used without
-root permission.  Also programs in the container are executed as the user of the
-host system which makes it much more convenient when touching files of the host
-system (as it is happening when building a mounted workspace).
+Apptainer (formerly called "Singularity") is a tool to run software inside
+containers, similar to Docker. Compared to Docker it has a higher focus on
+security and can be used without root permission.  Also programs in the
+container are executed as the user of the host system which makes it much more
+convenient when touching files of the host system (as it is happening when
+building a mounted workspace).
+
+.. note::
+
+    Singularity was recently renamed to Apptainer (so Apptainer 1.0 is basically
+    Singularity 3.9).  In the following we assume that you are using Apptainer,
+    however, it probably works the same with recent releases (3.x) of
+    Singularity.  Due to this, we are using the command `singularity` in the
+    following which should work with all versions (Apptainer installs a
+    corresponding alias).
+
+    If you are using Apptainer, you can replace `singularity` with `apptainer`
+    but both should work the same.
 
 
-Get our Singularity Image
--------------------------
+Install Apptainer
+-----------------
 
-We provide a Singularity image with Ubuntu 20.04 with all dependencies needed to
+You can download pre-build packages of recent releases from the `Apptainer
+GitHub repository <https://github.com/apptainer/apptainer/releases/>`_.
+
+For example on Ubuntu, download the deb package (called
+"apptainer_X.Y.Z_amd64.deb" and install it with::
+
+    $ sudo apt install ./apptainer_X.Y.Z_amd64.deb
+
+In the following, we provide some basic information on how to use
+Apptainer.  For more detailed information, please see the `official
+documentation`_.
+
+
+Get our Apptainer Image
+-----------------------
+
+We provide an Apptainer image with Ubuntu 20.04 with all dependencies needed to
 build and run the software here.  You can download the latest version using::
 
     singularity pull library://felix.widmaier/trifinger/base:latest
 
 
-Install Singularity
--------------------
-
-We are using Singularity version 3.7. Other recent versions are probably
-also so fine, however, we cannot guarantee compatibility for those.
-Unfortunately, most versions of Ubuntu still provide Singularity version
-2.x in their official repositories. A newer version can be installed
-from source in this case. For this you may follow the `official installation
-instructions <https://sylabs.io/guides/3.7/user-guide/quick_start.html#quick-installation-steps>`_
-or use the following, slightly simplified instructions (assuming you are working
-with Ubuntu).
-
-Install system dependencies::
-
-    $ sudo apt-get update && sudo apt-get install -y \
-        build-essential \
-        libssl-dev \
-        uuid-dev \
-        libgpgme11-dev \
-        squashfs-tools \
-        libseccomp-dev \
-        wget \
-        pkg-config \
-        git \
-        cryptsetup
-
-Get the required version of the Go compiler::
-
-    cd ~/Downloads  # you can save it anywhere else, just adjust paths below
-    wget https://dl.google.com/go/go1.13.linux-amd64.tar.gz
-    tar -xzf go1.13.linux-amd64.tar.gz
-
-Note that it is only needed once for building singularity, so no need to
-install it permanently (we just add it to PATH temporarily for building,
-see below).
-
-Now download and unpack the singularity source::
-
-    wget https://github.com/sylabs/singularity/releases/download/v3.7.1/singularity-3.7.1.tar.gz
-    tar -xzf singularity-3.7.1.tar.gz
-
-And finally build and install it::
-
-    export PATH=~/Downloads/go/bin:${PATH}  # adjust path if you used a different directory
-    cd singularity  # the folder to which the singularity source was extracted
-    ./mconfig
-    cd builddir
-    make
-    sudo make install
-
-Now you should be able to use Singularity. You can test this, for
-example, by running `singularity --version` which should print
-"singularity version 3.7.1". For more information on how to use
-Singularity, see the `official documentation`_.
+In case you prefer to build the image yourself, see the `trifinger_singularity
+repository on GitHub
+<https://github.com/open-dynamic-robot-initiative/trifinger_singularity>`_
 
 
 Run Something in the Container
@@ -86,7 +64,7 @@ the following is often enough::
 
 This will, however, be influenced by your local setup as environment variables
 are exported and the home directory is mounted by default.  Further the current
-working directory from which singularity is run is also bound inside the
+working directory from which Apptainer is run is also bound inside the
 container.
 
 This default behaviour is often convenient but can cause issues in some cases.
@@ -97,7 +75,7 @@ it is recommended to use the following command to run the container in a more
 isolated way::
 
     export SINGULARITYENV_DISPLAY=$DISPLAY
-    singularity shell -e --no-home -B $(pwd) path/to/image.sif
+    singularity shell -e --no-home --bind=$(pwd) path/to/image.sif
 
 The arguments explained:
 
@@ -106,13 +84,13 @@ The arguments explained:
 - ``-e`` (short for ``--cleanenv``) prevents environment variables to be
   exported.
 - ``--no-home`` prevents your home directory from being bound.
-- ``-B $(pwd)`` explicitly binds the current working directory.  This is needed
-  if the working directory is inside your home directory as otherwise it is
-  excluded by the ``--no-home``.
+- ``--bind=$(pwd)`` explicitly binds the current working directory.  This is
+  needed if the working directory is inside your home directory as otherwise it
+  is excluded by the ``--no-home``.
 
 Note that with the above the current working directory is still bound in the
 image, so it is possible to build/modify the workspace from the host-system when
-Singularity is run from the root directory of the workspace.
+Apptainer is run from the root directory of the workspace.
 
 
 Compatibility with Nvidia Drivers
@@ -158,6 +136,6 @@ which you call the command.
     $ singularity build --fakeroot user_image.sif path/to/user_image.def
 
 
-.. _official documentation: https://sylabs.io/guides/3.7/user-guide/index.html
-.. _Documentation for Definition Files: https://sylabs.io/guides/3.7/user-guide/definition_files.html
+.. _official documentation: https://apptainer.org/docs/
+.. _Documentation for Definition Files: https://apptainer.org/docs/user/1.0/definition_files.html
 
