@@ -49,7 +49,9 @@ def load_object_type() -> typing.Optional[str]:
         return None
 
 
-def get_robot_config_without_position_limits() -> robot_fingers.TriFingerConfig:
+def get_robot_config_without_position_limits() -> (
+    robot_fingers.TriFingerConfig
+):
     """Get TriFingerPro configuration without position limits.
 
     Loads the TriFingerPro configuration from the default config file and
@@ -272,15 +274,16 @@ def main():
         type=str,
         metavar="OBJECT_TYPE",
         choices=["cube", "cuboid", "dice", "auto"],
-        help="""Specify with which object the robot is equipped (if any).  If set to
-            "auto", the object type is read from the submission system configuration.
+        help="""Specify with which object the robot is equipped (if any).  If
+            set to "auto", the object type is read from the submission system
+            configuration.
         """,
     )
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="""Execute a trajectory to reset the object.  Only valid if --object is
-            set.
+        help="""Execute a trajectory to reset the object.  Only valid if
+            --object is set.
         """,
     )
     args = parser.parse_args()
