@@ -22,6 +22,7 @@ import tomli
 import robot_interfaces
 import robot_fingers
 import trifinger_object_tracking.py_tricamera_types as tricamera
+import trifinger_object_tracking.py_object_tracker
 
 
 # Distance from the zero position (finger pointing straight down) to the
@@ -236,11 +237,20 @@ def reset_object(robot, trajectory_file):
         robot.frontend.wait_until_timeindex(t)
 
 
-def check_if_cube_is_there():
+def check_if_cube_is_there(object_type: str):
     """Verify that the cube is still inside the arena."""
+
+    object_models = {
+        "cube": "cube_v2",
+        "cuboid": "cuboid_2x2x8_v2",
+    }
+
     camera_data = tricamera.SingleProcessData(history_size=5)
+    model = trifinger_object_tracking.py_object_tracker.get_model_by_name(
+        object_models[object_type]
+    )
     camera_driver = tricamera.TriCameraObjectTrackerDriver(
-        "camera60", "camera180", "camera300"
+        "camera60", "camera180", "camera300", model
     )
     camera_backend = tricamera.Backend(camera_driver, camera_data)
     camera_frontend = tricamera.Frontend(camera_data)
@@ -309,7 +319,7 @@ def main():
 
     if args.object in ["cube", "cuboid"]:
         print("Check if cube/cuboid is found")
-        check_if_cube_is_there()
+        check_if_cube_is_there(args.object)
 
 
 if __name__ == "__main__":
