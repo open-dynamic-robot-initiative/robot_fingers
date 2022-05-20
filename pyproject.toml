@@ -3,3 +3,39 @@ line-length = 79
 
 [tool.pylint.messages_control]
 disable = "C0330, C0326"
+
+[tool.mypy]
+exclude = "doc/"
+
+[[tool.mypy.overrides]]
+# list all modules for which no type hints are available
+module = [
+    "ament_index_python.*",
+    "catkin_pkg.*",
+    "cv2",
+    "matplotlib.*",
+    "pandas",
+    "pinocchio",
+    "progressbar",
+    "rclpy.*",
+    "scipy.*",
+    "setuptools",
+    "std_msgs.*",
+    "std_srvs.*",
+
+    # our packages
+    "robot_interfaces",
+    "trifinger_cameras.*",
+    "trifinger_simulation.*",
+    "trifinger_object_tracking.*",
+
+    # pybind11 packages
+    "robot_fingers.pybullet_drivers",
+    "robot_fingers.py_real_finger",
+    "robot_fingers.py_trifinger",
+    "robot_fingers.py_one_joint",
+    "robot_fingers.py_two_joint",
+    "robot_fingers.py_solo_eight",
+]
+ignore_missing_imports = true
+
