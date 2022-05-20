@@ -28,7 +28,7 @@ find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
 
 
-ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR python/${PROJECT_NAME})
+ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR ${PROJECT_NAME})
 
 
 ###########
