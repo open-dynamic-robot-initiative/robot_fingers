@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Send zero-torque commands to the robot and create a log"""
 
-import time
 import numpy as np
 
 from robot_interfaces import finger
@@ -28,7 +27,9 @@ def main():
                 finger.Action(torque=desired_torque)
             )
 
-            pos = finger_frontend.get_observation(t).position
+            finger_frontend.wait_for_timeindex(t)
+
+    finger_backend.shutdown()
 
 
 if __name__ == "__main__":

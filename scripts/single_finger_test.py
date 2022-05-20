@@ -116,7 +116,7 @@ class CursesGUI:
 
             self.win.refresh()
 
-        except curses.error as e:
+        except curses.error:
             raise RuntimeError(
                 "GUI rendering error.  Try increasing the terminal window."
             )

@@ -4,8 +4,6 @@
 Uses the "trifingerpro_calib" setup, so can safely be used for robots where the
 home-offsets are not yet configured.
 """
-import numpy as np
-
 import robot_fingers
 
 

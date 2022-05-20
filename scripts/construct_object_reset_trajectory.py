@@ -13,7 +13,7 @@ import trifinger_simulation
 def min_jerk_trajectory(current, setpoint, frequency, avg_speed):
     """Compute minimum jerk trajectory.
 
-    Based on [Mika's tech blog](https://mika-s.github.io/python/control-theory/trajectory-generation/2017/12/06/trajectory-generation-with-a-minimum-jerk-trajectory.html)
+    Based on [Mika's tech blog](https://mika-s.github.io/python/control-theory/trajectory-generation/2017/12/06/trajectory-generation-with-a-minimum-jerk-trajectory.html)  # noqa
     License: CC BY-SA 3.0
     """
     trajectory = []
@@ -24,14 +24,14 @@ def min_jerk_trajectory(current, setpoint, frequency, avg_speed):
 
     timefreq = int(move_time * frequency)
 
-    for time in range(1, timefreq):
+    for t in range(1, timefreq):
         trajectory.append(
             current
             + (setpoint - current)
             * (
-                10.0 * (time / timefreq) ** 3
-                - 15.0 * (time / timefreq) ** 4
-                + 6.0 * (time / timefreq) ** 5
+                10.0 * (t / timefreq) ** 3
+                - 15.0 * (t / timefreq) ** 4
+                + 6.0 * (t / timefreq) ** 5
             )
         )
 
@@ -40,9 +40,9 @@ def min_jerk_trajectory(current, setpoint, frequency, avg_speed):
             * (1.0 / timefreq)
             * (setpoint - current)
             * (
-                30.0 * (time / timefreq) ** 2.0
-                - 60.0 * (time / timefreq) ** 3.0
-                + 30.0 * (time / timefreq) ** 4.0
+                30.0 * (t / timefreq) ** 2.0
+                - 60.0 * (t / timefreq) ** 3.0
+                + 30.0 * (t / timefreq) ** 4.0
             )
         )
 
