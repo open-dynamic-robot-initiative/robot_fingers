@@ -258,18 +258,25 @@ def check_if_cube_is_there():
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--reset",
+        "--object",
         type=str,
         metavar="OBJECT_TYPE",
         choices=["cube", "cuboid", "dice", "auto"],
-        help="""Execute a trajectory to reset the object.  A different
-            trajectory is used depending on the specified object type.
+        help="""Specify with which object the robot is equipped (if any).  If set to
+            "auto", the object type is read from the submission system configuration.
+        """,
+    )
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="""Execute a trajectory to reset the object.  Only valid if --object is
+            set.
         """,
     )
     args = parser.parse_args()
 
-    if args.reset == "auto":
-        args.reset = load_object_type()
+    if args.object == "auto":
+        args.object = load_object_type()
 
     config = get_robot_config_without_position_limits()
     robot = robot_fingers.Robot(
@@ -284,20 +291,23 @@ def main():
     print("Position reachability test")
     run_self_test(robot)
 
-    if args.reset == "cube":
-        print("Reset cube position")
-        reset_object(robot, "trifingerpro_shuffle_cube_trajectory_fast.csv")
-    elif args.reset == "cuboid":
-        print("Reset cuboid position")
-        reset_object(robot, "trifingerpro_recenter_cuboid_2x2x8.csv")
-    elif args.reset == "dice":
-        print("Shuffle dice positions")
-        reset_object(robot, "trifingerpro_shuffle_dice_trajectory.csv")
+    if args.reset:
+        if args.object == "cube":
+            print("Reset cube position")
+            reset_object(
+                robot, "trifingerpro_shuffle_cube_trajectory_fast.csv"
+            )
+        elif args.object == "cuboid":
+            print("Reset cuboid position")
+            reset_object(robot, "trifingerpro_recenter_cuboid_2x2x8.csv")
+        elif args.object == "dice":
+            print("Shuffle dice positions")
+            reset_object(robot, "trifingerpro_shuffle_dice_trajectory.csv")
 
     # terminate the robot
     del robot
 
-    if args.reset in ["cube", "cuboid"]:
+    if args.object in ["cube", "cuboid"]:
         print("Check if cube/cuboid is found")
         check_if_cube_is_there()
 
