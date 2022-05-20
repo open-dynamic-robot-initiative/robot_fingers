@@ -12,10 +12,12 @@ Performs the following actins:
 import argparse
 import os
 import sys
+import typing
 
 import numpy as np
 import pandas
 from ament_index_python.packages import get_package_share_directory
+import tomli
 
 import robot_interfaces
 import robot_fingers
@@ -32,8 +34,21 @@ _max_torque_against_homing_endstop = [+0.4, +0.4, -0.4] * 3
 # Tolerance when checking if expected position is reached
 _position_tolerance = 0.1
 
+_submission_system_config_file = "/etc/trifingerpro/submission_system.toml"
 
-def get_robot_config_without_position_limits():
+
+def load_object_type() -> typing.Optional[str]:
+    with open(_submission_system_config_file, "rb") as f:
+        config = tomli.load(f)
+
+    try:
+        return config["post_submission"]["object_type"]
+    except KeyError:
+        print("ERROR: failed to load object from config file.")
+        return None
+
+
+def get_robot_config_without_position_limits() -> robot_fingers.TriFingerConfig:
     """Get TriFingerPro configuration without position limits.
 
     Loads the TriFingerPro configuration from the default config file and
@@ -56,7 +71,7 @@ def get_robot_config_without_position_limits():
     return config
 
 
-def end_stop_check(robot: robot_fingers.Robot):
+def end_stop_check(robot: robot_fingers.Robot) -> None:
     """Move robot to endstop, using constant torque and verify its position.
 
     Applies a constant torque for a fixed time to move to the end-stop.  If
@@ -123,11 +138,11 @@ def end_stop_check(robot: robot_fingers.Robot):
         sys.exit(1)
 
 
-def run_self_test(robot):
+def run_self_test(robot: robot_fingers.Robot) -> None:
     position_tolerance = 0.2
     push_sensor_threshold = 0.5
 
-    initial_pose = [0, 1.1, -1.9] * 3
+    initial_pose = [0.0, 1.1, -1.9] * 3
 
     reachable_goals = [
         [0.9, 1.5, -2.6] * 3,
@@ -135,8 +150,8 @@ def run_self_test(robot):
     ]
 
     unreachable_goals = [
-        [0, 0, 0] * 3,
-        [-0.5, 1.5, 0] * 3,
+        [0.0, 0.0, 0.0] * 3,
+        [-0.5, 1.5, 0.0] * 3,
     ]
 
     for goal in reachable_goals:
@@ -246,12 +261,15 @@ def main():
         "--reset",
         type=str,
         metavar="OBJECT_TYPE",
-        choices=["cube", "cuboid", "dice"],
+        choices=["cube", "cuboid", "dice", "auto"],
         help="""Execute a trajectory to reset the object.  A different
             trajectory is used depending on the specified object type.
         """,
     )
     args = parser.parse_args()
+
+    if args.reset == "auto":
+        args.reset = load_object_type()
 
     config = get_robot_config_without_position_limits()
     robot = robot_fingers.Robot(
