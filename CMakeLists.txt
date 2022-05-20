@@ -202,6 +202,7 @@ if (BUILD_TESTING)
     # using pybind11 types, therefore visibility needs to be hidden
     set_target_properties(test_pybullet_backend
         PROPERTIES CXX_VISIBILITY_PRESET hidden)
+    install(TARGETS test_pybullet_backend DESTINATION lib/${PROJECT_NAME})
 
 
     # Create a usefull macro to build different unit tests suits.
@@ -218,6 +219,7 @@ if (BUILD_TESTING)
                $<INSTALL_INTERFACE:include>)
       # link the dependecies to it
       target_link_libraries(${test_target_name} ${PROJECT_NAME})
+      install(TARGETS ${test_target_name} DESTINATION lib/${PROJECT_NAME})
 
     endmacro()
 
