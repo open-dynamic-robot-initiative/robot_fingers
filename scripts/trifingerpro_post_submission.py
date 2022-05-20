@@ -247,7 +247,6 @@ def main():
         type=str,
         metavar="OBJECT_TYPE",
         choices=["cube", "cuboid", "dice"],
-        default="cube",
         help="""Execute a trajectory to reset the object.  A different
             trajectory is used depending on the specified object type.
         """,
@@ -280,8 +279,9 @@ def main():
     # terminate the robot
     del robot
 
-    print("Check if cube is found")
-    check_if_cube_is_there()
+    if args.reset in ["cube", "cuboid"]:
+        print("Check if cube/cuboid is found")
+        check_if_cube_is_there()
 
 
 if __name__ == "__main__":
