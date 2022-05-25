@@ -8,6 +8,14 @@ You can, of course, also use the package without Singularity.  In this case you
 need to install all dependencies locally, though.
 
 
+Real-Time Requirements
+----------------------
+
+To ensure reliable communication with the robot hardware, a real-time Linux
+kernel is needed.  See `Real Time Setup in the documentation of robot_interfaces
+<http://people.tuebingen.mpg.de/mpi-is-software/robotfingers/docs/robot_interfaces/doc/real_time.html>`_
+
+
 Get the Source
 --------------
 
@@ -31,15 +39,14 @@ Now clone the project::
 
     treep --clone ROBOT_FINGERS
 
-**Important:** treep uses SSH to clone from github.  So for the above command to
-work, you need a github account with a registered SSH key.  Further this key
-needs to work without asking for a password everytime.  To achieve this, run
+.. important::
+    treep uses SSH to clone from GitHub.  So for the above command to work, you
+    need a GitHub account with a registered SSH key.  Further this key needs to
+    work without asking for a password everytime.  To achieve this, run ::
 
-::
+        ssh-add
 
-    ssh-add
-
-first.
+    first.
 
 
 Build
@@ -78,6 +85,27 @@ To build, cd into the ``workspace`` directory and build with::
     colcon build
 
 This assumes that `colcon` and all build dependencies are installed.
+
+
+Real-Time-Capable Build
+~~~~~~~~~~~~~~~~~~~~~~~
+
+When running a PREEMPT_RT Linux kernel, this is automatically detected at
+build-time and build flags are set accordingly.  If you want to make a real-time-capable
+build while running a different kernel (e.g. the "lowlatency" kernel or when
+cross-compiling), you need to explicity set the ``OS_VERSION``::
+
+    colcon build --cmake-args -DOS_VERSION=preempt-rt
+
+
+.. note::
+
+    If you see the following output during initialisation of the robot, this
+    means you are running a non-real-time build.
+
+    .. code-block:: text
+
+        Warning this thread is not going to be real time.
 
 
 .. _treep: https://pypi.org/project/treep/
