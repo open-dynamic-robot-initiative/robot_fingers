@@ -108,4 +108,39 @@ cross-compiling), you need to explicity set the ``OS_VERSION``::
         Warning this thread is not going to be real time.
 
 
+Run Demo
+--------
+
+When the build finished successfully, you can run one of the demos to see if
+everything works.
+
+Before running anything, you need to source the ``setup.bash`` of the
+workspace (this needs to be done every time you open a new terminal)::
+
+    source ./install/setup.bash
+
+
+As a first test, you can run the "fake robot" demo (which doesn't need an actual
+robot to be connected)::
+
+    ros2 run robot_fingers demo_fake_finger
+
+It should produce output like this::
+
+    Position: [299. 598. 897.]
+    Position: [ 599. 1198. 1797.]
+    Position: [ 899. 1798. 2697.]
+    Position: [1199. 2398. 3597.]
+    Position: [1499. 2998. 4497.]
+    Position: [1799. 3598. 5397.]
+    Position: [2099. 4198. 6297.]
+
+You can cancel it with Ctrl+C.
+
+For more demos (including the actual robot), see :doc:`getting_started`.
+
+
+
+
+
 .. _treep: https://pypi.org/project/treep/
