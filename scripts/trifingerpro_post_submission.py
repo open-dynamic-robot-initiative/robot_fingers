@@ -16,13 +16,14 @@ import typing
 
 import numpy as np
 import pandas
+from scipy.spatial.transform import Rotation
 from ament_index_python.packages import get_package_share_directory
 import tomli
 
 import robot_interfaces
 import robot_fingers
 import trifinger_object_tracking.py_tricamera_types as tricamera
-import trifinger_object_tracking.py_object_tracker
+import trifinger_object_tracking.py_object_tracker as object_tracker
 
 
 # Distance from the zero position (finger pointing straight down) to the
@@ -36,6 +37,12 @@ _max_torque_against_homing_endstop = [+0.4, +0.4, -0.4] * 3
 _position_tolerance = 0.1
 
 _submission_system_config_file = "/etc/trifingerpro/submission_system.toml"
+
+
+def orientation_distance(rot1: Rotation, rot2: Rotation) -> float:
+    """Compute angular distance between to orientations."""
+    error_rot = rot2.inv() * rot1
+    return error_rot.magnitude()
 
 
 def load_object_type() -> typing.Optional[str]:
@@ -239,32 +246,102 @@ def reset_object(robot, trajectory_file):
         robot.frontend.wait_until_timeindex(t)
 
 
-def check_if_cube_is_there(object_type: str):
-    """Verify that the cube is still inside the arena."""
+def check_object_detection_noise(object_type: str) -> bool:
+    """
+    Compute the variance of the object pose while nothing is moving and check
+    against some limits.
 
+    Args:
+        object_type: Which object to look for ("cube" or "cuboid").
+
+    Returns:
+        True if test is successful, False if there is any issue.
+    """
     object_models = {
         "cube": "cube_v2",
         "cuboid": "cuboid_2x2x8_v2",
     }
+    object_withs = {
+        "cube": 0.035,
+        "cuboid": 0.01,
+    }
 
-    camera_data = tricamera.SingleProcessData(history_size=5)
-    model = trifinger_object_tracking.py_object_tracker.get_model_by_name(
-        object_models[object_type]
-    )
+    N_SAMPLES = 30
+    CONFIDENCE_LIMIT = 0.75
+    POSITION_VAR_LIMIT = 1.0  # TODO good value?
+    Z_POSITION_TOLERANCE = 0.01
+    ORIENTATION_DIFF_LIMIT = 1.0  # TODO good value?
+
+    expected_z_pos = object_withs[object_type]
+
+    camera_data = tricamera.SingleProcessData(history_size=N_SAMPLES)
+    model = object_tracker.get_model_by_name(object_models[object_type])
     camera_driver = tricamera.TriCameraObjectTrackerDriver(
         "camera60", "camera180", "camera300", model
     )
     camera_backend = tricamera.Backend(camera_driver, camera_data)
     camera_frontend = tricamera.Frontend(camera_data)
 
-    observation = camera_frontend.get_latest_observation()
-    if observation.object_pose.confidence == 0:
-        print("Cube not found.")
-        sys.exit(2)
-    else:
-        print("Cube found.")
+    # collect observations
+    observation_buffer: typing.List[object_tracker.ObjectPose] = []
+    t = camera_frontend.get_current_timeindex()
+    while len(observation_buffer) < N_SAMPLES:
+        obs = camera_frontend.get_observation(t)
+        observation_buffer.append(obs.object_pose)
+        t += 1
 
     camera_backend.shutdown()
+
+    mean_confidence = np.mean([p.confidence for p in observation_buffer])
+    mean_position = np.mean([p.position for p in observation_buffer], axis=0)
+    var_position = np.var([p.position for p in observation_buffer], axis=0)
+
+    # for orientation use scipy Rotation to compute mean and then compute the
+    # mean angular difference of each orientation to this mean.
+    orientations = Rotation.from_quat(
+        [p.orientation for p in observation_buffer]
+    )
+    mean_orientation = orientations.mean()
+    orientations_diff_to_mean = [
+        orientation_distance(o, mean_orientation) for o in orientations
+    ]
+    mean_orientation_diff = np.mean(orientations_diff_to_mean)
+
+    print("Mean object detection confidence: {}".format(mean_confidence))
+    print("Mean object position: {}".format(mean_position))
+    print("Object position variance: {}".format(var_position))
+    print("Mean orientation dist to mean: {}".format(mean_orientation_diff))
+
+    if mean_confidence < CONFIDENCE_LIMIT:
+        print(
+            "Object detection confidence is very low (< {}).".format(
+                CONFIDENCE_LIMIT
+            )
+        )
+        return False
+
+    if np.max(var_position) > POSITION_VAR_LIMIT:
+        print(f"Object position variance exceeds limit {POSITION_VAR_LIMIT}")
+        return False
+
+    if abs(mean_position[2] - expected_z_pos) > Z_POSITION_TOLERANCE:
+        print(
+            "Object height exceeds tolerance"
+            f" ({expected_z_pos} +/- {Z_POSITION_TOLERANCE})"
+        )
+        return False
+
+    if mean_orientation_diff > ORIENTATION_DIFF_LIMIT:
+        print(
+            "Object orientation variance exceeds limit {}".format(
+                ORIENTATION_DIFF_LIMIT
+            )
+        )
+        return False
+
+    # FIXME: Log the data
+
+    return True
 
 
 def main():
@@ -321,8 +398,9 @@ def main():
     del robot
 
     if args.object in ["cube", "cuboid"]:
-        print("Check if cube/cuboid is found")
-        check_if_cube_is_there(args.object)
+        print("Check object detection")
+        if not check_object_detection_noise(args.object):
+            sys.exit(2)
 
 
 if __name__ == "__main__":
