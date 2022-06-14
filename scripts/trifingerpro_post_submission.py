@@ -308,8 +308,10 @@ def check_object_detection_noise(
     object_type: str, log: logging.Logger
 ) -> bool:
     """
-    Compute the variance of the object pose while nothing is moving and check
-    against some limits.
+    Collect multiple object pose observations while the robot is not moving.
+    Then compute mean pose as well as variance and average absolute error from
+    the mean pose. Check these values against some limits and report a failure
+    if any of these limits is exceeded.
 
     Args:
         object_type: Which object to look for ("cube" or "cuboid").
@@ -329,9 +331,9 @@ def check_object_detection_noise(
 
     N_SAMPLES = 30
     CONFIDENCE_LIMIT = 0.75
-    POSITION_VAR_LIMIT = 1.0  # TODO good value?
+    POSITION_MAE_LIMIT = 0.02
     Z_POSITION_TOLERANCE = 0.01
-    ORIENTATION_DIFF_LIMIT = 1.0  # TODO good value?
+    ORIENTATION_DIFF_LIMIT = 0.2
 
     expected_z_pos = object_withs[object_type]
 
@@ -370,8 +372,12 @@ def check_object_detection_noise(
     # Only check position/orientation if confidence test has passed (if no
     # object is found, these will contain invalid values, causing errors)
 
-    mean_position = np.mean([p.position for p in observation_buffer], axis=0)
-    var_position = np.var([p.position for p in observation_buffer], axis=0)
+    positions = np.array([p.position for p in observation_buffer])
+    mean_position = np.mean(positions, axis=0)
+    var_position = np.var(positions, axis=0)
+    position_errors = np.linalg.norm(positions - mean_position, axis=1)
+    position_mae = np.mean(position_errors)
+
     # for orientation use scipy Rotation to compute mean and then compute the
     # mean angular difference of each orientation to this mean.
     orientations = Rotation.from_quat(
@@ -381,20 +387,30 @@ def check_object_detection_noise(
     orientations_diff_to_mean = [
         orientation_distance(o, mean_orientation) for o in orientations
     ]
-    mean_orientation_diff = np.mean(orientations_diff_to_mean)
+    orientation_mae = np.mean(orientations_diff_to_mean)
 
-    log.info(SM("position mean", object_mean_position=mean_position))
-    log.info(SM("position var", object_var_position=var_position))
     log.info(
-        SM("orientation diff", mean_orientation_diff=mean_orientation_diff)
+        SM(
+            "position",
+            mean=mean_position,
+            var=var_position,
+            mean_error=position_mae,
+        )
+    )
+    log.info(
+        SM(
+            "orientation",
+            mean=mean_orientation.as_quat(),
+            mean_error=orientation_mae,
+        )
     )
 
-    if np.max(var_position) > POSITION_VAR_LIMIT:
+    if position_mae > POSITION_MAE_LIMIT:
         log.error(
             SM(
-                "Object position variance exceeds limit",
+                "Object position error exceeds limit",
                 variance=var_position,
-                limit=POSITION_VAR_LIMIT,
+                limit=POSITION_MAE_LIMIT,
             )
         )
         return False
@@ -403,18 +419,18 @@ def check_object_detection_noise(
         log.error(
             SM(
                 "Object height exceeds tolerance",
-                z_pos=mean_position[2],
+                mean_z_pos=mean_position[2],
                 expected_z_pos=expected_z_pos,
                 tolerance=Z_POSITION_TOLERANCE,
             )
         )
         return False
 
-    if mean_orientation_diff > ORIENTATION_DIFF_LIMIT:
+    if orientation_mae > ORIENTATION_DIFF_LIMIT:
         log.error(
             SM(
-                "Object orientation variance exceeds limit",
-                mean_orientation_diff=mean_orientation_diff,
+                "Object orientation error exceeds limit",
+                mean_error=orientation_mae,
                 limit=ORIENTATION_DIFF_LIMIT,
             )
         )
