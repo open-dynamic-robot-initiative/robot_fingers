@@ -354,9 +354,24 @@ def check_object_detection_noise(
     camera_backend.shutdown()
 
     mean_confidence = np.mean([p.confidence for p in observation_buffer])
+
+    log.info(SM("confidence", object_mean_confidence=mean_confidence))
+
+    if mean_confidence < CONFIDENCE_LIMIT:
+        log.error(
+            SM(
+                "Object detection confidence is too low",
+                mean_confidence=mean_confidence,
+                limit=CONFIDENCE_LIMIT,
+            )
+        )
+        return False
+
+    # Only check position/orientation if confidence test has passed (if no
+    # object is found, these will contain invalid values, causing errors)
+
     mean_position = np.mean([p.position for p in observation_buffer], axis=0)
     var_position = np.var([p.position for p in observation_buffer], axis=0)
-
     # for orientation use scipy Rotation to compute mean and then compute the
     # mean angular difference of each orientation to this mean.
     orientations = Rotation.from_quat(
@@ -368,22 +383,11 @@ def check_object_detection_noise(
     ]
     mean_orientation_diff = np.mean(orientations_diff_to_mean)
 
-    log.info(SM("confidence", object_mean_confidence=mean_confidence))
     log.info(SM("position mean", object_mean_position=mean_position))
     log.info(SM("position var", object_var_position=var_position))
     log.info(
         SM("orientation diff", mean_orientation_diff=mean_orientation_diff)
     )
-
-    if mean_confidence < CONFIDENCE_LIMIT:
-        log.error(
-            SM(
-                "Object detection confidence is too low",
-                mean_confidence=mean_confidence,
-                limit=CONFIDENCE_LIMIT,
-            )
-        )
-        return False
 
     if np.max(var_position) > POSITION_VAR_LIMIT:
         log.error(
