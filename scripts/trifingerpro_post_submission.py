@@ -10,9 +10,12 @@ Performs the following actins:
   implemented yet)
 """
 import argparse
+import json
 import os
 import sys
 import typing
+import logging
+import logging.handlers
 
 import numpy as np
 import pandas
@@ -37,6 +40,36 @@ _max_torque_against_homing_endstop = [+0.4, +0.4, -0.4] * 3
 _position_tolerance = 0.1
 
 _submission_system_config_file = "/etc/trifingerpro/submission_system.toml"
+
+
+class NumpyEncoder(json.JSONEncoder):
+    # From https://stackoverflow.com/a/47626762 (CC BY-SA 4.0)
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+
+class StructuredMessage:
+    """Log message with keywords for structured logging.
+
+    Taken from
+    https://docs.python.org/3.8/howto/logging-cookbook.html#implementing-structured-logging
+    """
+
+    def __init__(self, message, /, **kwargs):
+        self.message = message
+        self.kwargs = kwargs
+
+    def __str__(self):
+        return "%s >>> %s" % (
+            self.message,
+            json.dumps(self.kwargs, cls=NumpyEncoder),
+        )
+
+
+# for shorter code below
+SM = StructuredMessage
 
 
 def orientation_distance(rot1: Rotation, rot2: Rotation) -> float:
@@ -81,7 +114,7 @@ def get_robot_config_without_position_limits() -> (
     return config
 
 
-def end_stop_check(robot: robot_fingers.Robot) -> None:
+def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
     """Move robot to endstop, using constant torque and verify its position.
 
     Applies a constant torque for a fixed time to move to the end-stop.  If
@@ -93,6 +126,7 @@ def end_stop_check(robot: robot_fingers.Robot) -> None:
 
     Args:
         robot:  Initialized robot instance of the TriFingerPro.
+        log: Logger instance to log results.
     """
     # go to the "homing" end-stop (using the same torque as during homing)
     action = robot.Action(
@@ -121,9 +155,13 @@ def end_stop_check(robot: robot_fingers.Robot) -> None:
         np.linalg.norm(_zero_to_endstop - observation.position)
         > _position_tolerance
     ):
-        print("End stop not at expected position.")
-        print("Expected position: {}".format(_zero_to_endstop))
-        print("Actual position: {}".format(observation.position))
+        log.error(
+            SM(
+                "End stop not at expected position.",
+                expected_position=_zero_to_endstop,
+                actual_position=observation.position,
+            )
+        )
         sys.exit(1)
 
     # move back joint-by-joint
@@ -142,13 +180,17 @@ def end_stop_check(robot: robot_fingers.Robot) -> None:
 
     # verify that goal is reached
     if np.linalg.norm(goal - observation.position) > _position_tolerance:
-        print("Robot did not reach goal position")
-        print("Desired position: {}".format(goal))
-        print("Actual position: {}".format(observation.position))
+        log.error(
+            SM(
+                "Robot did not reach goal position",
+                desired_position=goal,
+                actual_position=observation.position,
+            )
+        )
         sys.exit(1)
 
 
-def run_self_test(robot: robot_fingers.Robot) -> None:
+def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
     position_tolerance = 0.2
     push_sensor_threshold = 0.5
 
@@ -174,16 +216,24 @@ def run_self_test(robot: robot_fingers.Robot) -> None:
 
         # verify that goal is reached
         if np.linalg.norm(goal - observation.position) > position_tolerance:
-            print("Robot did not reach goal position")
-            print("Desired position: {}".format(goal))
-            print("Actual position: {}".format(observation.position))
+            log.error(
+                SM(
+                    "Robot did not reach goal position",
+                    desired_position=goal,
+                    actual_position=observation.position,
+                )
+            )
             sys.exit(1)
 
         if (observation.tip_force > push_sensor_threshold).any():
-            print("Push sensor reports high value in non-contact situation.")
-            print("Sensor value: {}".format(observation.tip_force))
-            print("Desired position: {}".format(goal))
-            print("Actual position: {}".format(observation.position))
+            log.error(
+                SM(
+                    "Push sensor reports high value in non-contact situation.",
+                    sensor_value=observation.tip_force,
+                    desired_position=goal,
+                    actual_position=observation.position,
+                )
+            )
             # sys.exit(1)
 
     for goal in unreachable_goals:
@@ -202,16 +252,24 @@ def run_self_test(robot: robot_fingers.Robot) -> None:
 
         # verify that goal is reached
         if np.linalg.norm(goal - observation.position) < position_tolerance:
-            print("Robot reached a goal which should not be reachable.")
-            print("Desired position: {}".format(goal))
-            print("Actual position: {}".format(observation.position))
+            log.error(
+                SM(
+                    "Robot reached a goal which should not be reachable.",
+                    desired_position=goal,
+                    actual_position=observation.position,
+                )
+            )
             sys.exit(1)
 
         if (observation.tip_force < push_sensor_threshold).any():
-            print("Push sensor reports low value in contact situation.")
-            print("Sensor value: {}".format(observation.tip_force))
-            print("Desired position: {}".format(goal))
-            print("Actual position: {}".format(observation.position))
+            log.error(
+                SM(
+                    "Push sensor reports low value in contact situation.",
+                    sensor_value=observation.tip_force,
+                    desired_position=goal,
+                    actual_position=observation.position,
+                )
+            )
             # sys.exit(1)
 
     print("Test successful.")
@@ -246,13 +304,16 @@ def reset_object(robot, trajectory_file):
         robot.frontend.wait_until_timeindex(t)
 
 
-def check_object_detection_noise(object_type: str) -> bool:
+def check_object_detection_noise(
+    object_type: str, log: logging.Logger
+) -> bool:
     """
     Compute the variance of the object pose while nothing is moving and check
     against some limits.
 
     Args:
         object_type: Which object to look for ("cube" or "cuboid").
+        log: Logger instance to log results.
 
     Returns:
         True if test is successful, False if there is any issue.
@@ -307,39 +368,53 @@ def check_object_detection_noise(object_type: str) -> bool:
     ]
     mean_orientation_diff = np.mean(orientations_diff_to_mean)
 
-    print("Mean object detection confidence: {}".format(mean_confidence))
-    print("Mean object position: {}".format(mean_position))
-    print("Object position variance: {}".format(var_position))
-    print("Mean orientation dist to mean: {}".format(mean_orientation_diff))
+    log.info(SM("confidence", object_mean_confidence=mean_confidence))
+    log.info(SM("position mean", object_mean_position=mean_position))
+    log.info(SM("position var", object_var_position=var_position))
+    log.info(
+        SM("orientation diff", mean_orientation_diff=mean_orientation_diff)
+    )
 
     if mean_confidence < CONFIDENCE_LIMIT:
-        print(
-            "Object detection confidence is very low (< {}).".format(
-                CONFIDENCE_LIMIT
+        log.error(
+            SM(
+                "Object detection confidence is too low",
+                mean_confidence=mean_confidence,
+                limit=CONFIDENCE_LIMIT,
             )
         )
         return False
 
     if np.max(var_position) > POSITION_VAR_LIMIT:
-        print(f"Object position variance exceeds limit {POSITION_VAR_LIMIT}")
-        return False
-
-    if abs(mean_position[2] - expected_z_pos) > Z_POSITION_TOLERANCE:
-        print(
-            "Object height exceeds tolerance"
-            f" ({expected_z_pos} +/- {Z_POSITION_TOLERANCE})"
-        )
-        return False
-
-    if mean_orientation_diff > ORIENTATION_DIFF_LIMIT:
-        print(
-            "Object orientation variance exceeds limit {}".format(
-                ORIENTATION_DIFF_LIMIT
+        log.error(
+            SM(
+                "Object position variance exceeds limit",
+                variance=var_position,
+                limit=POSITION_VAR_LIMIT,
             )
         )
         return False
 
-    # FIXME: Log the data
+    if abs(mean_position[2] - expected_z_pos) > Z_POSITION_TOLERANCE:
+        log.error(
+            SM(
+                "Object height exceeds tolerance",
+                z_pos=mean_position[2],
+                expected_z_pos=expected_z_pos,
+                tolerance=Z_POSITION_TOLERANCE,
+            )
+        )
+        return False
+
+    if mean_orientation_diff > ORIENTATION_DIFF_LIMIT:
+        log.error(
+            SM(
+                "Object orientation variance exceeds limit",
+                mean_orientation_diff=mean_orientation_diff,
+                limit=ORIENTATION_DIFF_LIMIT,
+            )
+        )
+        return False
 
     return True
 
@@ -364,11 +439,43 @@ def main():
         """,
     )
     parser.add_argument(
+        "--log",
+        dest="logfile",
+        metavar="LOGFILE",
+        type=str,
+        help="If set, safe log to the specified file (using file rotation).",
+    )
+    parser.add_argument(
         "--skip-robot-test",
         action="store_true",
         help="Skip the robot self-test.",
     )
     args = parser.parse_args()
+
+    # configure logger
+    log = logging.getLogger()
+    log.setLevel(logging.NOTSET)
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setFormatter(
+        logging.Formatter("%(levelname)s - %(message)s")
+    )
+    stdout_handler.setLevel(logging.INFO)
+    log.addHandler(stdout_handler)
+    if args.logfile:
+        file_handler = logging.handlers.RotatingFileHandler(
+            filename=args.logfile, maxBytes=50000000, backupCount=5
+        )
+        file_handler.setFormatter(
+            logging.Formatter(
+                "%(asctime)s %(levelname)s %(name)s %(message)s",
+                datefmt="%Y-%m-%dT%H:%M:%S%z",
+            )
+        )
+        file_handler.setLevel(logging.DEBUG)
+        log.addHandler(file_handler)
+
+    # log parameters
+    log.debug(SM("Start post_submission", **vars(args)))
 
     if args.object == "auto":
         args.object = load_object_type()
@@ -386,9 +493,9 @@ def main():
 
     if not args.skip_robot_test:
         print("End stop test")
-        end_stop_check(robot)
+        end_stop_check(robot, logging.getLogger("end_stop_test"))
         print("Position reachability test")
-        run_self_test(robot)
+        run_self_test(robot, logging.getLogger("self_test"))
 
     if args.reset:
         if args.object == "cube":
@@ -408,7 +515,9 @@ def main():
 
     if args.object in ["cube", "cuboid"]:
         print("Check object detection")
-        if not check_object_detection_noise(args.object):
+        if not check_object_detection_noise(
+            args.object, logging.getLogger("object_detection")
+        ):
             sys.exit(2)
 
 
