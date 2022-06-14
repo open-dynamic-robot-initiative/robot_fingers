@@ -363,23 +363,32 @@ def main():
             --object is set.
         """,
     )
+    parser.add_argument(
+        "--skip-robot-test",
+        action="store_true",
+        help="Skip the robot self-test.",
+    )
     args = parser.parse_args()
 
     if args.object == "auto":
         args.object = load_object_type()
 
-    config = get_robot_config_without_position_limits()
-    robot = robot_fingers.Robot(
-        robot_interfaces.trifinger,
-        robot_fingers.create_trifinger_backend,
-        config,
-    )
-    robot.initialize()
+    robot = None
+    if not args.skip_robot_test or args.reset:
+        print("Initialise robot.")
+        config = get_robot_config_without_position_limits()
+        robot = robot_fingers.Robot(
+            robot_interfaces.trifinger,
+            robot_fingers.create_trifinger_backend,
+            config,
+        )
+        robot.initialize()
 
-    print("End stop test")
-    end_stop_check(robot)
-    print("Position reachability test")
-    run_self_test(robot)
+    if not args.skip_robot_test:
+        print("End stop test")
+        end_stop_check(robot)
+        print("Position reachability test")
+        run_self_test(robot)
 
     if args.reset:
         if args.object == "cube":
