@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-## [1.0.0]
+## [1.0.0] - 2022-06-28
 ### Added
 - Demo for forward/inverse kinematics computation for TriFingerPro.
 - `trifinger_post_submission`: Measure object detection noise and trigger a
