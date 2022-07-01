@@ -1,0 +1,40 @@
+# Build the package and run tests, using the latest trifinger_user Apptainer
+# image.
+# The Apptainer image has a full ROBOT_FINGERS workspace installed, so all
+# dependencies are there and only the checked package needs to be build, not the
+# whole workspace.
+#
+# Note: The Apptainer image only gets automatically rebuild, if something in the
+# image definition changes, not when other packages are changed.  So to avoid
+# that the workspace in the container gets outdated, manual builds need to be
+# triggered regularly.
+
+name: Build and Test
+
+on: [pull_request]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Install Apptainer
+        run: |
+          wget https://github.com/apptainer/apptainer/releases/download/v1.0.2/apptainer_1.0.2_amd64.deb
+          sudo apt-get install ./apptainer_1.0.2_amd64.deb
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Add matcher for gcc warnings
+        run: |
+          echo "::add-matcher::.github/workflows/gcc_problem_matcher.json"
+
+      - name: Build
+        run: apptainer run oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest colcon build
+
+      - name: Run tests
+        run: |
+          pkg_name=${GITHUB_REPOSITORY#*/}
+          echo "Run tests of package ${pkg_name}"
+          apptainer run oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest colcon test --packages-select=${pkg_name}
+          apptainer run oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest colcon test-result --verbose
