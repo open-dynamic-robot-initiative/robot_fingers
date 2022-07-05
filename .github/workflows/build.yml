@@ -44,7 +44,7 @@ jobs:
           path: |
             ~/.apptainer/cache
             **/apptainer_*.deb
-          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}-3
+          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}-4
 
       - name: Install Apptainer
         run: |
