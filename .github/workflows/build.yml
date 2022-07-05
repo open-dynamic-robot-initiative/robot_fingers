@@ -41,18 +41,17 @@ jobs:
         id: cache-apptainer
         uses: actions/cache@v3
         with:
-          path: ~/.apptainer/cache
+          path: |
+            ~/.apptainer/cache
+            ~/apptainer_*_amd64.deb
           key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}
 
       - name: Install Apptainer
         run: |
           APPTAINER_VERSION=1.0.2
-          # download with -N into .apptainer/cache, so a cached version is used
-          # if possible
-          mkdir -p ~/.apptainer/cache  # make sure cache directory exists
-          cd ~/.apptainer/cache
-          wget -N https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb
-          sudo apt-get install ./apptainer_${APPTAINER_VERSION}_amd64.deb
+          # download with -N, so a cached version is used if available
+          wget -P ~ -N https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb
+          sudo apt-get install ~/apptainer_${APPTAINER_VERSION}_amd64.deb
 
       - name: Check out code
         uses: actions/checkout@v2
