@@ -1,0 +1,71 @@
+# Build the package and run tests, using the latest trifinger_user Apptainer
+# image.
+# The Apptainer image has a full ROBOT_FINGERS workspace installed, so all
+# dependencies are there and only the checked package needs to be build, not the
+# whole workspace.
+#
+# Note: The Apptainer image only gets automatically rebuild, if something in the
+# image definition changes, not when other packages are changed.  So to avoid
+# that the workspace in the container gets outdated, manual builds need to be
+# triggered regularly.
+
+name: Build and Test
+
+on:
+  pull_request:
+  # NOTE: By also running on master (=the default branch), we have a cache for
+  # the default branch which can also be used by other branches (so we avoid
+  # that each branch creates its own cache).  See documentation of action/cache
+  # for more information.
+  push:
+    branches:
+     - master
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-20.04
+    steps:
+      # write the current week of the year to an output parameter so it can
+      # later be used in the cache key
+      - name: Get current week of the year
+        id: date
+        run: echo "::set-output name=week::$(date +'%W')"
+
+      # Cache the .apptainer/ directory, so the image does not need to be
+      # downloaded every time.
+      # The cache is created if it does not yet exists but changes in the cache
+      # are not stored in later runs.  As this makes the cache useless once
+      # the image changed, add the number of the current week to its key.  This
+      # way a new cache will be created once per week.
+      - name: Apptainer Cache
+        id: cache-apptainer
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.apptainer/cache
+            ~/apptainer_*_amd64.deb
+          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}
+
+      - name: Install Apptainer
+        run: |
+          APPTAINER_VERSION=1.0.2
+          # download with -N, so a cached version is used if available
+          wget -P ~ -N https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb
+          sudo apt-get install ~/apptainer_${APPTAINER_VERSION}_amd64.deb
+
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Add matcher for gcc warnings
+        run: |
+          echo "::add-matcher::.github/workflows/gcc_problem_matcher.json"
+
+      - name: Build
+        run: apptainer run oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest colcon build
+
+      - name: Run tests
+        run: |
+          pkg_name=${GITHUB_REPOSITORY#*/}
+          echo "Run tests of package ${pkg_name}"
+          apptainer run oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest colcon test --packages-select=${pkg_name}
+          apptainer run oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest colcon test-result --verbose
