@@ -43,8 +43,8 @@ jobs:
         with:
           path: |
             ~/.apptainer/cache
-            ./apptainer_1.0.2_amd64.deb
-          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}-7
+            ~/apptainer_1.0.2_amd64.deb
+          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}-8
 
       - name: Install Apptainer
         run: |
@@ -55,8 +55,8 @@ jobs:
 
           APPTAINER_VERSION=1.0.2
           # download with -N, so a cached version is used if possible
-          wget -N https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb
-          sudo apt-get install ./apptainer_${APPTAINER_VERSION}_amd64.deb
+          wget -P ~ -N https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb
+          sudo apt-get install ~/apptainer_${APPTAINER_VERSION}_amd64.deb
 
       - name: Check out code
         uses: actions/checkout@v2
