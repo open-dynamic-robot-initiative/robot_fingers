@@ -43,13 +43,11 @@ jobs:
         with:
           path: |
             ~/.apptainer/cache
-            ~/apptainer_1.0.2_amd64.deb
-          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}-8
+            ~/apptainer_*_amd64.deb
+          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}-9
 
       - name: Install Apptainer
         run: |
-          echo pwd
-          pwd
           echo ls
           find ~ -name '*apptainer*'
 
