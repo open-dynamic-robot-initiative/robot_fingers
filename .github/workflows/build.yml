@@ -11,7 +11,14 @@
 
 name: Build and Test
 
-on: [pull_request]
+on:
+  pull_request:
+  # NOTE: By also running on master (=the default branch), we have a cache for
+  # the default branch which will be used by other branches if they don't have
+  # their own cache already (see scope of caches created by actions/cache).
+  push:
+    branches:
+     - master
 
 jobs:
   build_and_test:
