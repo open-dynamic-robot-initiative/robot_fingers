@@ -48,7 +48,6 @@ jobs:
 
       - name: Install Apptainer
         run: |
-          if [ ! -f apptainer.deb ]; then
           APPTAINER_VERSION=1.0.2
           # download with -N, so a cached version is used if possible
           wget -N https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb
