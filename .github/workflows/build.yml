@@ -46,6 +46,9 @@ jobs:
             apptainer_*.deb
           key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}
 
+      - name: pull image
+        run: apptainer pull oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest
+
       - name: Install Apptainer
         run: |
           echo pwd
