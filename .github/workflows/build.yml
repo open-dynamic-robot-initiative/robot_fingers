@@ -24,14 +24,24 @@ jobs:
   build_and_test:
     runs-on: ubuntu-20.04
     steps:
-      # cache the .apptainer/ directory, so the image does not need to be
-      # downloaded every time
+      # write the current week of the year to an output parameter so it can
+      # later be used in the cache key
+      - name: Get current week of the year
+        id: date
+        run: echo "::set-output name=week::$(date +'%W')"
+
+      # Cache the .apptainer/ directory, so the image does not need to be
+      # downloaded every time.
+      # The cache is created if it does not yet exists but changes in the cache
+      # are not stored in later runs.  As this makes the cache useless once
+      # the image changed, add the number of the current week to its key.  This
+      # way a new cache will be created once per week.
       - name: Apptainer Cache
         id: cache-apptainer
         uses: actions/cache@v3
         with:
           path: ~/.apptainer/cache
-          key: ${{ runner.os }}-apptainer
+          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}
 
       - name: Install Apptainer
         run: |
