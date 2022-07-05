@@ -17,10 +17,24 @@ jobs:
   build_and_test:
     runs-on: ubuntu-20.04
     steps:
+      # cache the .apptainer/ directory, so the image does not need to be
+      # downloaded every time
+      - name: Apptainer Cache
+        id: cache-apptainer
+        uses: actions/cache@v3
+        with:
+          path: ~/.apptainer/cache
+          key: ${{ runner.os }}-apptainer
+
       - name: Install Apptainer
         run: |
-          wget https://github.com/apptainer/apptainer/releases/download/v1.0.2/apptainer_1.0.2_amd64.deb
-          sudo apt-get install ./apptainer_1.0.2_amd64.deb
+          APPTAINER_VERSION=1.0.2
+          # download with -N into .apptainer/cache, so a cached version is used
+          # if possible
+          mkdir -p ~/.apptainer/cache  # make sure cache directory exists
+          cd ~/.apptainer/cache
+          wget -N https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb
+          sudo apt-get install ./apptainer_${APPTAINER_VERSION}_amd64.deb
 
       - name: Check out code
         uses: actions/checkout@v2
