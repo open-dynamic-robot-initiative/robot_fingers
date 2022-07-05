@@ -44,22 +44,19 @@ jobs:
           path: |
             ~/.apptainer/cache
             apptainer_*.deb
-          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}-foo
+          key: ${{ runner.os }}-apptainer-${{ steps.date.outputs.week }}-2
 
       - name: Install Apptainer
         run: |
           echo pwd
           pwd
           echo ls
-          ls
+          ls -R ~
 
           APPTAINER_VERSION=1.0.2
           # download with -N, so a cached version is used if possible
           wget -N https://github.com/apptainer/apptainer/releases/download/v${APPTAINER_VERSION}/apptainer_${APPTAINER_VERSION}_amd64.deb
           sudo apt-get install ./apptainer_${APPTAINER_VERSION}_amd64.deb
-
-      - name: pull image
-        run: apptainer pull oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest
 
       - name: Check out code
         uses: actions/checkout@v2
