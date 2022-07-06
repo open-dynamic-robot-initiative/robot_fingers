@@ -46,7 +46,7 @@ Get our Apptainer Image
 We provide an Apptainer image with Ubuntu 20.04 with all dependencies needed to
 build and run the software here.  You can download the latest version using::
 
-    singularity pull library://felix.widmaier/trifinger/base:latest
+    singularity pull oras://ghcr.io/open-dynamic-robot-initiative/trifinger_singularity/trifinger_user:latest
 
 
 In case you prefer to build the image yourself, see the `trifinger_singularity
