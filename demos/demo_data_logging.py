@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""Send zero-torque commands to the robot and create a log"""
-
+"""Demo showing how to use the robot data logger."""
 import numpy as np
 
 from robot_interfaces import finger
@@ -15,21 +14,26 @@ def main():
 
     desired_torque = np.zeros(3)
 
-    block_size = 100
+    # The buffer limit should cover at least the number of steps done in
+    # the experiment.
+    buffer_limit = 11000
     filename = "log.csv"
 
-    finger_logger = finger.Logger(finger_data, block_size)
-    finger_logger.start(filename)
+    # initialise and start the logger
+    logger = finger.Logger(finger_data, buffer_limit)
+    logger.start()
 
-    while True:
-        for _ in range(1000):
-            t = finger_frontend.append_desired_action(
-                finger.Action(torque=desired_torque)
-            )
+    # run the robot for a while
+    for _ in range(10000):
+        t = finger_frontend.append_desired_action(
+            finger.Action(torque=desired_torque)
+        )
+        finger_frontend.wait_until_timeindex(t)
 
-            finger_frontend.wait_for_timeindex(t)
+    # stop logger and write data to file
+    logger.stop_and_save(filename, finger.Logger.Format.CSV)
 
-    finger_backend.shutdown()
+    finger_backend.request_shutdown()
 
 
 if __name__ == "__main__":
