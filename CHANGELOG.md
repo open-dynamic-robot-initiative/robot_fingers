@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+### Fixed
+- Update demo_data_logging to changed interface of the RobotLogger class.
 
 ## [1.0.0] - 2022-06-28
 ### Added
