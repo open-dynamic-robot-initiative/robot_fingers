@@ -25,6 +25,12 @@ public:
     }
 
 private:
+
+// suppress warning about designated initializers (e.g. `.torque_constant_NmpA`)
+// only being available with C++20 (we will get there eventually so just ignore
+// the warning until then).
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     OneJointDriver(const MotorBoards &motor_boards, const Config &config)
         : SimpleNJointBlmcRobotDriver<1, 1>(motor_boards,
                                             create_motors(motor_boards),
@@ -36,6 +42,7 @@ private:
                                             config)
     {
     }
+#pragma GCC diagnostic pop
 
     static Motors create_motors(const MotorBoards &motor_boards)
     {
