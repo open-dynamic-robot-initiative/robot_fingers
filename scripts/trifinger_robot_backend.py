@@ -70,14 +70,17 @@ def main():
     node = NotificationNode("trifinger_backend")
 
     logger = node.get_logger()
+    logger.debug("Initialised trifinger_backend node")
 
     cameras_enabled = False
     if args.cameras:
+        logger.debug("Use cameras")
         cameras_enabled = True
         from trifinger_cameras import tricamera
 
         CameraDriver = tricamera.TriCameraDriver
     elif args.cameras_with_tracker:
+        logger.debug("Use cameras with object tracking")
         cameras_enabled = True
         import trifinger_object_tracking.py_tricamera_types as tricamera
         import trifinger_object_tracking.py_object_tracker
@@ -92,8 +95,11 @@ def main():
     if cameras_enabled:
         logger.info("Start camera backend")
 
+        logger.debug("create camera_data")
         camera_data = tricamera.MultiProcessData("tricamera", False)
+        logger.debug("create camera_driver")
         camera_driver = CameraDriver("camera60", "camera180", "camera300")
+        logger.debug("create camera_backend")
         camera_backend = tricamera.Backend(camera_driver, camera_data)
 
         logger.info("Camera backend ready.")
@@ -104,12 +110,14 @@ def main():
     config_file_path = "/etc/trifingerpro/trifingerpro.yml"
 
     # Storage for all observations, actions, etc.
+    logger.debug("Create robot_data")
     robot_data = robot_interfaces.trifinger.MultiProcessData(
         "trifinger", False
     )
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.
+    logger.debug("Create robot backend")
     backend = robot_fingers.create_trifinger_backend(
         robot_data,
         config_file_path,
@@ -118,6 +126,7 @@ def main():
     )
 
     # Initializes the robot (e.g. performs homing).
+    logger.debug("initialise robot backend")
     backend.initialize()
 
     logger.info("Robot backend is ready")
