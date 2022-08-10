@@ -14,6 +14,8 @@
 
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Eigen>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <robot_interfaces/monitored_robot_driver.hpp>
 #include <robot_interfaces/n_joint_robot_types.hpp>
@@ -106,6 +108,7 @@ public:
                          motor_parameters.gear_ratio),
           config_(config)
     {
+        spdlog::get("robot_driver")->debug("create driver (constructor)");
         pause_motors();
     }
 
@@ -628,15 +631,20 @@ typename Driver::Types::BackendPtr create_backend(
     constexpr double MAX_ACTION_DURATION_S = 0.003;
     constexpr double MAX_INTER_ACTION_DURATION_S = 0.005;
 
+    auto logger = spdlog::stderr_color_mt("robot_driver");
+    logger->set_level(spdlog::level::debug);
+
     config.print();
 
     // wrap the actual robot driver directly in a MonitoredRobotDriver
+    logger->debug("create monitored driver");
     auto monitored_driver =
         std::make_shared<robot_interfaces::MonitoredRobotDriver<Driver>>(
             std::make_shared<Driver>(config),
             MAX_ACTION_DURATION_S,
             MAX_INTER_ACTION_DURATION_S);
 
+    logger->debug("create robot backend");
     constexpr bool real_time_mode = true;
     auto backend = std::make_shared<typename Driver::Types::Backend>(
         monitored_driver,
@@ -645,6 +653,7 @@ typename Driver::Types::BackendPtr create_backend(
         first_action_timeout,
         max_number_of_actions);
     backend->set_max_action_repetitions(std::numeric_limits<uint32_t>::max());
+    logger->debug("robot backend created");
 
     return backend;
 }

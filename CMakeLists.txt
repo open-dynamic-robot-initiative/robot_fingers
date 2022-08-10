@@ -26,6 +26,7 @@ find_package(trifinger_object_tracking REQUIRED)
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(spdlog REQUIRED)
 
 
 ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR ${PROJECT_NAME})
@@ -43,6 +44,7 @@ target_include_directories(
 target_link_libraries(${PROJECT_NAME} INTERFACE
     Eigen3::Eigen
     yaml_utils::yaml_utils
+    spdlog::spdlog
     blmc_drivers::blmc_drivers
     robot_interfaces::robot_interfaces
 )

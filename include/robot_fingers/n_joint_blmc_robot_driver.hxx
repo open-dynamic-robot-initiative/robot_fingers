@@ -324,6 +324,7 @@ void NJBRD::pause_motors()
 {
     for (size_t i = 0; i < motor_boards_.size(); i++)
     {
+        spdlog::get("robot_driver")->debug("pause motors on board {}", i);
         motor_boards_[i]->pause_motors();
     }
 }
@@ -649,10 +650,15 @@ typename NJBRD::Action NJBRD::apply_action_uninitialized(
 TPL_NJBRD
 void NJBRD::_initialize()
 {
+    auto logger = spdlog::get("robot_driver");
+
+    logger->debug("set PD control gains");
     joint_modules_.set_position_control_gains(
         config_.position_control_gains.kp, config_.position_control_gains.kd);
 
+    logger->debug("Start homing");
     bool homing_succeeded = homing();
+    logger->debug("Finished homing.  Pause motors");
     pause_motors();
 
     // NOTE: do not set is_initialized_ yet as we want to allow move_to_position
@@ -660,6 +666,7 @@ void NJBRD::_initialize()
     // it is out of the limits).
     if (homing_succeeded)
     {
+        logger->debug("Move to initial position");
         Vector waypoint = get_latest_observation().position;
 
         bool reached_goal = false;
