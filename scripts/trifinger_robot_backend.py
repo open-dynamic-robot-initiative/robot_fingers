@@ -70,6 +70,7 @@ def main():
     node = NotificationNode("trifinger_backend")
 
     logger = node.get_logger()
+    logger.set_level(rclpy.logging.LoggingSeverity.DEBUG)
     logger.debug("Initialised trifinger_backend node")
 
     cameras_enabled = False
