@@ -1,6 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- plot_post_submission_log.py now plots multiple log files side by side instead of
+  merging them.  This is useful for comparing different robots.
+  The option to merge multiple log files has been dropped but the merging can easily be
+  done beforehand, e.g. using `cat` and saving to a temporary file.
+
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.
 

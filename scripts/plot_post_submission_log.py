@@ -6,9 +6,9 @@ log file. This script reads that log to plot the results of the object
 detection test over time.
 """
 import argparse
+import json
 import pathlib
 import sys
-import json
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -43,27 +43,32 @@ def main():
     )
     args = parser.parse_args()
 
-    data = []
-    for filename in args.logfiles:
-        data.extend(read_file(filename))
-
-    position_displacement = [
-        np.linalg.norm(s["position"]["mean"][:2]) for s in data
-    ]
-    mean_confidence = [s["confidence"]["object_mean_confidence"] for s in data]
-    position_mean_error = [s["position"]["mean_error"] for s in data]
-    orientation_mean_error = [s["orientation"]["mean_error"] for s in data]
-
     fig, axes = plt.subplots(4, 1)
-    plot_data = (
-        ("Mean Confidence", mean_confidence),
-        ("Position Mean Error", position_mean_error),
-        ("Orientation Mean Error", orientation_mean_error),
-        ("Position Displacement from Center", position_displacement),
-    )
-    for ax, (title, data) in zip(axes, plot_data):
-        ax.set_title(title)
-        ax.plot(data)
+    labels = [x.name for x in args.logfiles]
+    for filename, label in zip(args.logfiles, labels):
+        data = read_file(filename)
+
+        position_displacement = [
+            np.linalg.norm(s["position"]["mean"][:2]) for s in data
+        ]
+        mean_confidence = [
+            s["confidence"]["object_mean_confidence"] for s in data
+        ]
+        position_mean_error = [s["position"]["mean_error"] for s in data]
+        orientation_mean_error = [s["orientation"]["mean_error"] for s in data]
+
+        plot_data = (
+            ("Mean Confidence", mean_confidence),
+            ("Position Mean Error", position_mean_error),
+            ("Orientation Mean Error", orientation_mean_error),
+            ("Position Displacement from Center", position_displacement),
+        )
+        for ax, (title, data) in zip(axes, plot_data):
+            ax.set_title(title)
+            ax.plot(data, label=label)
+
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper right")
 
     # to prevent overlap of subplots (must be called after creating the plots)
     fig.tight_layout()
