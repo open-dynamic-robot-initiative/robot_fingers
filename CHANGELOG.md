@@ -1,6 +1,10 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- Script `trifingerpro_replay_actions_from_log` to re-apply the actions from a robot log
+  file.
+
 ### Changed
 - plot_post_submission_log.py now plots multiple log files side by side instead of
   merging them.  This is useful for comparing different robots.
