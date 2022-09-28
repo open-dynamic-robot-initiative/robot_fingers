@@ -9,6 +9,8 @@
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.
+- Update configuration for `single_finger_test` to work with current software
+  version.
 
 ## [1.0.0] - 2022-06-28
 ### Added
