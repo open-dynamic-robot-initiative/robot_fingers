@@ -15,6 +15,7 @@ module = [
     "matplotlib.*",
     "pandas",
     "pinocchio",
+    "plotext",
     "progressbar",
     "rclpy.*",
     "scipy.*",
