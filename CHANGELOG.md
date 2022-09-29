@@ -4,6 +4,9 @@
 ### Added
 - Script `trifingerpro_replay_actions_from_log` to re-apply the actions from a robot log
   file.
+- `plot_post_submission_log`: When run remotely (i.e. no display available) use
+  [plotext](https://github.com/piccolomo/plotext) to show the plot directly in
+  the terminal or save as file to /tmp if plotext is not available.
 
 ### Changed
 - plot_post_submission_log.py now plots multiple log files side by side instead of
