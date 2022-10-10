@@ -1,0 +1,47 @@
+# Build the package and run tests, using the latest trifinger_user Apptainer
+# image.
+# The Apptainer image has a full ROBOT_FINGERS workspace installed, so all
+# dependencies are there and only the checked package needs to be build, not the
+# whole workspace.
+#
+# Note: The Apptainer image only gets automatically rebuild, if something in the
+# image definition changes, not when other packages are changed.  So to avoid
+# that the workspace in the container gets outdated, manual builds need to be
+# triggered regularly.
+
+name: Build and Test
+
+on:
+  push:
+    branches:
+     - master
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-20.04
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Setup Apptainer
+        uses: open-dynamic-robot-initiative/trifinger-build-action/setup_apptainer@v1
+
+      - name: Build
+        uses: open-dynamic-robot-initiative/trifinger-build-action/build@v1
+
+      - name: Documentation
+        uses: open-dynamic-robot-initiative/trifinger-build-action/build_and_deploy_docs@v1
+
+      - name: Tests
+        uses: open-dynamic-robot-initiative/trifinger-build-action/run_tests@v1
