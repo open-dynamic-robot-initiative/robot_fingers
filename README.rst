@@ -34,5 +34,5 @@ Copyright (c) 2020 Max Planck Gesellschaft
 .. _Source Code: https://github.com/open-dynamic-robot-initiative/robot_fingers
 .. _Bug Tracker: https://github.com/open-dynamic-robot-initiative/robot_fingers/issues
 .. _paper: https://arxiv.org/abs/2008.03596
-.. _Documentation: http://people.tuebingen.mpg.de/mpi-is-software/robotfingers/docs/robot_fingers
-.. _robot_interfaces: http://people.tuebingen.mpg.de/mpi-is-software/robotfingers/docs/robot_interfaces
+.. _Documentation: https://open-dynamic-robot-initiative.github.io/robot_fingers
+.. _robot_interfaces: https://open-dynamic-robot-initiative.github.io/robot_interfaces
