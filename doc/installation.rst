@@ -12,8 +12,8 @@ Real-Time Requirements
 ----------------------
 
 To ensure reliable communication with the robot hardware, a real-time Linux
-kernel is needed.  See `Real Time Setup in the documentation of robot_interfaces
-<http://people.tuebingen.mpg.de/mpi-is-software/robotfingers/docs/robot_interfaces/doc/real_time.html>`_
+kernel is needed.  See :doc:`Real Time Setup in the documentation of
+robot_interfaces <robot_interfaces:doc/real_time>`
 
 
 Get the Source

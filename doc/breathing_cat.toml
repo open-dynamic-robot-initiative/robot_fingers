@@ -1,0 +1,2 @@
+[intersphinx.mapping]
+robot_interfaces = "https://open-dynamic-robot-initiative.github.io/robot_interfaces"
