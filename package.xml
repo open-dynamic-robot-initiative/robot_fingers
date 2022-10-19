@@ -10,7 +10,7 @@
 
   <license>BSD</license>
 
-  <url type="website">https://open-dynamic-robot-initiative.github.io/code_documentation/robot_fingers</url>
+  <url type="website">https://open-dynamic-robot-initiative.github.io/robot_fingers</url>
   <url type="repository">https://github.com/open-dynamic-robot-initiative/robot_fingers</url>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
