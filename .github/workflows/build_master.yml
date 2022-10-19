@@ -28,20 +28,21 @@ jobs:
     # Deploy to the github-pages environment
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.doc.outputs.page_url }}
 
     steps:
       - name: Check out code
         uses: actions/checkout@v3
 
       - name: Setup Apptainer
-        uses: open-dynamic-robot-initiative/trifinger-build-action/setup_apptainer@v1
+        uses: open-dynamic-robot-initiative/trifinger-build-action/setup_apptainer@v2
 
       - name: Build
-        uses: open-dynamic-robot-initiative/trifinger-build-action/build@v1
+        uses: open-dynamic-robot-initiative/trifinger-build-action/build@v2
 
       - name: Documentation
-        uses: open-dynamic-robot-initiative/trifinger-build-action/build_and_deploy_docs@v1
+        id: doc
+        uses: open-dynamic-robot-initiative/trifinger-build-action/build_and_deploy_docs@v2
 
       - name: Tests
-        uses: open-dynamic-robot-initiative/trifinger-build-action/run_tests@v1
+        uses: open-dynamic-robot-initiative/trifinger-build-action/run_tests@v2
