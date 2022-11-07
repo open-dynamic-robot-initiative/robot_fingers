@@ -355,6 +355,12 @@ void NJBRD::initialize()
 }
 
 TPL_NJBRD
+typename NJBRD::Action NJBRD::get_idle_action()
+{
+    return Action::Position(config_.initial_position_rad);
+}
+
+TPL_NJBRD
 typename NJBRD::Action NJBRD::apply_action(const NJBRD::Action &desired_action)
 {
     if (!is_initialized_)
