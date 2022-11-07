@@ -88,8 +88,7 @@ void NJBRD::Config::print() const
 }
 
 TPL_NJBRD
-typename NJBRD::Config NJBRD::Config::load_config(
-    const std::string &config_file_name)
+auto NJBRD::Config::load_config(const std::string &config_file_name) -> Config
 {
     NJBRD::Config config;
     YAML::Node user_config;
@@ -292,8 +291,8 @@ void NJBRD::Config::set_config_value(const YAML::Node &user_config,
 }
 
 TPL_NJBRD
-typename NJBRD::MotorBoards NJBRD::create_motor_boards(
-    const std::array<std::string, N_MOTOR_BOARDS> &can_ports)
+auto NJBRD::create_motor_boards(
+    const std::array<std::string, N_MOTOR_BOARDS> &can_ports) -> MotorBoards
 {
     // setup can buses -----------------------------------------------------
     std::array<std::shared_ptr<blmc_drivers::CanBus>, N_MOTOR_BOARDS> can_buses;
@@ -329,7 +328,7 @@ void NJBRD::pause_motors()
 }
 
 TPL_NJBRD
-typename NJBRD::Vector NJBRD::get_measured_index_angles() const
+auto NJBRD::get_measured_index_angles() const -> Vector
 {
     return joint_modules_.get_measured_index_angles();
 }
@@ -355,13 +354,13 @@ void NJBRD::initialize()
 }
 
 TPL_NJBRD
-typename NJBRD::Action NJBRD::get_idle_action()
+auto NJBRD::get_idle_action() -> Action
 {
     return Action::Position(config_.initial_position_rad);
 }
 
 TPL_NJBRD
-typename NJBRD::Action NJBRD::apply_action(const NJBRD::Action &desired_action)
+auto NJBRD::apply_action(const NJBRD::Action &desired_action) -> Action
 {
     if (!is_initialized_)
     {
@@ -498,15 +497,15 @@ void NJBRD::shutdown()
 }
 
 TPL_NJBRD
-typename NJBRD::Action NJBRD::process_desired_action(
-    const Action &desired_action,
-    const Observation &latest_observation,
-    const double max_torque_Nm,
-    const Vector &safety_kd,
-    const Vector &default_position_control_kp,
-    const Vector &default_position_control_kd,
-    const Vector &lower_position_limits,
-    const Vector &upper_position_limits)
+auto NJBRD::process_desired_action(const Action &desired_action,
+                                   const Observation &latest_observation,
+                                   const double max_torque_Nm,
+                                   const Vector &safety_kd,
+                                   const Vector &default_position_control_kp,
+                                   const Vector &default_position_control_kd,
+                                   const Vector &lower_position_limits,
+                                   const Vector &upper_position_limits)
+    -> Action
 {
     Action processed_action = desired_action;
 
@@ -614,8 +613,8 @@ bool NJBRD::is_within_hard_position_limits(const Observation &observation) const
 }
 
 TPL_NJBRD
-typename NJBRD::Action NJBRD::apply_action_uninitialized(
-    const NJBRD::Action &desired_action)
+auto NJBRD::apply_action_uninitialized(const NJBRD::Action &desired_action)
+    -> Action
 {
     double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
@@ -886,8 +885,9 @@ bool NJBRD::move_to_position(const NJBRD::Vector &goal_pos,
 }
 
 template <size_t N_JOINTS, size_t N_MOTOR_BOARDS>
-typename SimpleNJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>::Observation
-SimpleNJointBlmcRobotDriver<N_JOINTS, N_MOTOR_BOARDS>::get_latest_observation()
+auto SimpleNJointBlmcRobotDriver<N_JOINTS,
+                                 N_MOTOR_BOARDS>::get_latest_observation()
+    -> Observation
 {
     Observation observation;
 
