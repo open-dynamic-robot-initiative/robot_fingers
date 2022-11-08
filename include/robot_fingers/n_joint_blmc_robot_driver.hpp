@@ -227,7 +227,6 @@ protected:
     //! \brief Counter for the number of actions sent to the robot.
     uint32_t action_counter_ = 0;
 
-
     Action apply_action_uninitialized(const Action &desired_action);
 
     //! \brief Actual initialization that is called in a real-time thread in

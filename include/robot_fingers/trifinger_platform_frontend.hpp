@@ -239,7 +239,6 @@ private:
 typedef T_TriFingerPlatformFrontend<
     trifinger_object_tracking::TriCameraObjectObservation>
     TriFingerPlatformWithObjectFrontend;
-typedef T_TriFingerPlatformFrontend<
-    trifinger_cameras::TriCameraObservation>
+typedef T_TriFingerPlatformFrontend<trifinger_cameras::TriCameraObservation>
     TriFingerPlatformFrontend;
 }  // namespace robot_fingers

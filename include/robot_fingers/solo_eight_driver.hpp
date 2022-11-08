@@ -25,13 +25,12 @@ public:
     }
 
 private:
-
 // suppress warning about designated initializers (e.g. `.torque_constant_NmpA`)
 // only being available with C++20 (we will get there eventually so just ignore
 // the warning until then).
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
-   SoloEightDriver(const MotorBoards &motor_boards, const Config &config)
+    SoloEightDriver(const MotorBoards &motor_boards, const Config &config)
         : SimpleNJointBlmcRobotDriver<8, 4>(motor_boards,
                                             create_motors(motor_boards),
                                             {

@@ -22,7 +22,6 @@ public:
     }
 
 private:
-
 // suppress warning about designated initializers (e.g. `.torque_constant_NmpA`)
 // only being available with C++20 (we will get there eventually so just ignore
 // the warning until then).

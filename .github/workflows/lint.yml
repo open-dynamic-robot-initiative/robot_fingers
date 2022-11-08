@@ -38,6 +38,7 @@ jobs:
           python3 -m flake8 .
 
   black:
+    name: Python Formatting
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -45,3 +46,13 @@ jobs:
         with:
           python-version: 3.8
       - uses: psf/black@stable
+
+  clang-format:
+    name: C++ Formatting
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - run: wget https://raw.githubusercontent.com/machines-in-motion/mpi_cmake_modules/master/scripts/run-clang-format
+      - run: wget https://raw.githubusercontent.com/machines-in-motion/mpi_cmake_modules/master/resources/_clang-format
+      - run: python ./run-clang-format -r .
