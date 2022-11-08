@@ -11,6 +11,14 @@
 
 namespace robot_fingers
 {
+// alias for the base class, so all template arguments only need to be listed
+// once
+template <size_t N_FINGERS>
+using _NFingerDriverBase =
+    NJointBlmcRobotDriver<robot_interfaces::NFingerObservation<N_FINGERS>,
+                          N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
+                          N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>;
+
 /**
  * @brief Driver for the Finger robots.
  *
@@ -20,21 +28,14 @@ namespace robot_fingers
  * @tparam N_FINGERS  Number of fingers on the robot.
  */
 template <size_t N_FINGERS>
-class NFingerDriver : public NJointBlmcRobotDriver<
-                          robot_interfaces::NFingerObservation<N_FINGERS>,
-                          N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
-                          N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
+class NFingerDriver : public _NFingerDriverBase<N_FINGERS>
 {
 public:
-    typedef NJointBlmcRobotDriver<
-        robot_interfaces::NFingerObservation<N_FINGERS>,
-        N_FINGERS * robot_interfaces::JOINTS_PER_FINGER,
-        N_FINGERS * robot_interfaces::BOARDS_PER_FINGER>
-        Base;
     typedef robot_interfaces::NFingerObservation<N_FINGERS> Observation;
-    using typename Base::Vector;
+    using typename _NFingerDriverBase<N_FINGERS>::Vector;
 
-    using Base::NJointBlmcRobotDriver;
+    // inherit the base constructor
+    using _NFingerDriverBase<N_FINGERS>::_NFingerDriverBase;
 
     Observation get_latest_observation() override
     {
