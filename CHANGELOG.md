@@ -13,6 +13,9 @@
   merging them.  This is useful for comparing different robots.
   The option to merge multiple log files has been dropped but the merging can easily be
   done beforehand, e.g. using `cat` and saving to a temporary file.
+- Use a position command to the configured initial position as "idle action".
+  This results in the robot holding its position after initialisation instead of
+  dropping down.
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.

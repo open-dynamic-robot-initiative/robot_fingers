@@ -127,9 +127,15 @@ public:
      * Homes all joints using home_on_index_after_negative_end_stop.  When
      * finished, move the joint to the starting position (defined in
      * `config_.initial_position_rad`).
-     *
      */
     void initialize() override;
+
+    /**
+     * @brief Provide position command to initial position as idle action.
+     *
+     * This will hold the joints in place after the initialisation.
+     */
+    Action get_idle_action() override;
 
     virtual Observation get_latest_observation() override = 0;
     Action apply_action(const Action &desired_action) override;
