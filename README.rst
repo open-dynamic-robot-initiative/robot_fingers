@@ -4,7 +4,6 @@ robot_fingers: (Tri-)Finger Robot Driver and Tools
 Drivers, examples and basic scripts for the (Tri)Finger robots.
 
 .. image:: doc/images/trifingerpro_with_cube.jpg
-   :align: center
 
 The source code is hosted on GitHub_.  Please also use the `Bug Tracker`_ there
 if you have a question or want to report a bug.
