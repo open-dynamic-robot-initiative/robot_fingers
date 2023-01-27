@@ -17,6 +17,7 @@ import typing
 import logging
 import logging.handlers
 
+import cv2
 import numpy as np
 import pandas
 from scipy.spatial.transform import Rotation
@@ -27,6 +28,7 @@ import robot_interfaces
 import robot_fingers
 import trifinger_object_tracking.py_tricamera_types as tricamera
 import trifinger_object_tracking.py_object_tracker as object_tracker
+from trifinger_cameras import utils
 
 
 # Distance from the zero position (finger pointing straight down) to the
@@ -304,8 +306,113 @@ def reset_object(robot, trajectory_file):
         robot.frontend.wait_until_timeindex(t)
 
 
+def record_camera_observations(
+    object_type: str, num_observations: int
+) -> typing.List[tricamera.TriCameraObjectObservation]:
+    """
+    Record camera observations while the robot is not moving.
+
+    Args:
+        object_type: Which object to look for ("cube" or "cuboid").
+        num_observations: Number of observations that are recorded.
+
+    Returns:
+        The recorded observations.
+    """
+    object_models = {
+        "cube": "cube_v2",
+        "cuboid": "cuboid_2x2x8_v2",
+        # If no object is specified, simply use cube (object poses will be
+        # garbage if there is no actual object in the scene, but one can still
+        # use the images for other checks.  This is a bit hacky but easier then
+        # using a different camera driver.
+        None: "cube_v2",
+    }
+
+    camera_data = tricamera.SingleProcessData(history_size=num_observations)
+    model = object_tracker.get_model_by_name(object_models[object_type])
+    camera_driver = tricamera.TriCameraObjectTrackerDriver(
+        "camera60", "camera180", "camera300", model
+    )
+    camera_backend = tricamera.Backend(camera_driver, camera_data)
+    camera_frontend = tricamera.Frontend(camera_data)
+
+    # collect observations
+    observation_buffer: typing.List[tricamera.TriCameraObjectObservation] = []
+    t = camera_frontend.get_current_timeindex()
+    while len(observation_buffer) < num_observations:
+        obs = camera_frontend.get_observation(t)
+        observation_buffer.append(obs)
+        t += 1
+
+    camera_backend.shutdown()
+
+    return observation_buffer
+
+
+def check_camera_sharpness(
+    observations: typing.Sequence[tricamera.TriCameraObjectObservation],
+    log: logging.Logger,
+) -> bool:
+    """Check if all cameras are reasonable well in focus.
+
+    Uses Canny edge detection to estimate how sharp the images are
+    (more edges = sharper).  If the mean value of the edge image is below a
+    given threshold, this might mean that the corresponding camera is out of
+    focus and should be checked.
+
+    See https://stackoverflow.com/a/66557408
+
+    Args:
+        observations: Sequence of camera observations.
+        log: Logger instance to log results.
+
+    Returns:
+        True if test is successful, False if there is any issue.
+
+    """
+    CAMERA_NAMES = ("camera60", "camera180", "camera300")
+    CANNY_THRES1 = 25
+    CANNY_THRES2 = 250
+    EDGE_MEAN_THRES = 12.0
+
+    edge_means: typing.List[typing.List[float]] = [[], [], []]
+
+    for obs in observations:
+        images = [utils.convert_image(camera.image) for camera in obs.cameras]
+
+        for i, image in enumerate(images):
+            edges = cv2.Canny(image, CANNY_THRES1, CANNY_THRES2)
+            edge_means[i].append(np.mean(edges))
+
+    means_of_means = np.mean(edge_means, axis=1)
+
+    log.info(
+        SM(
+            "Camera sharpness",
+            edge_mean=means_of_means,
+            limit=EDGE_MEAN_THRES,
+        )
+    )
+    for i, camera in enumerate(CAMERA_NAMES):
+        if means_of_means[i] < EDGE_MEAN_THRES:
+            log.error(
+                SM(
+                    "Camera is too blurry.  Lense should be checked.",
+                    camera=camera,
+                    edge_mean=means_of_means[i],
+                    limit=EDGE_MEAN_THRES,
+                )
+            )
+            return False
+
+    return True
+
+
 def check_object_detection_noise(
-    object_type: str, log: logging.Logger
+    object_type: str,
+    observations: typing.Sequence[tricamera.TriCameraObjectObservation],
+    log: logging.Logger,
 ) -> bool:
     """
     Collect multiple object pose observations while the robot is not moving.
@@ -315,21 +422,18 @@ def check_object_detection_noise(
 
     Args:
         object_type: Which object to look for ("cube" or "cuboid").
+        observations: Sequence of camera observations with object pose
+            information.
         log: Logger instance to log results.
 
     Returns:
         True if test is successful, False if there is any issue.
     """
-    object_models = {
-        "cube": "cube_v2",
-        "cuboid": "cuboid_2x2x8_v2",
-    }
     object_withs = {
         "cube": 0.035,
         "cuboid": 0.01,
     }
 
-    N_SAMPLES = 30
     CONFIDENCE_LIMIT = 0.75
     POSITION_MAE_LIMIT = 0.02
     Z_POSITION_TOLERANCE = 0.01
@@ -337,25 +441,11 @@ def check_object_detection_noise(
 
     expected_z_pos = object_withs[object_type]
 
-    camera_data = tricamera.SingleProcessData(history_size=N_SAMPLES)
-    model = object_tracker.get_model_by_name(object_models[object_type])
-    camera_driver = tricamera.TriCameraObjectTrackerDriver(
-        "camera60", "camera180", "camera300", model
-    )
-    camera_backend = tricamera.Backend(camera_driver, camera_data)
-    camera_frontend = tricamera.Frontend(camera_data)
+    object_poses: typing.List[object_tracker.ObjectPose] = [
+        obs.object_pose for obs in observations
+    ]
 
-    # collect observations
-    observation_buffer: typing.List[object_tracker.ObjectPose] = []
-    t = camera_frontend.get_current_timeindex()
-    while len(observation_buffer) < N_SAMPLES:
-        obs = camera_frontend.get_observation(t)
-        observation_buffer.append(obs.object_pose)
-        t += 1
-
-    camera_backend.shutdown()
-
-    mean_confidence = np.mean([p.confidence for p in observation_buffer])
+    mean_confidence = np.mean([p.confidence for p in object_poses])
 
     log.info(SM("confidence", object_mean_confidence=mean_confidence))
 
@@ -372,7 +462,7 @@ def check_object_detection_noise(
     # Only check position/orientation if confidence test has passed (if no
     # object is found, these will contain invalid values, causing errors)
 
-    positions = np.array([p.position for p in observation_buffer])
+    positions = np.array([p.position for p in object_poses])
     mean_position = np.mean(positions, axis=0)
     var_position = np.var(positions, axis=0)
     position_errors = np.linalg.norm(positions - mean_position, axis=1)
@@ -380,9 +470,7 @@ def check_object_detection_noise(
 
     # for orientation use scipy Rotation to compute mean and then compute the
     # mean angular difference of each orientation to this mean.
-    orientations = Rotation.from_quat(
-        [p.orientation for p in observation_buffer]
-    )
+    orientations = Rotation.from_quat([p.orientation for p in object_poses])
     mean_orientation = orientations.mean()
     orientations_diff_to_mean = [
         orientation_distance(o, mean_orientation) for o in orientations
@@ -533,10 +621,22 @@ def main():
     # terminate the robot
     del robot
 
+    print("Check cameras")
+    camera_observations = record_camera_observations(
+        args.object, num_observations=30
+    )
+
+    if not check_camera_sharpness(
+        camera_observations, logging.getLogger("camera_sharpness")
+    ):
+        sys.exit(2)
+
     if args.object in ["cube", "cuboid"]:
         print("Check object detection")
         if not check_object_detection_noise(
-            args.object, logging.getLogger("object_detection")
+            args.object,
+            camera_observations,
+            logging.getLogger("object_detection"),
         ):
             sys.exit(2)
 
