@@ -7,6 +7,8 @@
 - `plot_post_submission_log`: When run remotely (i.e. no display available) use
   [plotext](https://github.com/piccolomo/plotext) to show the plot directly in
   the terminal or save as file to /tmp if plotext is not available.
+- Check camera sharpness in `trifinger_post_submission.py`.  This should alert us early,
+  if a lense comes loose.
 
 ### Changed
 - plot_post_submission_log.py now plots multiple log files side by side instead of
