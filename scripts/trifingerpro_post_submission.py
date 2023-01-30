@@ -354,7 +354,7 @@ def check_camera_sharpness(
     observations: typing.Sequence[tricamera.TriCameraObjectObservation],
     log: logging.Logger,
 ) -> bool:
-    """Check if all cameras are reasonable well in focus.
+    """Check if all cameras are reasonably well in focus.
 
     Uses Canny edge detection to estimate how sharp the images are
     (more edges = sharper).  If the mean value of the edge image is below a
