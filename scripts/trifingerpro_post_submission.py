@@ -398,7 +398,7 @@ def check_camera_sharpness(
         if means_of_means[i] < EDGE_MEAN_THRES:
             log.error(
                 SM(
-                    "Camera is too blurry.  Lense should be checked.",
+                    "Camera is too blurry.  Lens should be checked.",
                     camera=camera,
                     edge_mean=means_of_means[i],
                     limit=EDGE_MEAN_THRES,
