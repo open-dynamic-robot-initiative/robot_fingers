@@ -40,7 +40,6 @@ class CursesGUI:
         self.win.erase()
 
         try:
-
             # status line
             status_line = " q: quit | p: toggle position control on/off"
             max_rows, max_cols = self.win.getmaxyx()

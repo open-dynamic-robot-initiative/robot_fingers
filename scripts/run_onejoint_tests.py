@@ -202,7 +202,6 @@ def hard_direction_change(robot, num_repetitions, torque):
 
 
 def main():
-
     if len(sys.argv) >= 2:
         log_directory = sys.argv[1]
     else:

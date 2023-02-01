@@ -40,7 +40,6 @@ class AverageBuffer:
 
 
 def run_application(stdscr, robot, velocity_radps, buffer_size):
-
     stdscr.nodelay(True)
 
     enabled = False
