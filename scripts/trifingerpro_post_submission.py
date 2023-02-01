@@ -17,7 +17,6 @@ import typing
 import logging
 import logging.handlers
 
-import cv2
 import numpy as np
 import pandas
 from scipy.spatial.transform import Rotation
@@ -356,12 +355,9 @@ def check_camera_sharpness(
 ) -> bool:
     """Check if all cameras are reasonably well in focus.
 
-    Uses Canny edge detection to estimate how sharp the images are
-    (more edges = sharper).  If the mean value of the edge image is below a
-    given threshold, this might mean that the corresponding camera is out of
-    focus and should be checked.
-
-    See https://stackoverflow.com/a/66557408
+    If the average "edge mean" value of the images is below a given threshold,
+    this might mean that the corresponding camera is out of focus and should be
+    checked.
 
     Args:
         observations: Sequence of camera observations.
@@ -369,11 +365,8 @@ def check_camera_sharpness(
 
     Returns:
         True if test is successful, False if there is any issue.
-
     """
     CAMERA_NAMES = ("camera60", "camera180", "camera300")
-    CANNY_THRES1 = 25
-    CANNY_THRES2 = 250
     EDGE_MEAN_THRES = 12.0
 
     edge_means: typing.List[typing.List[float]] = [[], [], []]
@@ -382,8 +375,8 @@ def check_camera_sharpness(
         images = [utils.convert_image(camera.image) for camera in obs.cameras]
 
         for i, image in enumerate(images):
-            edges = cv2.Canny(image, CANNY_THRES1, CANNY_THRES2)
-            edge_means[i].append(np.mean(edges))
+            edge_mean, edges = utils.check_image_sharpness(image)
+            edge_means[i].append(edge_mean)
 
     means_of_means = np.mean(edge_means, axis=1)
 
