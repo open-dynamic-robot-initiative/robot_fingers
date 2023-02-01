@@ -4,3 +4,6 @@ robot_interfaces = "https://open-dynamic-robot-initiative.github.io/robot_interf
 [mainpage]
 title = "robot_fingers: (Tri-)Finger Robot Driver and Tools"
 auto_general_docs = false
+
+[html]
+logo = "doc/images/trifinger_pictogram.png"
