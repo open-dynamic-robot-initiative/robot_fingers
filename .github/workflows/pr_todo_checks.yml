@@ -7,10 +7,9 @@ jobs:
     name: New FIXMEs
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - run: git fetch origin ${GITHUB_BASE_REF}
+    - uses: actions/checkout@v3
     - name: Check for FIXMEs
-      uses: luator/github_action_check_new_todos@v1.0.0
+      uses: luator/github_action_check_new_todos@v2
       with:
           label: FIXME
           base_ref: origin/${{ github.base_ref }}
@@ -19,10 +18,9 @@ jobs:
     name: New TODOs
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - run: git fetch origin ${GITHUB_BASE_REF}
+    - uses: actions/checkout@v3
     - name: Check for TODOs
-      uses: luator/github_action_check_new_todos@v1.0.0
+      uses: luator/github_action_check_new_todos@v2
       with:
           label: TODO
           base_ref: origin/${{ github.base_ref }}
