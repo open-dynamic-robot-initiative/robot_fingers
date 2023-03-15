@@ -119,6 +119,7 @@ install(DIRECTORY config
 
 install(
     TARGETS
+        ${PROJECT_NAME}
         trifinger_platform_frontend
         trifinger_platform_log
         demo_trifinger_platform
