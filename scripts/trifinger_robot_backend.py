@@ -23,7 +23,7 @@ def parse_arguments() -> argparse.Namespace:
         "--max-number-of-actions",
         "-a",
         type=int,
-        required=True,
+        default=0,
         help="""Maximum numbers of actions that are processed.  After this the
             backend shuts down automatically.
         """,

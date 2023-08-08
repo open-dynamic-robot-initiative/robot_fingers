@@ -11,7 +11,7 @@
   if a lense comes loose.
 
 ### Changed
-- plot_post_submission_log.py now plots multiple log files side by side instead of
+- `plot_post_submission_log.py` now plots multiple log files side by side instead of
   merging them.  This is useful for comparing different robots.
   The option to merge multiple log files has been dropped but the merging can easily be
   done beforehand, e.g. using `cat` and saving to a temporary file.
@@ -22,9 +22,10 @@
   The old name still works as well but is deprecated.
 - `trifinger_data_backend`: Make `--log-buffer-size` (formerly
   `--max-number-of-actions`) optional if no logging is enabled.
+- `trifinger_robot_backend`:  Make `--max-number-of-actions` optional.
 
 ### Fixed
-- Update demo_data_logging to changed interface of the RobotLogger class.
+- Update `demo_data_logging` to changed interface of the `RobotLogger` class.
 - Update configuration for `single_finger_test` to work with current software
   version.
 - Install the interface library, so other packages can link to
