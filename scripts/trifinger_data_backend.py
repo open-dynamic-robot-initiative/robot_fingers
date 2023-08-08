@@ -36,7 +36,6 @@ def parse_arguments() -> argparse.Namespace:
         "--max-number-of-actions",
         "-a",
         type=int,
-        required=True,
         help="""Size of the logger buffer in robot time steps.""",
     )
     camera_group = parser.add_mutually_exclusive_group()
@@ -75,6 +74,15 @@ def parse_arguments() -> argparse.Namespace:
             file=sys.stderr,
         )
 
+    # logging is only possible with fixed number of actions (otherwise it is not
+    # possible to decide the logger buffer size)
+    if (
+        args.robot_logfile or args.camera_logfile
+    ) and not args.log_buffer_size:
+        parser.error(
+            "--log-buffer-size must be specified when using data logging."
+        )
+
     return args
 
 
@@ -109,12 +117,16 @@ def main() -> int:
     )
 
     if args.robot_logfile:
+        assert args.log_buffer_size is not None
+
         robot_logger = robot_interfaces.trifinger.Logger(
             robot_data, buffer_limit=args.log_buffer_size
         )
         robot_logger.start()
 
     if cameras_enabled and args.camera_logfile:
+        assert args.log_buffer_size is not None
+
         # make the logger buffer a bit bigger as needed to be on the safe side
         buffer_length_factor = 1.5
 

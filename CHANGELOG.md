@@ -20,6 +20,8 @@
   dropping down.
 - `trifinger_data_backend`: Rename `--max-number-of-actions` to `--log-buffer-size`.
   The old name still works as well but is deprecated.
+- `trifinger_data_backend`: Make `--log-buffer-size` (formerly
+  `--max-number-of-actions`) optional if no logging is enabled.
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.
