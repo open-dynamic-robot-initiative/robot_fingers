@@ -17,7 +17,7 @@ import robot_fingers
 from robot_fingers.ros import NotificationNode
 
 
-def main():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--max-number-of-actions",
@@ -64,7 +64,11 @@ def main():
             Only used if --cameras-with-tracker is set.  Default: %(default)s.
         """,
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_arguments()
 
     rclpy.init()
     node = NotificationNode("trifinger_backend")
@@ -137,7 +141,7 @@ def main():
         camera_backend.shutdown()
 
     termination_reason = backend.get_termination_reason()
-    logger.debug("Backend termination reason: %d" % termination_reason)
+    logger.debug("Backend termination reason: %d", termination_reason)
 
     rclpy.shutdown()
 
@@ -158,13 +162,14 @@ def main():
         )
 
         return 20
-    elif termination_reason < 0:
+
+    if termination_reason < 0:
         # negative termination reason means there was an error
 
         # negate code as exit codes should be positive
         return -termination_reason
-    else:
-        return 0
+
+    return 0
 
 
 if __name__ == "__main__":
