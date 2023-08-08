@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Run TriFinger Data Backend
 
 Runs the leader multi-processing robot/sensor data and loggers.
@@ -18,8 +17,13 @@ CAMERA_TIME_SERIES_LENGTH = 15
 
 ROBOT_TIME_SERIES_LENGTH = 1000
 
+# Frame rate of the cameras (needed to determine camera logger buffer size)
+CAMERA_FPS = 10
+# Update rate of the robot (needed to determine camera logger buffer size)
+ROBOT_RATE_HZ = 1000
 
-def main():
+
+def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--max-number-of-actions",
@@ -92,17 +96,15 @@ def main():
         robot_logger.start()
 
     if cameras_enabled and args.camera_logfile:
-        camera_fps = 10
-        robot_rate_hz = 1000
         # make the logger buffer a bit bigger as needed to be on the safe side
         buffer_length_factor = 1.5
 
-        episode_length_s = args.max_number_of_actions / robot_rate_hz
+        episode_length_s = args.max_number_of_actions / ROBOT_RATE_HZ
         # Compute camera log size based on number of robot actions plus some
         # buffer
-        log_size = int(camera_fps * episode_length_s * buffer_length_factor)
+        log_size = int(CAMERA_FPS * episode_length_s * buffer_length_factor)
 
-        logger.info("Initialize camera logger with buffer size %d" % log_size)
+        logger.info("Initialize camera logger with buffer size %d", log_size)
         camera_logger = tricamera.Logger(camera_data, log_size)
 
     logger.info("Data backend is ready")
@@ -131,12 +133,12 @@ def main():
 
     if cameras_enabled and args.camera_logfile:
         logger.info(
-            "Save recorded camera data to file %s" % args.camera_logfile
+            "Save recorded camera data to file %s", args.camera_logfile
         )
         camera_logger.stop_and_save(args.camera_logfile)
 
     if args.robot_logfile:
-        logger.info("Save robot data to file %s" % args.robot_logfile)
+        logger.info("Save robot data to file %s", args.robot_logfile)
         robot_logger.stop_and_save(
             args.robot_logfile, robot_interfaces.trifinger.Logger.Format.BINARY
         )
