@@ -18,6 +18,8 @@
 - Use a position command to the configured initial position as "idle action".
   This results in the robot holding its position after initialisation instead of
   dropping down.
+- `trifinger_data_backend`: Rename `--max-number-of-actions` to `--log-buffer-size`.
+  The old name still works as well but is deprecated.
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.
@@ -25,6 +27,11 @@
   version.
 - Install the interface library, so other packages can link to
   `robot_fingers::robot_fingers`.
+
+### Deprecated
+- The `--max-number-of-actions/-a` argument of `trifinger_data_backend` is deprecated.
+  Use `--log-buffer-size` instead.
+
 
 ## [1.0.0] - 2022-06-28
 ### Added

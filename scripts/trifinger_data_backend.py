@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Run TriFinger Data Backend.
 
-Runs the leader multi-processing robot/sensor data and loggers.
+Runs the leader multi-processing robot/sensor data and loggers.  Run this before
+starting the robot backend.
 """
 import argparse
 import sys
@@ -24,16 +25,19 @@ CAMERA_FPS = 10
 ROBOT_RATE_HZ = 1000
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+def parse_arguments() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
+        "--log-buffer-size",
         "--max-number-of-actions",
         "-a",
         type=int,
         required=True,
-        help="""Maximum numbers of actions that are processed.  After this the
-            backend shuts down automatically.
-        """,
+        help="""Size of the logger buffer in robot time steps.""",
     )
     camera_group = parser.add_mutually_exclusive_group()
     camera_group.add_argument(
@@ -62,6 +66,20 @@ def main() -> int:
         """,
     )
     args = parser.parse_args()
+
+    # Show deprecation warning for --max-number-of-actions/-a
+    if "--max-number-of-actions" in sys.argv or "-a" in sys.argv:
+        print(
+            "WARNING: --max-number-of-actions/-a is deprecated."
+            " Use --log-buffer-size instead.",
+            file=sys.stderr,
+        )
+
+    return args
+
+
+def main() -> int:
+    args = parse_arguments()
 
     rclpy.init()
     node = NotificationNode("trifinger_data")
@@ -92,7 +110,7 @@ def main() -> int:
 
     if args.robot_logfile:
         robot_logger = robot_interfaces.trifinger.Logger(
-            robot_data, buffer_limit=args.max_number_of_actions
+            robot_data, buffer_limit=args.log_buffer_size
         )
         robot_logger.start()
 
@@ -100,7 +118,7 @@ def main() -> int:
         # make the logger buffer a bit bigger as needed to be on the safe side
         buffer_length_factor = 1.5
 
-        episode_length_s = args.max_number_of_actions / ROBOT_RATE_HZ
+        episode_length_s = args.log_buffer_size / ROBOT_RATE_HZ
         # Compute camera log size based on number of robot actions plus some
         # buffer
         log_size = int(CAMERA_FPS * episode_length_s * buffer_length_factor)
