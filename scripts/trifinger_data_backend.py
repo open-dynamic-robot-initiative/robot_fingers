@@ -1,4 +1,5 @@
-"""Run TriFinger Data Backend
+#!/usr/bin/env python3
+"""Run TriFinger Data Backend.
 
 Runs the leader multi-processing robot/sensor data and loggers.
 """
