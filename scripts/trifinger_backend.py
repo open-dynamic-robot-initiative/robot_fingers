@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run TriFinger back-end using multi-process robot data."""
 import argparse
+import enum
 import functools
 import logging
 import math
@@ -17,6 +18,12 @@ import robot_fingers
 CAMERA_FPS = 10
 # Control rate of the robot
 ROBOT_RATE_HZ = 1000
+
+
+class CameraSetup(enum.Enum):
+    NONE = 0
+    CAMERAS = 1
+    CAMERAS_WITH_TRACKING = 2
 
 
 def find_robot_config_file(
@@ -62,12 +69,17 @@ def parse_arguments() -> argparse.Namespace:
     camera_group.add_argument(
         "--cameras",
         "-c",
-        action="store_true",
+        default=CameraSetup.NONE,
+        const=CameraSetup.CAMERAS,
+        action="store_const",
         help="Run camera backend.",
     )
     camera_group.add_argument(
         "--cameras-with-tracker",
-        action="store_true",
+        dest="cameras",
+        action="store_const",
+        default=CameraSetup.NONE,
+        const=CameraSetup.CAMERAS_WITH_TRACKING,
         help="Run camera backend with integrated object tracker.",
     )
     parser.add_argument(
@@ -143,12 +155,12 @@ def main() -> int:
     args = parse_arguments()
 
     cameras_enabled = False
-    if args.cameras:
+    if args.cameras == CameraSetup.CAMERAS:
         cameras_enabled = True
         from trifinger_cameras import tricamera
 
         CameraDriver = tricamera.TriCameraDriver
-    elif args.cameras_with_tracker:
+    elif args.cameras == CameraSetup.CAMERAS_WITH_TRACKING:
         cameras_enabled = True
         import trifinger_object_tracking.py_tricamera_types as tricamera
         import trifinger_object_tracking.py_object_tracker
