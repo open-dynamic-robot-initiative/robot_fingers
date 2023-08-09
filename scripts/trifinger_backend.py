@@ -13,6 +13,12 @@ import robot_interfaces
 import robot_fingers
 
 
+# Frame rate of the cameras
+CAMERA_FPS = 10
+# Control rate of the robot
+ROBOT_RATE_HZ = 1000
+
+
 def find_robot_config_file(
     config_dir: pathlib.Path,
     filenames: typing.Sequence[str] = ("trifinger.yml", "trifingerpro.yml"),
@@ -157,8 +163,9 @@ def main() -> int:
     if cameras_enabled:
         logging.info("Start camera backend")
 
-        # make sure camera time series covers at least one second
-        CAMERA_TIME_SERIES_LENGTH = 15
+        # make sure camera time series covers at least one second (add some margin to
+        # avoid problems)
+        CAMERA_TIME_SERIES_LENGTH = int(CAMERA_FPS * 1.5)
 
         camera_data = tricamera.MultiProcessData(
             "tricamera", True, CAMERA_TIME_SERIES_LENGTH
@@ -177,7 +184,8 @@ def main() -> int:
     if args.max_number_of_actions:
         history_size = args.max_number_of_actions + 1
     else:
-        history_size = 1000
+        # by default set the history size to cover 1 second
+        history_size = ROBOT_RATE_HZ
     robot_data = robot_interfaces.trifinger.MultiProcessData(
         "trifinger", True, history_size=history_size
     )
@@ -206,14 +214,12 @@ def main() -> int:
     if cameras_enabled and args.camera_logfile:
         assert args.max_number_of_actions > 0
 
-        camera_fps = 10
-        robot_rate_hz = 1000
         # make the logger buffer a bit bigger as needed to be on the safe side
         buffer_length_factor = 1.5
 
-        episode_length_s = args.max_number_of_actions / robot_rate_hz
+        episode_length_s = args.max_number_of_actions / ROBOT_RATE_HZ
         # Compute camera log size based on number of robot actions plus a 10% buffer
-        log_size = int(camera_fps * episode_length_s * buffer_length_factor)
+        log_size = int(CAMERA_FPS * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
         camera_logger = tricamera.Logger(camera_data, log_size)
