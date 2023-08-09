@@ -104,6 +104,15 @@ def main():
     )
     args = parser.parse_args()
 
+    # logging is only possible with fixed number of actions (otherwise it is not
+    # possible to decide the logger buffer size)
+    if (
+        args.robot_logfile or args.camera_logfile
+    ) and not args.max_number_of_actions:
+        parser.error(
+            "--max-number-of-actions must be specified when using data logging."
+        )
+
     log_handler = logging.StreamHandler(sys.stdout)
     logging.basicConfig(
         format="[TRIFINGER_BACKEND %(levelname)s %(asctime)s] %(message)s",
