@@ -122,15 +122,16 @@ def parse_arguments() -> argparse.Namespace:
     )
     args = parser.parse_args()
 
-    ## some argument validation
+    # === some argument validation
 
-    # logging is only possible with fixed number of actions (otherwise it is not
-    # possible to decide the logger buffer size)
+    # logging is only possible with fixed number of actions (otherwise it is
+    # not possible to decide the logger buffer size)
     if (
         args.robot_logfile or args.camera_logfile
     ) and not args.max_number_of_actions:
         parser.error(
-            "--max-number-of-actions must be specified when using data logging."
+            "--max-number-of-actions must be specified when using data"
+            " logging."
         )
 
     if not args.config_dir.is_dir():
@@ -139,7 +140,7 @@ def parse_arguments() -> argparse.Namespace:
             % args.config_dir
         )
 
-    ## configure logging
+    # === configure logging
 
     log_handler = logging.StreamHandler(sys.stdout)
     logging.basicConfig(
@@ -175,8 +176,8 @@ def main() -> int:
     if cameras_enabled:
         logging.info("Start camera backend")
 
-        # make sure camera time series covers at least one second (add some margin to
-        # avoid problems)
+        # make sure camera time series covers at least one second (add some
+        # margin to avoid problems)
         CAMERA_TIME_SERIES_LENGTH = int(CAMERA_FPS * 1.5)
 
         camera_data = tricamera.MultiProcessData(
@@ -230,7 +231,8 @@ def main() -> int:
         buffer_length_factor = 1.5
 
         episode_length_s = args.max_number_of_actions / ROBOT_RATE_HZ
-        # Compute camera log size based on number of robot actions plus a 10% buffer
+        # Compute camera log size based on number of robot actions plus a 10%
+        # buffer
         log_size = int(CAMERA_FPS * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
