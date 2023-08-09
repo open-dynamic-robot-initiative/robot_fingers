@@ -32,7 +32,7 @@ def find_robot_config_file(
     )
 
 
-def main():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--max-number-of-actions",
@@ -119,6 +119,12 @@ def main():
         level=logging.DEBUG,
         handlers=[log_handler],
     )
+
+    return args
+
+
+def main():
+    args = parse_arguments()
 
     if not args.config_dir.exists():
         logging.fatal("Config directory %s does not exist")
