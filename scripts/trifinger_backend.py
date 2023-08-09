@@ -123,7 +123,7 @@ def parse_arguments() -> argparse.Namespace:
     return args
 
 
-def main():
+def main() -> int:
     args = parse_arguments()
 
     if not args.config_dir.exists():
@@ -203,8 +203,7 @@ def main():
         buffer_length_factor = 1.5
 
         episode_length_s = args.max_number_of_actions / robot_rate_hz
-        # Compute camera log size based on number of robot actions plus a
-        # 10% buffer
+        # Compute camera log size based on number of robot actions plus a 10% buffer
         log_size = int(camera_fps * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
@@ -251,8 +250,8 @@ def main():
     if termination_reason < 0:
         # negate code as exit codes should be positive
         return -termination_reason
-    else:
-        return 0
+
+    return 0
 
 
 if __name__ == "__main__":
