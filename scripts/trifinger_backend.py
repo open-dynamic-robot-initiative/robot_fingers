@@ -168,14 +168,16 @@ def main():
     config_file_path = find_robot_config_file(args.config_dir)
 
     # Storage for all observations, actions, etc.
-    # FIXME this is not useful if max_number_of_actions is zero (to disable
-    # limit)
-    history_size = args.max_number_of_actions + 1
+    if args.max_number_of_actions:
+        history_size = args.max_number_of_actions + 1
+    else:
+        history_size = 1000
     robot_data = robot_interfaces.trifinger.MultiProcessData(
         "trifinger", True, history_size=history_size
     )
 
     if args.robot_logfile:
+        # TODO: set buffer size?
         robot_logger = robot_interfaces.trifinger.Logger(robot_data)
 
     # The backend sends actions from the data to the robot and writes
@@ -193,6 +195,8 @@ def main():
     logging.info("Robot backend is ready")
 
     if cameras_enabled and args.camera_logfile:
+        assert args.max_number_of_actions > 0
+
         camera_fps = 10
         robot_rate_hz = 1000
         # make the logger buffer a bit bigger as needed to be on the safe side
