@@ -183,8 +183,11 @@ def main() -> int:
     )
 
     if args.robot_logfile:
-        # TODO: set buffer size?
-        robot_logger = robot_interfaces.trifinger.Logger(robot_data)
+        assert args.max_number_of_actions > 0
+
+        robot_logger = robot_interfaces.trifinger.Logger(
+            robot_data, buffer_limit=args.max_number_of_actions
+        )
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.
