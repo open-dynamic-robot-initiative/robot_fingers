@@ -104,6 +104,8 @@ def parse_arguments() -> argparse.Namespace:
     )
     args = parser.parse_args()
 
+    ## some argument validation
+
     # logging is only possible with fixed number of actions (otherwise it is not
     # possible to decide the logger buffer size)
     if (
@@ -112,6 +114,14 @@ def parse_arguments() -> argparse.Namespace:
         parser.error(
             "--max-number-of-actions must be specified when using data logging."
         )
+
+    if not args.config_dir.is_dir():
+        parser.error(
+            "--config-dir: %s does not exist or is not a directory"
+            % args.config_dir
+        )
+
+    ## configure logging
 
     log_handler = logging.StreamHandler(sys.stdout)
     logging.basicConfig(
@@ -125,10 +135,6 @@ def parse_arguments() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_arguments()
-
-    if not args.config_dir.exists():
-        logging.fatal("Config directory %s does not exist")
-        return 1
 
     cameras_enabled = False
     if args.cameras:
