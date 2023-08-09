@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run TriFinger back-end using multi-process robot data."""
 import argparse
+import enum
 import functools
 import logging
 import math
@@ -11,6 +12,18 @@ import typing
 
 import robot_interfaces
 import robot_fingers
+
+
+# Frame rate of the cameras
+CAMERA_FPS = 10
+# Control rate of the robot
+ROBOT_RATE_HZ = 1000
+
+
+class CameraSetup(enum.Enum):
+    NONE = 0
+    CAMERAS = 1
+    CAMERAS_WITH_TRACKING = 2
 
 
 def find_robot_config_file(
@@ -32,7 +45,7 @@ def find_robot_config_file(
     )
 
 
-def main():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--max-number-of-actions",
@@ -56,12 +69,17 @@ def main():
     camera_group.add_argument(
         "--cameras",
         "-c",
-        action="store_true",
+        default=CameraSetup.NONE,
+        const=CameraSetup.CAMERAS,
+        action="store_const",
         help="Run camera backend.",
     )
     camera_group.add_argument(
         "--cameras-with-tracker",
-        action="store_true",
+        dest="cameras",
+        action="store_const",
+        default=CameraSetup.NONE,
+        const=CameraSetup.CAMERAS_WITH_TRACKING,
         help="Run camera backend with integrated object tracker.",
     )
     parser.add_argument(
@@ -104,6 +122,26 @@ def main():
     )
     args = parser.parse_args()
 
+    # === some argument validation
+
+    # logging is only possible with fixed number of actions (otherwise it is
+    # not possible to decide the logger buffer size)
+    if (
+        args.robot_logfile or args.camera_logfile
+    ) and not args.max_number_of_actions:
+        parser.error(
+            "--max-number-of-actions must be specified when using data"
+            " logging."
+        )
+
+    if not args.config_dir.is_dir():
+        parser.error(
+            "--config-dir: %s does not exist or is not a directory"
+            % args.config_dir
+        )
+
+    # === configure logging
+
     log_handler = logging.StreamHandler(sys.stdout)
     logging.basicConfig(
         format="[TRIFINGER_BACKEND %(levelname)s %(asctime)s] %(message)s",
@@ -111,17 +149,19 @@ def main():
         handlers=[log_handler],
     )
 
-    if not args.config_dir.exists():
-        logging.fatal("Config directory %s does not exist")
-        return 1
+    return args
+
+
+def main() -> int:
+    args = parse_arguments()
 
     cameras_enabled = False
-    if args.cameras:
+    if args.cameras == CameraSetup.CAMERAS:
         cameras_enabled = True
         from trifinger_cameras import tricamera
 
         CameraDriver = tricamera.TriCameraDriver
-    elif args.cameras_with_tracker:
+    elif args.cameras == CameraSetup.CAMERAS_WITH_TRACKING:
         cameras_enabled = True
         import trifinger_object_tracking.py_tricamera_types as tricamera
         import trifinger_object_tracking.py_object_tracker
@@ -136,8 +176,9 @@ def main():
     if cameras_enabled:
         logging.info("Start camera backend")
 
-        # make sure camera time series covers at least one second
-        CAMERA_TIME_SERIES_LENGTH = 15
+        # make sure camera time series covers at least one second (add some
+        # margin to avoid problems)
+        CAMERA_TIME_SERIES_LENGTH = int(CAMERA_FPS * 1.5)
 
         camera_data = tricamera.MultiProcessData(
             "tricamera", True, CAMERA_TIME_SERIES_LENGTH
@@ -153,15 +194,21 @@ def main():
     config_file_path = find_robot_config_file(args.config_dir)
 
     # Storage for all observations, actions, etc.
-    # FIXME this is not useful if max_number_of_actions is zero (to disable
-    # limit)
-    history_size = args.max_number_of_actions + 1
+    if args.max_number_of_actions:
+        history_size = args.max_number_of_actions + 1
+    else:
+        # by default set the history size to cover 1 second
+        history_size = ROBOT_RATE_HZ
     robot_data = robot_interfaces.trifinger.MultiProcessData(
         "trifinger", True, history_size=history_size
     )
 
     if args.robot_logfile:
-        robot_logger = robot_interfaces.trifinger.Logger(robot_data)
+        assert args.max_number_of_actions > 0
+
+        robot_logger = robot_interfaces.trifinger.Logger(
+            robot_data, buffer_limit=args.max_number_of_actions
+        )
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.
@@ -178,15 +225,15 @@ def main():
     logging.info("Robot backend is ready")
 
     if cameras_enabled and args.camera_logfile:
-        camera_fps = 10
-        robot_rate_hz = 1000
+        assert args.max_number_of_actions > 0
+
         # make the logger buffer a bit bigger as needed to be on the safe side
         buffer_length_factor = 1.5
 
-        episode_length_s = args.max_number_of_actions / robot_rate_hz
-        # Compute camera log size based on number of robot actions plus a
-        # 10% buffer
-        log_size = int(camera_fps * episode_length_s * buffer_length_factor)
+        episode_length_s = args.max_number_of_actions / ROBOT_RATE_HZ
+        # Compute camera log size based on number of robot actions plus a 10%
+        # buffer
+        log_size = int(CAMERA_FPS * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
         camera_logger = tricamera.Logger(camera_data, log_size)
@@ -232,8 +279,8 @@ def main():
     if termination_reason < 0:
         # negate code as exit codes should be positive
         return -termination_reason
-    else:
-        return 0
+
+    return 0
 
 
 if __name__ == "__main__":
