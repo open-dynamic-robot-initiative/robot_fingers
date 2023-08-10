@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Move TriFingerPro on simple sine position profile."""
+import argparse
+
 import numpy as np
 
 import robot_interfaces
@@ -22,8 +24,27 @@ def get_target_joint_positions(t: int) -> np.ndarray:
     return target
 
 
+def parse_arguments() -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--with-object",
+        "-o",
+        action="store_true",
+        help="Set if backend provides object tracking data.",
+    )
+
+    return parser.parse_args()
+
+
+
 def main() -> None:  # noqa[D103]
-    robot = robot_fingers.TriFingerPlatformFrontend()
+    args = parse_arguments()
+
+    if args.with_object:
+        robot = robot_fingers.TriFingerPlatformWithObjectFrontend()
+    else:
+        robot = robot_fingers.TriFingerPlatformFrontend()
 
     t = 0
     while True:
@@ -40,6 +61,11 @@ def main() -> None:  # noqa[D103]
             print(f"[{t}] actual joint positions: {robot_observation.position}")
 
             print(f"[{t}] Image shape: {camera_observation.cameras[0].image.shape}")
+
+            if args.with_object:
+                object_pos = camera_observation.filtered_object_pose.position
+                print(f"[{t}] Object position: {object_pos}")
+
             print()
 
 
