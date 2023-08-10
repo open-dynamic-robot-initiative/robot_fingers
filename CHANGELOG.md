@@ -18,6 +18,8 @@
 - Use a position command to the configured initial position as "idle action".
   This results in the robot holding its position after initialisation instead of
   dropping down.
+- Improved `demo_trifinger_platform.py` to use sine position profile instead of
+  random motions and add option to use with object tracking.
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.
