@@ -9,7 +9,14 @@ import robot_fingers
 
 
 def get_target_joint_positions(t: int) -> np.ndarray:
-    """Compute target joint positions for time step t using simple sine profile."""
+    """Compute target joint positions using simple sine profile.
+
+    Args:
+        t: Time step (corresponds to time in milliseconds).
+
+    Returns:
+        Numpy array with target position for each joint.
+    """
     INITIAL_POSITION_RAD = np.array([0.0, 0.9, -1.7] * 3)
     AMPLITUDE_RAD = np.deg2rad([10, 20, 20] * 3)
     FREQUENCY_HZ = 1.0
@@ -37,7 +44,6 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-
 def main() -> None:  # noqa[D103]
     args = parse_arguments()
 
@@ -58,9 +64,12 @@ def main() -> None:  # noqa[D103]
 
         if t % 100 == 0:
             print(f"[{t}] target joint positions: {action.position}")
-            print(f"[{t}] actual joint positions: {robot_observation.position}")
+            print(
+                f"[{t}] actual joint positions: {robot_observation.position}"
+            )
 
-            print(f"[{t}] Image shape: {camera_observation.cameras[0].image.shape}")
+            image = camera_observation.cameras[0].image
+            print(f"[{t}] Image shape: {image.shape}")
 
             if args.with_object:
                 object_pos = camera_observation.filtered_object_pose.position
