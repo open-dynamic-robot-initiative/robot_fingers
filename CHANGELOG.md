@@ -30,6 +30,8 @@
 - Logger initialisation in `trifinger_backend`.
 - `trifinger_backend`: Use proper timeseries history length if no limit for
   number of actions is specified.
+- pybind11 build error on Ubuntu 22.04
+
 
 ## [1.0.0] - 2022-06-28
 ### Added
