@@ -112,9 +112,9 @@ public:
         return applied_action;
     }
 
-    std::string get_error() override
+    std::optional<std::string> get_error() override
     {
-        return "";  // no errors
+        return std::nullopt;  // no errors
     }
 
     void shutdown() override

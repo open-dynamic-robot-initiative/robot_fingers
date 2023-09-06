@@ -374,61 +374,43 @@ auto NJBRD::apply_action(const NJBRD::Action &desired_action) -> Action
 }
 
 TPL_NJBRD
-std::string NJBRD::get_error()
+std::optional<std::string> NJBRD::get_error()
 {
     // Checks each board for errors and translates the error codes into
     // human-readable strings.  If multiple boards have errors, the messages
     // are concatenated.  Each message is prepended with the index of the
     // corresponding board.
 
-    std::string error_msg = "";
+    std::optional<std::string> error_msg = std::nullopt;
 
     for (size_t i = 0; i < motor_boards_.size(); i++)
     {
         auto status_timeseries = motor_boards_[i]->get_status();
         if (status_timeseries->length() > 0)
         {
-            std::string board_error_msg = "";
+            std::string_view board_error_msg = "";
             using ErrorCodes = blmc_drivers::MotorBoardStatus::ErrorCodes;
-            switch (status_timeseries->newest_element().error_code)
-            {
-                case ErrorCodes::NONE:
-                    break;
-                case ErrorCodes::ENCODER:
-                    board_error_msg = "Encoder Error";
-                    break;
-                case ErrorCodes::CAN_RECV_TIMEOUT:
-                    board_error_msg = "CAN Receive Timeout";
-                    break;
-                case ErrorCodes::CRIT_TEMP:
-                    board_error_msg = "Critical Temperature";
-                    break;
-                case ErrorCodes::POSCONV:
-                    board_error_msg =
-                        "Error in SpinTAC Position Convert module";
-                    break;
-                case ErrorCodes::POS_ROLLOVER:
-                    board_error_msg = "Position Rollover";
-                    break;
-                case ErrorCodes::OTHER:
-                    board_error_msg = "Other Error";
-                    break;
-                default:
-                    board_error_msg = "Unknown Error";
-                    break;
-            }
 
-            if (!board_error_msg.empty())
+            if (status_timeseries->newest_element().error_code !=
+                ErrorCodes::NONE)
             {
-                if (!error_msg.empty())
+                board_error_msg =
+                    blmc_drivers::MotorBoardStatus::get_error_description(
+                        status_timeseries->newest_element().error_code);
+
+                if (error_msg)
                 {
-                    error_msg += "  ";
+                    *error_msg += "  ";
+                }
+                else
+                {
+                    // initialise
+                    error_msg = "";
                 }
 
                 // error of the board with board index to the error message
                 // string
-                error_msg +=
-                    "[Board " + std::to_string(i) + "] " + board_error_msg;
+                *error_msg += fmt::format("[Board {}] {}", i, board_error_msg);
             }
         }
     }
@@ -437,12 +419,17 @@ std::string NJBRD::get_error()
     Vector position = this->joint_modules_.get_measured_angles();
     if (!config_.is_within_hard_position_limits(position))
     {
-        if (!error_msg.empty())
+        if (error_msg)
         {
-            error_msg += " | ";
+            *error_msg += " | ";
+        }
+        else
+        {
+            // initialise
+            error_msg = "";
         }
 
-        error_msg += "Position limits exceeded.";
+        *error_msg += "Position limits exceeded.";
     }
 
     return error_msg;
