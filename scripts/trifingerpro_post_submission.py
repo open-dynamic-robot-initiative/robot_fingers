@@ -517,6 +517,9 @@ def check_object_detection_noise(
         )
         return False
 
+    # add an explicit success message to make the output easier to understand
+    log.info("Object detection test passed.")
+
     return True
 
 
