@@ -349,6 +349,57 @@ def record_camera_observations(
     return observation_buffer
 
 
+def check_camera_brightness(
+    observations: typing.Sequence[tricamera.TriCameraObjectObservation],
+    log: logging.Logger,
+) -> bool:
+    """Check if the camera images match the expected brightness.
+
+    If they are too dark, it might mean that one of the light panels is broken.
+
+    Args:
+        observations: Sequence of camera observations.
+        log: Logger instance to log results.
+
+    Returns:
+        True if test is successful, False if there is any issue.
+    """
+    # On robots with all four panels on, brightness mean is typically in the
+    # range of 90-95.  On a robot that has 90 with all on, turning one panel
+    # off reduced it to 75.  Set the threshold based on this information.  If
+    # it results in frequent false positives, we can lower it a bit.
+    BRIGHTNESS_MEAN_TRHESHOLD = 87.0
+
+    all_cameras_means = []
+    for obs in observations:
+        # NOTE for brightness estimation, we don't need to debayer, we can just
+        # use the raw data
+        image_means = [np.mean(camera.image) for camera in obs.cameras]
+        all_cameras_means.append(np.mean(image_means))
+
+    total_mean = np.mean(all_cameras_means)
+
+    if total_mean >= BRIGHTNESS_MEAN_TRHESHOLD:
+        log.info(
+            SM(
+                "Image brightness is okay",
+                mean_brightness=total_mean,
+                limit=BRIGHTNESS_MEAN_TRHESHOLD,
+            )
+        )
+    else:
+        log.error(
+            SM(
+                "Image brightness is too low.  Lighting should be checked.",
+                mean_brightness=total_mean,
+                limit=BRIGHTNESS_MEAN_TRHESHOLD,
+            )
+        )
+        return False
+
+    return True
+
+
 def check_camera_sharpness(
     observations: typing.Sequence[tricamera.TriCameraObjectObservation],
     log: logging.Logger,
@@ -621,6 +672,11 @@ def main():
     camera_observations = record_camera_observations(
         args.object, num_observations=30
     )
+
+    if not check_camera_brightness(
+        camera_observations, logging.getLogger("camera_brightness")
+    ):
+        sys.exit(2)
 
     if not check_camera_sharpness(
         camera_observations, logging.getLogger("camera_sharpness")
