@@ -451,6 +451,9 @@ std::string NJBRD::get_error()
 TPL_NJBRD
 void NJBRD::shutdown()
 {
+    // The shutdown trajectory is allowed to violate the position limits
+    disable_position_limits();
+
     // Move on the shutdown trajectory step by step.  If no shutdown trajectory
     // is configured, the list of steps will be empty, so nothing will happen.
     bool success = true;
@@ -495,6 +498,10 @@ void NJBRD::shutdown()
             file << timestamp << "\t" << action_counter_ << std::endl;
         }
     }
+
+    // shouldn't be needed anymore after shutdown but nonetheless make sure
+    // position limits are only disabled locally
+    enable_position_limits();
 }
 
 TPL_NJBRD
