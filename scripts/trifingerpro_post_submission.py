@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Perform "post submission" actions on TriFingerPro.
 
-Performs the following actins:
+Performs the following actions:
 
 - run some self-tests to check if the robot is behaving as expected
 - move the fingers on a previously recorded trajectory to randomize the
