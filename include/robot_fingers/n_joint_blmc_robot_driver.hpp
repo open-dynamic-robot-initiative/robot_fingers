@@ -180,6 +180,8 @@ public:
      * @param safety_kd  D-gain for velocity damping.
      * @param default_position_control_kp  Default P-gain for position control.
      * @param default_position_control_kd  Default D-gain for position control.
+     * @param is_position_limit_enabled  If false, position limit checks are
+     *      skipped.
      * @param lower_position_limits  Lower limits for joint positions.
      * @param upper_position_limits  Upper limits for joint positions.
      *
@@ -192,6 +194,7 @@ public:
         const Vector &safety_kd,
         const Vector &default_position_control_kp,
         const Vector &default_position_control_kd,
+        bool is_position_limit_enabled,
         const Vector &lower_position_limits =
             Vector::Constant(-std::numeric_limits<double>::infinity()),
         const Vector &upper_position_limits =
@@ -222,10 +225,13 @@ protected:
      */
     Config config_;
 
-    bool is_initialized_ = false;
+    bool is_initialized_ = true;
 
     //! \brief Counter for the number of actions sent to the robot.
     uint32_t action_counter_ = 0;
+
+    //! \brief Whether or not position limits (both soft and hard) are checked.
+    bool is_position_limit_enabled_ = false;
 
     Action apply_action_uninitialized(const Action &desired_action);
 
@@ -283,6 +289,17 @@ protected:
     bool move_to_position(const Vector &goal_pos,
                           const double tolerance,
                           const uint32_t time_steps);
+
+    //! Enable the position limits
+    void enable_position_limits()
+    {
+        is_position_limit_enabled_ = true;
+    }
+    //! Disable the position limits
+    void disable_position_limits()
+    {
+        is_position_limit_enabled_ = false;
+    }
 };
 
 /**
