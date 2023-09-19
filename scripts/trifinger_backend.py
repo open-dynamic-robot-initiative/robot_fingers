@@ -272,7 +272,7 @@ def main() -> int:
         else:
             end_index = -1
 
-        robot_logger.write_current_buffer_binary(
+        robot_logger.save_current_robot_data_binary(
             args.robot_logfile, start_index=0, end_index=end_index
         )
 
