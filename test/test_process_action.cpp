@@ -58,7 +58,8 @@ TEST_F(TestProcessDesiredAction, valid_torque_no_safety)
                                        max_torque_Nm,
                                        safety_kd,
                                        default_position_control_kp,
-                                       default_position_control_kd);
+                                       default_position_control_kd,
+                                       false);
 
     ASSERT_EQ(desired_torque[0], resulting_action.torque[0]);
     ASSERT_EQ(desired_torque[1], resulting_action.torque[1]);
@@ -82,7 +83,8 @@ TEST_F(TestProcessDesiredAction, exceed_max_torque_no_safety)
                                        max_torque_Nm,
                                        safety_kd,
                                        default_position_control_kp,
-                                       default_position_control_kd);
+                                       default_position_control_kd,
+                                       false);
 
     ASSERT_EQ(max_torque_Nm, resulting_action.torque[0]);
     ASSERT_EQ(-max_torque_Nm, resulting_action.torque[1]);
@@ -103,7 +105,8 @@ TEST_F(TestProcessDesiredAction, velocity_damping_low_velocity)
                                        max_torque_Nm,
                                        safety_kd,
                                        default_position_control_kp,
-                                       default_position_control_kd);
+                                       default_position_control_kd,
+                                       false);
 
     // joint 0 has positive velocity so expecting a reduced torque.
     // joint 1 has negative velocity so expecting an increased torque.
@@ -135,7 +138,8 @@ TEST_F(TestProcessDesiredAction, velocity_damping_high_velocity)
                                        max_torque_Nm,
                                        safety_kd,
                                        default_position_control_kp,
-                                       default_position_control_kd);
+                                       default_position_control_kd,
+                                       false);
 
     // joint 0 has positive velocity so expecting a reduced torque.
     // joint 1 has negative velocity so expecting an increased torque.
@@ -167,7 +171,8 @@ TEST_F(TestProcessDesiredAction, position_controller_basic)
                                        max_torque_Nm,
                                        safety_kd,
                                        default_position_control_kp,
-                                       default_position_control_kd);
+                                       default_position_control_kd,
+                                       false);
 
     // Just testing here if the torque command goes in the right direction
 
@@ -207,7 +212,8 @@ TEST_F(TestProcessDesiredAction, position_controller_one_joint_only)
                                        max_torque_Nm,
                                        safety_kd,
                                        default_position_control_kp,
-                                       default_position_control_kd);
+                                       default_position_control_kd,
+                                       false);
 
     // Just testing here if the torque command goes in the right direction
     ASSERT_LT(resulting_action.torque[0], 0.0);
@@ -239,7 +245,8 @@ TEST_F(TestProcessDesiredAction, position_controller_with_velocity)
             max_torque_Nm,
             safety_kd,
             default_position_control_kp,
-            default_position_control_kd);
+            default_position_control_kd,
+            false);
 
     observation.velocity << -.01, .01;
 
@@ -249,7 +256,8 @@ TEST_F(TestProcessDesiredAction, position_controller_with_velocity)
         max_torque_Nm,
         safety_kd,
         default_position_control_kp,
-        default_position_control_kd);
+        default_position_control_kd,
+        false);
 
     // Since velocity has same sign as position error, the resulting
     // (absolute) torques should be lower (since it is
@@ -285,7 +293,8 @@ TEST_F(TestProcessDesiredAction, position_controller_custom_gains)
             max_torque_Nm,
             safety_kd,
             default_position_control_kp,
-            default_position_control_kd);
+            default_position_control_kd,
+            false);
 
     Types::Action resulting_action_custom_gains =
         Driver::process_desired_action(
@@ -294,7 +303,8 @@ TEST_F(TestProcessDesiredAction, position_controller_custom_gains)
             max_torque_Nm,
             safety_kd,
             default_position_control_kp,
-            default_position_control_kd);
+            default_position_control_kd,
+            false);
 
     // verify that custom gains are set in resulting action
     EXPECT_EQ(kp[0], resulting_action_custom_gains.position_kp[0]);
@@ -334,7 +344,8 @@ TEST_F(TestProcessDesiredAction, position_controller_and_torque)
                                        max_torque_Nm,
                                        safety_kd,
                                        default_position_control_kp,
-                                       default_position_control_kd);
+                                       default_position_control_kd,
+                                       false);
 
     // Just testing here if the torque command goes in the right direction
 
@@ -369,6 +380,7 @@ TEST_F(TestProcessDesiredAction, position_within_limits)
         safety_kd,
         default_position_control_kp,
         default_position_control_kd,
+        true,
         -limits,
         limits);
 
@@ -404,6 +416,7 @@ TEST_F(TestProcessDesiredAction, position_below_limits)
         safety_kd,
         default_position_control_kp,
         default_position_control_kd,
+        true,
         -limits,
         limits);
 
@@ -439,6 +452,7 @@ TEST_F(TestProcessDesiredAction, position_above_limits)
         safety_kd,
         default_position_control_kp,
         default_position_control_kd,
+        true,
         -limits,
         limits);
 
@@ -473,6 +487,7 @@ TEST_F(TestProcessDesiredAction, position_one_joint_above_limit)
         safety_kd,
         default_position_control_kp,
         default_position_control_kd,
+        true,
         -limits,
         limits);
 
@@ -508,6 +523,7 @@ TEST_F(TestProcessDesiredAction, position_one_above_one_below_limit)
         safety_kd,
         default_position_control_kp,
         default_position_control_kd,
+        true,
         -limits,
         limits);
 
@@ -520,6 +536,43 @@ TEST_F(TestProcessDesiredAction, position_one_above_one_below_limit)
     EXPECT_EQ(default_position_control_kp[1], resulting_action.position_kp[1]);
     EXPECT_EQ(default_position_control_kd[0], resulting_action.position_kd[0]);
     EXPECT_EQ(default_position_control_kd[1], resulting_action.position_kd[1]);
+}
+
+TEST_F(TestProcessDesiredAction, position_above_limits_but_check_disabled)
+{
+    // disable velocity damping for this test
+    safety_kd << 0., 0.;
+
+    observation.position << 3, 4;
+
+    Vector limits;
+    limits << 1, 2;
+
+    Vector desired_position, kp, kd;
+    // use current position as target to ensure they are outside the limits
+    desired_position = observation.position;
+    kp << 10, 10;
+    kd << 5, 5;
+
+    Types::Action resulting_action = Driver::process_desired_action(
+        Types::Action::Position(desired_position, kp, kd),
+        observation,
+        max_torque_Nm,
+        safety_kd,
+        default_position_control_kp,
+        default_position_control_kd,
+        false,
+        -limits,
+        limits);
+
+    // verify that position and gains are not modified despite being above the
+    // limits
+    EXPECT_EQ(desired_position[0], resulting_action.position[0]);
+    EXPECT_EQ(desired_position[1], resulting_action.position[1]);
+    EXPECT_EQ(kp[0], resulting_action.position_kp[0]);
+    EXPECT_EQ(kp[1], resulting_action.position_kp[1]);
+    EXPECT_EQ(kd[0], resulting_action.position_kd[0]);
+    EXPECT_EQ(kd[1], resulting_action.position_kd[1]);
 }
 
 int main(int argc, char **argv)

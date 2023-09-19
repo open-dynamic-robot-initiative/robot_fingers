@@ -4,15 +4,15 @@ on: [pull_request]
 
 jobs:
   mypy:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: "3.10"
       - name: Install
         run: |
-          python3 -m pip install mypy types-PyYAML numpy==1.20.3
+          python3 -m pip install mypy types-PyYAML numpy==1.23.3
       - name: Add matcher
         run: |
           echo "::add-matcher::.github/workflows/mypy-problem-matcher.json"
@@ -21,12 +21,12 @@ jobs:
           python3 -m mypy .
 
   flake8:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: "3.10"
       - name: Install
         run: |
           python3 -m pip install flake8
@@ -39,20 +39,20 @@ jobs:
 
   black:
     name: Python Formatting
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.8
+          python-version: "3.10"
       - uses: psf/black@stable
 
   clang-format:
     name: C++ Formatting
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
       - run: wget https://raw.githubusercontent.com/machines-in-motion/mpi_cmake_modules/master/scripts/run-clang-format
       - run: wget https://raw.githubusercontent.com/machines-in-motion/mpi_cmake_modules/master/resources/_clang-format
       - run: python ./run-clang-format -r .

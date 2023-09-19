@@ -343,7 +343,8 @@ void NJBRD::initialize()
 
     real_time_tools::RealTimeThread realtime_thread;
     realtime_thread.create_realtime_thread(
-        [](void *instance_pointer) {
+        [](void *instance_pointer)
+        {
             // instance_pointer = this, cast to correct type and call the
             // _initialize() method.
             ((NJBRD *)(instance_pointer))->_initialize();
@@ -450,6 +451,9 @@ std::string NJBRD::get_error()
 TPL_NJBRD
 void NJBRD::shutdown()
 {
+    // The shutdown trajectory is allowed to violate the position limits
+    disable_position_limits();
+
     // Move on the shutdown trajectory step by step.  If no shutdown trajectory
     // is configured, the list of steps will be empty, so nothing will happen.
     bool success = true;
@@ -494,6 +498,10 @@ void NJBRD::shutdown()
             file << timestamp << "\t" << action_counter_ << std::endl;
         }
     }
+
+    // shouldn't be needed anymore after shutdown but nonetheless make sure
+    // position limits are only disabled locally
+    enable_position_limits();
 }
 
 TPL_NJBRD
@@ -503,6 +511,7 @@ auto NJBRD::process_desired_action(const Action &desired_action,
                                    const Vector &safety_kd,
                                    const Vector &default_position_control_kp,
                                    const Vector &default_position_control_kd,
+                                   bool is_position_limit_enabled,
                                    const Vector &lower_position_limits,
                                    const Vector &upper_position_limits)
     -> Action
@@ -513,46 +522,54 @@ auto NJBRD::process_desired_action(const Action &desired_action,
     // ---------------
     // If a joint exceeds the soft position limit, replace the command for that
     // joint with a position command to the limit
-    for (std::size_t i = 0; i < N_JOINTS; i++)
+    if (is_position_limit_enabled)
     {
-        // Clamp position commands to the allowed range (note that if position
-        // is NaN both conditions are false, so the NaN is preserved).
-        if (processed_action.position[i] < lower_position_limits[i])
+        for (std::size_t i = 0; i < N_JOINTS; i++)
         {
-            processed_action.position[i] = lower_position_limits[i];
-        }
-        else if (processed_action.position[i] > upper_position_limits[i])
-        {
-            processed_action.position[i] = upper_position_limits[i];
-        }
-
-        auto set_limit_action = [&](double sign, double limit) {
-            // Discard torque command if it pushes further out of the valid
-            // range.
-            if (processed_action.torque[i] * sign > 0)
+            // Clamp position commands to the allowed range (note that if
+            // position is NaN both conditions are false, so the NaN is
+            // preserved).
+            if (processed_action.position[i] < lower_position_limits[i])
             {
-                processed_action.torque[i] = 0;
+                processed_action.position[i] = lower_position_limits[i];
+            }
+            else if (processed_action.position[i] > upper_position_limits[i])
+            {
+                processed_action.position[i] = upper_position_limits[i];
             }
 
-            // If no position is set, set it to the limit value (otherwise it
-            // will already be clamped to the limit range, so it will be fine).
-            if (std::isnan(processed_action.position[i]))
+            auto set_limit_action = [&](double sign, double limit)
             {
-                processed_action.position[i] = limit;
+                // Discard torque command if it pushes further out of the valid
+                // range.
+                if (processed_action.torque[i] * sign > 0)
+                {
+                    processed_action.torque[i] = 0;
+                }
+
+                // If no position is set, set it to the limit value (otherwise
+                // it will already be clamped to the limit range, so it will be
+                // fine).
+                if (std::isnan(processed_action.position[i]))
+                {
+                    processed_action.position[i] = limit;
+                }
+
+                // do not allow custom gains
+                processed_action.position_kp[i] =
+                    default_position_control_kp[i];
+                processed_action.position_kd[i] =
+                    default_position_control_kd[i];
+            };
+
+            if (latest_observation.position[i] < lower_position_limits[i])
+            {
+                set_limit_action(-1, lower_position_limits[i]);
             }
-
-            // do not allow custom gains
-            processed_action.position_kp[i] = default_position_control_kp[i];
-            processed_action.position_kd[i] = default_position_control_kd[i];
-        };
-
-        if (latest_observation.position[i] < lower_position_limits[i])
-        {
-            set_limit_action(-1, lower_position_limits[i]);
-        }
-        else if (latest_observation.position[i] > upper_position_limits[i])
-        {
-            set_limit_action(+1, upper_position_limits[i]);
+            else if (latest_observation.position[i] > upper_position_limits[i])
+            {
+                set_limit_action(+1, upper_position_limits[i]);
+            }
         }
     }
 
@@ -609,7 +626,9 @@ auto NJBRD::process_desired_action(const Action &desired_action,
 TPL_NJBRD
 bool NJBRD::is_within_hard_position_limits(const Observation &observation) const
 {
-    return config_.is_within_hard_position_limits(observation.position);
+    // if position limits are disabled, always return true
+    return !is_position_limit_enabled_ ||
+           config_.is_within_hard_position_limits(observation.position);
 }
 
 TPL_NJBRD
@@ -619,18 +638,6 @@ auto NJBRD::apply_action_uninitialized(const NJBRD::Action &desired_action)
     double start_time_sec = real_time_tools::Timer::get_current_time_sec();
 
     Observation observation = get_latest_observation();
-
-    // Only enable soft position limits once initialization is done (i.e. no
-    // limits during homing).
-    Vector lower_limits =
-        is_initialized_
-            ? config_.soft_position_limits_lower
-            : Vector::Constant(-std::numeric_limits<double>::infinity());
-    Vector upper_limits =
-        is_initialized_
-            ? config_.soft_position_limits_upper
-            : Vector::Constant(std::numeric_limits<double>::infinity());
-
     Action applied_action =
         process_desired_action(desired_action,
                                observation,
@@ -638,8 +645,9 @@ auto NJBRD::apply_action_uninitialized(const NJBRD::Action &desired_action)
                                config_.safety_kd,
                                config_.position_control_gains.kp,
                                config_.position_control_gains.kd,
-                               lower_limits,
-                               upper_limits);
+                               is_position_limit_enabled_,
+                               config_.soft_position_limits_lower,
+                               config_.soft_position_limits_upper);
 
     joint_modules_.set_torques(applied_action.torque);
     joint_modules_.send_torques();
@@ -656,6 +664,10 @@ void NJBRD::_initialize()
 {
     joint_modules_.set_position_control_gains(
         config_.position_control_gains.kp, config_.position_control_gains.kd);
+
+    // During homing, the joints have to move to the end-stops, so disable
+    // position limits.
+    disable_position_limits();
 
     bool homing_succeeded = homing();
     pause_motors();
@@ -686,6 +698,8 @@ void NJBRD::_initialize()
     pause_motors();
 
     is_initialized_ = homing_succeeded;
+
+    enable_position_limits();
 }
 
 TPL_NJBRD

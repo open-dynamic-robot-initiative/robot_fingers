@@ -22,6 +22,9 @@
   dropping down.
 - Improved `demo_trifinger_platform.py` to use sine position profile instead of
   random motions and add option to use with object tracking.
+- Disable position limit checks during shutdown trajectory.  This allows setting
+  the rest position of the TriFingerPro to a more suitable position which is
+  outside of the operation limits.
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.
