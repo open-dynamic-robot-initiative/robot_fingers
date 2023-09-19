@@ -97,6 +97,7 @@ shutdown_trajectory:
     - target_position_rad: [0, 0.9, -1.7, 0, 0.9, -1.7, 0, 0.9, -1.7]
       move_steps: 3000
     # then move to rest position (a position from which it cannot get stuck
-    # during homing for the next run).
-    - target_position_rad: [0.0161, 0.8998, -0.9770, 0.0161, 0.8998, -0.9770, 0.0161, 0.8998, -0.9770]
+    # during homing for the next run and that is a good initial position for
+    # calibration on first run after power on).
+    - target_position_rad: [1.57, 1.8, -2.5, 1.57, 1.8, -2.5, 1.57, 1.8, -2.5]
       move_steps: 1000
