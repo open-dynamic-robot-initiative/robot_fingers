@@ -53,9 +53,7 @@ class CursesGUI:
             # header line
             line = 0
             if position_control_enabled:
-                self.win.addstr(
-                    line, 0, "Position Control Enabled", curses.A_BOLD
-                )
+                self.win.addstr(line, 0, "Position Control Enabled", curses.A_BOLD)
             else:
                 self.win.addstr(line, 0, "Position Control Disabled")
             line += 3

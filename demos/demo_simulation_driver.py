@@ -46,14 +46,10 @@ def main():
     num_fingers = finger_types_data.get_number_of_fingers(args.finger_type)
     if num_fingers == 1:
         finger_types = robot_interfaces.finger
-        create_backend = (
-            robot_fingers.pybullet_drivers.create_single_finger_backend
-        )
+        create_backend = robot_fingers.pybullet_drivers.create_single_finger_backend
     elif num_fingers == 3:
         finger_types = robot_interfaces.trifinger
-        create_backend = (
-            robot_fingers.pybullet_drivers.create_trifinger_backend
-        )
+        create_backend = robot_fingers.pybullet_drivers.create_trifinger_backend
 
     robot_data = finger_types.SingleProcessData()
 

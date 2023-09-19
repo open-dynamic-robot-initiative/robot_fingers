@@ -49,9 +49,7 @@ def main():
     if args.multi_process:
         # In multi-process case assume that the backend is running in a
         # separate process and only set up the frontend here.
-        robot_data = robot_interfaces.solo_eight.MultiProcessData(
-            "solo8", False
-        )
+        robot_data = robot_interfaces.solo_eight.MultiProcessData("solo8", False)
         frontend = robot_interfaces.solo_eight.Frontend(robot_data)
     else:
         # In single-process case run both frontend and backend in this process

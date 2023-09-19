@@ -47,9 +47,7 @@ def read_file(filename):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "logfiles", nargs="+", type=pathlib.Path, help="logfiles"
-    )
+    parser.add_argument("logfiles", nargs="+", type=pathlib.Path, help="logfiles")
     parser.add_argument(
         "--no-display",
         dest="use_display",
@@ -75,9 +73,7 @@ def main():
         position_displacement = [
             np.linalg.norm(s["position"]["mean"][:2]) for s in data
         ]
-        mean_confidence = [
-            s["confidence"]["object_mean_confidence"] for s in data
-        ]
+        mean_confidence = [s["confidence"]["object_mean_confidence"] for s in data]
         position_mean_error = [s["position"]["mean_error"] for s in data]
         orientation_mean_error = [s["orientation"]["mean_error"] for s in data]
 

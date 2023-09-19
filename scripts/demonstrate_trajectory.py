@@ -103,9 +103,7 @@ def loop(win, args):
                 return
             elif pressed_key == ord(" "):
                 if is_recording:
-                    robot.logger.stop_and_save(
-                        args.outfile, robot.logger.Format.CSV
-                    )
+                    robot.logger.stop_and_save(args.outfile, robot.logger.Format.CSV)
                 else:
                     robot.logger.start()
 
@@ -122,9 +120,7 @@ def main():
         choices=robot_fingers.Robot.get_supported_robots(),
         help="Name of the robot.",
     )
-    parser.add_argument(
-        "outfile", type=str, help="Output file for the recorded data."
-    )
+    parser.add_argument("outfile", type=str, help="Output file for the recorded data.")
     args = parser.parse_args()
 
     curses.wrapper(lambda stdscr: loop(stdscr, args))

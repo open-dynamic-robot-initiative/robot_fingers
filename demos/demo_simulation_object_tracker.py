@@ -51,9 +51,7 @@ def main():
     cube = collision_objects.Block()
 
     # initialize the object tracker interface
-    object_tracker_data = object_tracker.Data(
-        "object_tracker", True, args.history_size
-    )
+    object_tracker_data = object_tracker.Data("object_tracker", True, args.history_size)
     object_tracker_backend = object_tracker.SimulationBackend(
         object_tracker_data, cube, real_time
     )

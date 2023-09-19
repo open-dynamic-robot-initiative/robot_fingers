@@ -41,9 +41,7 @@ def main():
 
     for action_type in ("applied_action", "desired_action"):
         for field in ("torque", "position", "position_kp", "position_kd"):
-            header += [
-                "%s_%s_%d" % (action_type, field, i) for i in range(n_joints)
-            ]
+            header += ["%s_%s_%d" % (action_type, field, i) for i in range(n_joints)]
 
     print("Convert log file")
     progress = progressbar.ProgressBar()

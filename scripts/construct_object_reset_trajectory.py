@@ -299,14 +299,10 @@ def main():
     swipes_120 = connect_swipes(initial_pos_120, swipes_120, jump_speed_mps)
     swipes_240 = connect_swipes(initial_pos_240, swipes_240, jump_speed_mps)
 
-    joint_trajectory = trajectory_ik(
-        swipes_0, swipes_120, swipes_240, args.visualize
-    )
+    joint_trajectory = trajectory_ik(swipes_0, swipes_120, swipes_240, args.visualize)
 
     header = ["observation_position_%d" % i for i in range(9)]
-    np.savetxt(
-        args.out_file, joint_trajectory, header=" ".join(header), comments=""
-    )
+    np.savetxt(args.out_file, joint_trajectory, header=" ".join(header), comments="")
 
 
 if __name__ == "__main__":

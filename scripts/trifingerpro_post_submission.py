@@ -90,9 +90,7 @@ def load_object_type() -> typing.Optional[str]:
         return None
 
 
-def get_robot_config_without_position_limits() -> (
-    robot_fingers.TriFingerConfig
-):
+def get_robot_config_without_position_limits() -> robot_fingers.TriFingerConfig:
     """Get TriFingerPro configuration without position limits.
 
     Loads the TriFingerPro configuration from the default config file and
@@ -130,9 +128,7 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         log: Logger instance to log results.
     """
     # go to the "homing" end-stop (using the same torque as during homing)
-    action = robot.Action(
-        torque=robot.config.calibration.endstop_search_torques_Nm
-    )
+    action = robot.Action(torque=robot.config.calibration.endstop_search_torques_Nm)
     for _ in range(2000):
         t = robot.frontend.append_desired_action(action)
         robot.frontend.wait_until_timeindex(t)
@@ -152,10 +148,7 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
 
     observation = robot.frontend.get_observation(t)
 
-    if (
-        np.linalg.norm(_zero_to_endstop - observation.position)
-        > _position_tolerance
-    ):
+    if np.linalg.norm(_zero_to_endstop - observation.position) > _position_tolerance:
         log.error(
             SM(
                 "End stop not at expected position.",
@@ -611,9 +604,7 @@ def main():
     log = logging.getLogger()
     log.setLevel(logging.NOTSET)
     stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setFormatter(
-        logging.Formatter("%(levelname)s - %(message)s")
-    )
+    stdout_handler.setFormatter(logging.Formatter("%(levelname)s - %(message)s"))
     stdout_handler.setLevel(logging.INFO)
     log.addHandler(stdout_handler)
     if args.logfile:
@@ -655,9 +646,7 @@ def main():
     if args.reset:
         if args.object == "cube":
             print("Reset cube position")
-            reset_object(
-                robot, "trifingerpro_shuffle_cube_trajectory_fast.csv"
-            )
+            reset_object(robot, "trifingerpro_shuffle_cube_trajectory_fast.csv")
         elif args.object == "cuboid":
             print("Reset cuboid position")
             reset_object(robot, "trifingerpro_recenter_cuboid_2x2x8.csv")
@@ -669,9 +658,7 @@ def main():
     del robot
 
     print("Check cameras")
-    camera_observations = record_camera_observations(
-        args.object, num_observations=30
-    )
+    camera_observations = record_camera_observations(args.object, num_observations=30)
 
     if not check_camera_brightness(
         camera_observations, logging.getLogger("camera_brightness")

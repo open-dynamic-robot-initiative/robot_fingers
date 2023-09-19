@@ -64,9 +64,7 @@ def main() -> None:  # noqa[D103]
 
         if t % 100 == 0:
             print(f"[{t}] target joint positions: {action.position}")
-            print(
-                f"[{t}] actual joint positions: {robot_observation.position}"
-            )
+            print(f"[{t}] actual joint positions: {robot_observation.position}")
 
             image = camera_observation.cameras[0].image
             print(f"[{t}] Image shape: {image.shape}")

@@ -24,9 +24,7 @@ def main():
 
     # run the robot for a while
     for _ in range(10000):
-        t = finger_frontend.append_desired_action(
-            finger.Action(torque=desired_torque)
-        )
+        t = finger_frontend.append_desired_action(finger.Action(torque=desired_torque))
         finger_frontend.wait_until_timeindex(t)
 
     # stop logger and write data to file

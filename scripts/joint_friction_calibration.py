@@ -111,9 +111,7 @@ def run_application(stdscr, robot, velocity_radps, buffer_size):
 
             line += 2
             stdscr.addstr(line, 0, "Status:", curses.A_BOLD)
-            stdscr.addstr(
-                line, len("Status:") + 1, "RUNNING" if enabled else "STOPPED"
-            )
+            stdscr.addstr(line, len("Status:") + 1, "RUNNING" if enabled else "STOPPED")
 
             line += 2
             stdscr.addstr(line, 0, "Commanded Torque:", curses.A_BOLD)
@@ -140,16 +138,12 @@ def run_application(stdscr, robot, velocity_radps, buffer_size):
                 )
 
             line += 2
-            stdscr.addstr(
-                line, 0, "Velocity (actual / desired):", curses.A_BOLD
-            )
+            stdscr.addstr(line, 0, "Velocity (actual / desired):", curses.A_BOLD)
             for i, (p, d) in enumerate(
                 zip(velocity_buffer.mean(), desired_velocity_radps)
             ):
                 line += 1
-                stdscr.addstr(
-                    line, 4, "Joint {}: {:.3f} / {:3f}".format(i, p, d)
-                )
+                stdscr.addstr(line, 4, "Joint {}: {:.3f} / {:3f}".format(i, p, d))
 
             stdscr.refresh()
 
