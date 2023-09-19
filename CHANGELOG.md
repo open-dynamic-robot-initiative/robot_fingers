@@ -13,6 +13,7 @@
   broken light panels.
 
 ### Changed
+- Upgrade to robot_interfaces v2 (not yet released).
 - plot_post_submission_log.py now plots multiple log files side by side instead of
   merging them.  This is useful for comparing different robots.
   The option to merge multiple log files has been dropped but the merging can easily be

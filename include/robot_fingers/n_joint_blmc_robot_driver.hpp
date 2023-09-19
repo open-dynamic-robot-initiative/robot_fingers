@@ -12,6 +12,7 @@
 #include <iterator>
 #include <string>
 
+#include <fmt/format.h>
 #include <yaml-cpp/yaml.h>
 #include <Eigen/Eigen>
 
@@ -139,7 +140,7 @@ public:
 
     virtual Observation get_latest_observation() override = 0;
     Action apply_action(const Action &desired_action) override;
-    std::string get_error() override;
+    std::optional<std::string> get_error() override;
     void shutdown() override;
 
     /**

@@ -30,6 +30,7 @@ find_package(trifinger_object_tracking REQUIRED)
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
+find_package(fmt REQUIRED)
 find_package(OpenCV REQUIRED)
 
 
@@ -47,6 +48,7 @@ target_include_directories(
 )
 target_link_libraries(${PROJECT_NAME} INTERFACE
     Eigen3::Eigen
+    fmt::fmt
     yaml_utils::yaml_utils
     blmc_drivers::blmc_drivers
     robot_interfaces::robot_interfaces
