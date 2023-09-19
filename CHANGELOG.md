@@ -8,7 +8,9 @@
   [plotext](https://github.com/piccolomo/plotext) to show the plot directly in
   the terminal or save as file to /tmp if plotext is not available.
 - Check camera sharpness in `trifinger_post_submission.py`.  This should alert us early,
-  if a lense comes loose.
+  if a lens comes loose.
+- Check camera brightness in `trifinger_post_submission.py` to auto-detect
+  broken light panels.
 
 ### Changed
 - plot_post_submission_log.py now plots multiple log files side by side instead of
