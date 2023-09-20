@@ -24,12 +24,8 @@ import robot_fingers
 
 def init_kinematics():
     """Initialise the kinematics calculator for TriFingerPro."""
-    robot_properties_path = get_package_share_directory(
-        "robot_properties_fingers"
-    )
-    urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf(
-        "trifingerpro"
-    )
+    robot_properties_path = get_package_share_directory("robot_properties_fingers")
+    urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf("trifingerpro")
     finger_urdf_path = os.path.join(robot_properties_path, "urdf", urdf_file)
     kinematics = trifinger_simulation.pinocchio_utils.Kinematics(
         finger_urdf_path,
@@ -53,9 +49,7 @@ def main():
         robot.initialize()
         frontend = robot.frontend
     else:
-        robot_data = robot_interfaces.trifinger.MultiProcessData(
-            "trifinger", False
-        )
+        robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger", False)
         frontend = robot_interfaces.trifinger.Frontend(robot_data)
 
     kinematics = init_kinematics()
@@ -87,9 +81,7 @@ def main():
         # update desired tip positions
         for i in range(len(initial_cartesian_tip_positions)):
             dy = distance * np.sin(t * np.pi / n_steps)
-            cartesian_tip_positions[i][1] = (
-                initial_cartesian_tip_positions[i][1] + dy
-            )
+            cartesian_tip_positions[i][1] = initial_cartesian_tip_positions[i][1] + dy
 
         # use inverse kinematics to get the corresponding joint angles
         angular_joint_positions, err = kinematics.inverse_kinematics(

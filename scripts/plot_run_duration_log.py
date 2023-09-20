@@ -12,9 +12,7 @@ import matplotlib.dates
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "logfile", type=pathlib.Path, help="Path to the logfile."
-    )
+    parser.add_argument("logfile", type=pathlib.Path, help="Path to the logfile.")
     args = parser.parse_args()
 
     data = np.loadtxt(args.logfile)

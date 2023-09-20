@@ -61,8 +61,6 @@ if __name__ == "__main__":
             robot.frontend.wait_until_timeindex(t)
 
         desired_tip_pos = forward_kinematics(desired_position)
-        actual_tip_pos = forward_kinematics(
-            robot.frontend.get_observation(t).position
-        )
+        actual_tip_pos = forward_kinematics(robot.frontend.get_observation(t).position)
         error = desired_tip_pos - actual_tip_pos
         print("Position Error: {:.3}  {}".format(np.linalg.norm(error), error))

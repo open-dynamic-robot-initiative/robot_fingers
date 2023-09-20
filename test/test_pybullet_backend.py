@@ -25,20 +25,14 @@ class TestPyBulletBackend(unittest.TestCase):
         num_fingers = finger_types_data.get_number_of_fingers(finger_type)
         if num_fingers == 1:
             finger_types = robot_interfaces.finger
-            create_backend = (
-                robot_fingers.pybullet_drivers.create_single_finger_backend
-            )
+            create_backend = robot_fingers.pybullet_drivers.create_single_finger_backend
         elif num_fingers == 3:
             finger_types = robot_interfaces.trifinger
-            create_backend = (
-                robot_fingers.pybullet_drivers.create_trifinger_backend
-            )
+            create_backend = robot_fingers.pybullet_drivers.create_trifinger_backend
 
         robot_data = finger_types.SingleProcessData()
 
-        backend = create_backend(
-            robot_data, real_time_mode=False, visualize=False
-        )
+        backend = create_backend(robot_data, real_time_mode=False, visualize=False)
 
         frontend = finger_types.Frontend(robot_data)
         backend.initialize()
@@ -52,9 +46,7 @@ class TestPyBulletBackend(unittest.TestCase):
 
             # check if desired position is reached
             current_position = frontend.get_observation(t).position
-            np.testing.assert_array_almost_equal(
-                goal, current_position, decimal=1
-            )
+            np.testing.assert_array_almost_equal(goal, current_position, decimal=1)
 
     def test_single_finger_position_control(self):
         """Test position control for the simulated single finger."""

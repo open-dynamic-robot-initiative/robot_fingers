@@ -102,8 +102,7 @@ def hit_endstop(robot, desired_torque, hold=0, timeout=5000):
     t = robot.append_desired_action(action)
 
     while (
-        np.any(np.abs(robot.get_observation(t).velocity) > zero_velocity)
-        or step < 100
+        np.any(np.abs(robot.get_observation(t).velocity) > zero_velocity) or step < 100
     ) and step < timeout:
         t = robot.append_desired_action(action)
 
@@ -276,9 +275,7 @@ def main():
             hard_direction_change(robot, 2, trq)
 
             t = robot.get_current_timeindex()
-            if np.any(
-                np.abs(robot.get_observation(t).position) > POSITION_LIMIT
-            ):
+            if np.any(np.abs(robot.get_observation(t).position) > POSITION_LIMIT):
                 print("ERROR: Position limit exceeded!")
                 return
 

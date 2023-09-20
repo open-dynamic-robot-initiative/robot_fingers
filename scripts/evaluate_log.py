@@ -14,9 +14,7 @@ from trifinger_simulation.camera import load_camera_parameters
 def compute_reward_move_cube(task, log, t, goal):
     camera_observation = log.get_camera_observation(t)
     cube_pose = camera_observation.filtered_object_pose
-    reward = -task.evaluate_state(
-        goal["goal"], cube_pose, int(goal["difficulty"])
-    )
+    reward = -task.evaluate_state(goal["goal"], cube_pose, int(goal["difficulty"]))
     return reward
 
 
@@ -27,9 +25,7 @@ def compute_reward_move_cube_on_trajectory(task, log, t, goal):
     return reward
 
 
-def compute_reward_rearrange_dice(
-    task, log, t, goal, goal_masks, reward_cache
-):
+def compute_reward_rearrange_dice(task, log, t, goal, goal_masks, reward_cache):
     camera_observation = log.get_camera_observation(t)
     # use timestamp of the first camera to identify the observation
     stamp = camera_observation.cameras[0].timestamp
@@ -37,8 +33,7 @@ def compute_reward_rearrange_dice(
     # only compute the reward if it is not yet in the cache
     if stamp not in reward_cache:
         masks = tuple(
-            segment_image(convert_image(c.image))
-            for c in camera_observation.cameras
+            segment_image(convert_image(c.image)) for c in camera_observation.cameras
         )
         reward_cache[stamp] = -task.evaluate_state(goal_masks, masks)
 
@@ -111,9 +106,7 @@ def main():
         camera_log = str(args.log_dir / "camera_data.dat")
 
         if args.task in ("move_cube", "move_cube_on_trajectory"):
-            log = robot_fingers.TriFingerPlatformWithObjectLog(
-                robot_log, camera_log
-            )
+            log = robot_fingers.TriFingerPlatformWithObjectLog(robot_log, camera_log)
         else:
             log = robot_fingers.TriFingerPlatformLog(robot_log, camera_log)
     except Exception as e:

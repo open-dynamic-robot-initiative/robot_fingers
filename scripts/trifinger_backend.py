@@ -126,18 +126,14 @@ def parse_arguments() -> argparse.Namespace:
 
     # logging is only possible with fixed number of actions (otherwise it is
     # not possible to decide the logger buffer size)
-    if (
-        args.robot_logfile or args.camera_logfile
-    ) and not args.max_number_of_actions:
+    if (args.robot_logfile or args.camera_logfile) and not args.max_number_of_actions:
         parser.error(
-            "--max-number-of-actions must be specified when using data"
-            " logging."
+            "--max-number-of-actions must be specified when using data" " logging."
         )
 
     if not args.config_dir.is_dir():
         parser.error(
-            "--config-dir: %s does not exist or is not a directory"
-            % args.config_dir
+            "--config-dir: %s does not exist or is not a directory" % args.config_dir
         )
 
     # === configure logging
@@ -260,9 +256,7 @@ def main() -> int:
         pathlib.Path(args.ready_indicator).unlink()
 
     if cameras_enabled and args.camera_logfile:
-        logging.info(
-            "Save recorded camera data to file %s", args.camera_logfile
-        )
+        logging.info("Save recorded camera data to file %s", args.camera_logfile)
         camera_logger.stop_and_save(args.camera_logfile)
 
     if args.robot_logfile:

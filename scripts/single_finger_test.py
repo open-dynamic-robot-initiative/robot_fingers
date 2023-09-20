@@ -52,9 +52,7 @@ class CursesGUI:
 
             # header line
             line = 0
-            self.win.addstr(
-                line, 0, "Single Finger Test Application", curses.A_BOLD
-            )
+            self.win.addstr(line, 0, "Single Finger Test Application", curses.A_BOLD)
             line += 3
 
             # draw the data tables
@@ -66,9 +64,7 @@ class CursesGUI:
                 ["Position [rad]", "Velocity [rad/s]", "Torque [Nm]"],
                 motor_observation_data,
             )
-            self.win.addstr(
-                line, 0, "Tip Force: {}".format(observation.tip_force)
-            )
+            self.win.addstr(line, 0, "Tip Force: {}".format(observation.tip_force))
             line += 1
             line += 2
 
@@ -103,9 +99,7 @@ class CursesGUI:
                 "Action Repetitions: {}".format(status.action_repetitions),
             )
             line += 1
-            self.win.addstr(
-                line, 0, "Error Status: {}".format(status.error_status)
-            )
+            self.win.addstr(line, 0, "Error Status: {}".format(status.error_status))
             line += 1
             self.win.addstr(
                 line, 0, "Error Message: {}".format(status.get_error_message())
@@ -170,9 +164,7 @@ class CursesGUI:
 
         column_margin = 3
         if column_width is None:
-            column_width = (
-                max((len(h) for h in column_headers)) + column_margin
-            )
+            column_width = max((len(h) for h in column_headers)) + column_margin
 
         first_column_width = max((len(h) for h in row_headers)) + column_margin
 
@@ -249,9 +241,7 @@ def main():
             "config",
             "single_finger_test.yml",
         )
-        backend = robot_fingers.create_real_finger_backend(
-            robot_data, config_file_path
-        )
+        backend = robot_fingers.create_real_finger_backend(robot_data, config_file_path)
 
     frontend = finger.Frontend(robot_data)
     backend.initialize()

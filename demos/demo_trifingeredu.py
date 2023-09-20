@@ -52,9 +52,7 @@ def main():
     if args.multi_process:
         # In multi-process case assume that the backend is running in a
         # separate process and only set up the frontend here.
-        robot_data = robot_interfaces.trifinger.MultiProcessData(
-            "trifinger", False
-        )
+        robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger", False)
         frontend = robot_interfaces.trifinger.Frontend(robot_data)
     else:
         # In single-process case run both frontend and backend in this process

@@ -114,9 +114,7 @@ def main():
         # wait for first action to be sent by the user (but make sure to not
         # block when shutdown is requested)
         while (
-            not robot_data.desired_action.wait_for_timeindex(
-                0, max_duration_s=1
-            )
+            not robot_data.desired_action.wait_for_timeindex(0, max_duration_s=1)
             and not node.shutdown_requested
         ):
             rclpy.spin_once(node, timeout_sec=0)
@@ -130,9 +128,7 @@ def main():
     logger.debug("Received shutdown signal")
 
     if cameras_enabled and args.camera_logfile:
-        logger.info(
-            "Save recorded camera data to file %s" % args.camera_logfile
-        )
+        logger.info("Save recorded camera data to file %s" % args.camera_logfile)
         camera_logger.stop_and_save(args.camera_logfile)
 
     if args.robot_logfile:

@@ -27,8 +27,6 @@ class TimePrinter:
             time_str = time.strftime("%F %H:%M")
             duration_h = round((now - self.start_time) / 3600)
             print(
-                "{} ({} h since {})".format(
-                    time_str, duration_h, self.start_time_str
-                )
+                "{} ({} h since {})".format(time_str, duration_h, self.start_time_str)
             )
             self._last_time_print = now

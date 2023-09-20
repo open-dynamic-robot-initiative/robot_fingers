@@ -84,9 +84,7 @@ def main():
     node = NotificationNode("trifinger_backend")
     logger = node.get_logger()
 
-    robot_data = robot_interfaces.trifinger.MultiProcessData(
-        "trifinger", False
-    )
+    robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger", False)
 
     backend = drivers.create_trifinger_backend(
         robot_data,

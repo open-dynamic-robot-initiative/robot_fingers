@@ -98,9 +98,7 @@ class Robot:
         Returns:
             Robot: A ``Robot`` instance for the specified robot.
         """
-        return cls(
-            *robot_configs[robot_name], logger_buffer_size=logger_buffer_size
-        )
+        return cls(*robot_configs[robot_name], logger_buffer_size=logger_buffer_size)
 
     @staticmethod
     def get_supported_robots():

@@ -184,9 +184,7 @@ def move_on_full_range(push_interval):
     config.soft_position_limits_upper = [np.inf] * n_joints
 
     robot_data = robot_interfaces.finger.SingleProcessData()
-    robot_backend = robot_fingers.create_real_finger_backend(
-        robot_data, config
-    )
+    robot_backend = robot_fingers.create_real_finger_backend(robot_data, config)
     robot_frontend = robot_interfaces.finger.Frontend(robot_data)
 
     robot_backend.initialize()

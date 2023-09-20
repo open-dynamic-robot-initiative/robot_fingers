@@ -104,9 +104,7 @@ def main():
     config_file_path = "/etc/trifingerpro/trifingerpro.yml"
 
     # Storage for all observations, actions, etc.
-    robot_data = robot_interfaces.trifinger.MultiProcessData(
-        "trifinger", False
-    )
+    robot_data = robot_interfaces.trifinger.MultiProcessData("trifinger", False)
 
     # The backend sends actions from the data to the robot and writes
     # observations from the robot to the data.

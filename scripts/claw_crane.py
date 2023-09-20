@@ -17,16 +17,10 @@ from robot_fingers.curses import SimpleCursesGUI
 
 def loop(win, args):
     title = "Claw Crane"
-    status_line = (
-        " q: quit | a/d: x-axis | w/s: y-axis | r/f: z-axis | q/e: open/close"
-    )
+    status_line = " q: quit | a/d: x-axis | w/s: y-axis | r/f: z-axis | q/e: open/close"
 
-    robot_properties_path = get_package_share_directory(
-        "robot_properties_fingers"
-    )
-    urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf(
-        "trifingerpro"
-    )
+    robot_properties_path = get_package_share_directory("robot_properties_fingers")
+    urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf("trifingerpro")
     finger_urdf_path = os.path.join(robot_properties_path, "urdf", urdf_file)
     kinematics = trifinger_simulation.pinocchio_utils.Kinematics(
         finger_urdf_path,
@@ -53,9 +47,7 @@ def loop(win, args):
     try:
         while True:
             steps = 200
-            joint_pos_step_size = (
-                target_joint_pos - current_joint_pos
-            ) / steps
+            joint_pos_step_size = (target_joint_pos - current_joint_pos) / steps
 
             for _ in range(50):
                 current_joint_pos += joint_pos_step_size
@@ -65,9 +57,7 @@ def loop(win, args):
 
             gui.update_screen(
                 [
-                    "Center: ({:.3f}, {:.3f}, {:.3f})".format(
-                        *center_position
-                    ),
+                    "Center: ({:.3f}, {:.3f}, {:.3f})".format(*center_position),
                     "Tips to Center: {:.3f}".format(dist_tips_to_center),
                     "",
                 ]

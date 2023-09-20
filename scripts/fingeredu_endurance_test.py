@@ -56,16 +56,11 @@ def main():
     )
 
     finger_data = robot_interfaces.finger.SingleProcessData()
-    backend = robot_fingers.create_real_finger_backend(
-        finger_data, config_file_path
-    )
+    backend = robot_fingers.create_real_finger_backend(finger_data, config_file_path)
     finger = robot_interfaces.finger.Frontend(finger_data)
     backend.initialize()
 
-    input(
-        "Verify that finger is pointing straight down."
-        "  Press Enter to continue."
-    )
+    input("Verify that finger is pointing straight down." "  Press Enter to continue.")
 
     demo_position_commands(finger)
 
