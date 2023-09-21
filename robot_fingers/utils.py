@@ -1,5 +1,6 @@
 """Utility classes/functions for the robot_fingers package."""
 import time
+import typing as t
 
 import numpy as np
 import numpy.typing as npt
@@ -36,7 +37,7 @@ class TimePrinter:
 
 def min_jerk_trajectory(
     start_position: npt.ArrayLike, end_position: npt.ArrayLike, num_steps: int
-) -> npt.NDArray:
+) -> t.Iterator[npt.NDArray]:
     """Generator for computing minimum jerk trajectories.
 
     Example:
