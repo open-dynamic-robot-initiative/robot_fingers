@@ -18,6 +18,7 @@ import logging
 import logging.handlers
 
 import numpy as np
+import numpy.typing as npt
 import pandas
 from scipy.spatial.transform import Rotation
 from ament_index_python.packages import get_package_share_directory
@@ -187,35 +188,9 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
 
 def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
     position_tolerance = 0.2
-    push_sensor_threshold = 0.5
 
-    initial_pose = [0.0, 1.1, -1.9] * 3
-
-    reachable_goals = [
-        [0.9, 1.5, -2.6] * 3,
-        [-0.3, 1.5, -1.7] * 3,
-    ]
-
-    unreachable_goals = [
-        [0.0, 0.0, 0.0] * 3,
-        [-0.5, 1.5, 0.0] * 3,
-    ]
-
-    action = robot.Action(position=initial_pose)
-    for _ in range(1000):
-        t = robot.frontend.append_desired_action(action)
-        robot.frontend.wait_until_timeindex(t)
-    observation = robot.frontend.get_observation(t)
-    for goal in reachable_goals:
-        for _position in min_jerk_trajectory(observation.position, goal, 1000):
-            action = robot.Action(position=_position)
-            t = robot.frontend.append_desired_action(action)
-            robot.frontend.wait_until_timeindex(t)
-
-        observation = robot.frontend.get_observation(t)
-
-        # verify that goal is reached
-        if np.linalg.norm(goal - observation.position) > position_tolerance:
+    def _check_position_reached(goal: npt.NDArray, actual: npt.NDArray) -> bool:
+        if np.linalg.norm(goal - actual) > position_tolerance:
             log.error(
                 SM(
                     "Robot did not reach goal position",
@@ -223,9 +198,56 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
                     actual_position=observation.position,
                 )
             )
+            return False
+        return True
+
+    def _has_tip_sensor_contact(
+        current_tip_force: npt.NDArray,
+        no_contact_reference: npt.NDArray,
+    ) -> bool:
+        contact_delta_threshold = 0.2
+        reference_delta = current_tip_force - no_contact_reference
+        return any(reference_delta > contact_delta_threshold)
+
+    initial_pose = np.array([0.0, 1.1, -1.9] * 3)
+
+    reachable_goals = np.array(
+        [
+            [0.9, 1.5, -2.6] * 3,
+            [-0.3, 1.5, -1.7] * 3,
+        ]
+    )
+
+    unreachable_goals = np.array(
+        [
+            [0.0, 0.0, 0.0] * 3,
+            [-0.5, 1.5, 0.0] * 3,
+        ]
+    )
+
+    # move to initial position first to get a no-contact measurement of the push sensor
+    action = robot.Action(position=initial_pose)
+    for _ in range(1000):
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t)
+    observation = robot.frontend.get_observation(t)
+    if not _check_position_reached(initial_pose, observation.position):
+        sys.exit(1)
+
+    no_contact_tip_force = observation.tip_force
+
+    for goal in reachable_goals:
+        for _position in min_jerk_trajectory(observation.position, goal, 1000):
+            action = robot.Action(position=_position)
+            t = robot.frontend.append_desired_action(action)
+            robot.frontend.wait_until_timeindex(t)
+        observation = robot.frontend.get_observation(t)
+
+        # verify that goal is reached
+        if not _check_position_reached(goal, observation.position):
             sys.exit(1)
 
-        if (observation.tip_force > push_sensor_threshold).any():
+        if _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
             log.error(
                 SM(
                     "Push sensor reports high value in non-contact situation.",
@@ -234,7 +256,7 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
                     actual_position=observation.position,
                 )
             )
-            # sys.exit(1)
+            sys.exit(1)
 
     for goal in unreachable_goals:
         # move to initial position first
@@ -261,7 +283,7 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
             )
             sys.exit(1)
 
-        if (observation.tip_force < push_sensor_threshold).any():
+        if not _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
             log.error(
                 SM(
                     "Push sensor reports low value in contact situation.",
@@ -270,7 +292,7 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
                     actual_position=observation.position,
                 )
             )
-            # sys.exit(1)
+            sys.exit(1)
 
     print("Test successful.")
 
