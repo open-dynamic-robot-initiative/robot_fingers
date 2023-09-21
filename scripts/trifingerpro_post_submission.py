@@ -253,6 +253,7 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
                 log,
                 "Push sensor reports high value in non-contact situation.",
                 sensor_value=observation.tip_force,
+                no_contact_reference=no_contact_tip_force,
                 desired_position=goal,
                 actual_position=observation.position,
             )
@@ -285,6 +286,7 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
                 log,
                 "Push sensor reports low value in contact situation.",
                 sensor_value=observation.tip_force,
+                no_contact_reference=no_contact_tip_force,
                 desired_position=goal,
                 actual_position=observation.position,
             )
