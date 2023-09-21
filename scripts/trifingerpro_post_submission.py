@@ -317,6 +317,14 @@ def reset_object(robot, trajectory_file):
     # extract the positions from the recorded data
     positions = data[data_keys].to_numpy()
 
+    # move to start position with a smooth trajectory
+    t = robot.frontend.get_current_timeindex()
+    observation = robot.frontend.get_observation(t)
+    for _position in min_jerk_trajectory(observation.position, positions[0], 700):
+        action = robot.Action(position=_position)
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t)
+
     for position in positions:
         action = robot.Action(position=position)
         t = robot.frontend.append_desired_action(action)
