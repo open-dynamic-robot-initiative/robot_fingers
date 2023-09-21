@@ -25,6 +25,7 @@ import tomli
 
 import robot_interfaces
 import robot_fingers
+from robot_fingers.utils import min_jerk_trajectory
 import trifinger_object_tracking.py_tricamera_types as tricamera
 import trifinger_object_tracking.py_object_tracker as object_tracker
 from trifinger_cameras import utils
@@ -200,9 +201,14 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         [-0.5, 1.5, 0.0] * 3,
     ]
 
+    action = robot.Action(position=initial_pose)
+    for _ in range(1000):
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t)
+    observation = robot.frontend.get_observation(t)
     for goal in reachable_goals:
-        action = robot.Action(position=goal)
-        for _ in range(1000):
+        for _position in min_jerk_trajectory(observation.position, goal, 1000):
+            action = robot.Action(position=_position)
             t = robot.frontend.append_desired_action(action)
             robot.frontend.wait_until_timeindex(t)
 
@@ -232,19 +238,19 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
 
     for goal in unreachable_goals:
         # move to initial position first
-        action = robot.Action(position=initial_pose)
-        for _ in range(1000):
+        for _position in min_jerk_trajectory(observation.position, initial_pose, 1000):
+            action = robot.Action(position=_position)
             t = robot.frontend.append_desired_action(action)
             robot.frontend.wait_until_timeindex(t)
-
-        action = robot.Action(position=goal)
-        for _ in range(1000):
-            t = robot.frontend.append_desired_action(action)
-            robot.frontend.wait_until_timeindex(t)
-
         observation = robot.frontend.get_observation(t)
 
-        # verify that goal is reached
+        for _position in min_jerk_trajectory(observation.position, goal, 1000):
+            action = robot.Action(position=_position)
+            t = robot.frontend.append_desired_action(action)
+            robot.frontend.wait_until_timeindex(t)
+        observation = robot.frontend.get_observation(t)
+
+        # verify that goal is not reached
         if np.linalg.norm(goal - observation.position) < position_tolerance:
             log.error(
                 SM(
