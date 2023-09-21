@@ -208,7 +208,7 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         current_tip_force: npt.NDArray,
         no_contact_reference: npt.NDArray,
     ) -> bool:
-        contact_delta_threshold = 0.2
+        contact_delta_threshold = 0.1
         reference_delta = current_tip_force - no_contact_reference
         return any(reference_delta > contact_delta_threshold)
 
