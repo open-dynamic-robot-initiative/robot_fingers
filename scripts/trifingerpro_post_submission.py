@@ -239,7 +239,7 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
     no_contact_tip_force = observation.tip_force
 
     for goal in reachable_goals:
-        for _position in min_jerk_trajectory(observation.position, goal, 1000):
+        for _position in min_jerk_trajectory(observation.position, goal, 700):
             action = robot.Action(position=_position)
             t = robot.frontend.append_desired_action(action)
             robot.frontend.wait_until_timeindex(t)
@@ -260,13 +260,13 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
 
     for goal in unreachable_goals:
         # move to initial position first
-        for _position in min_jerk_trajectory(observation.position, initial_pose, 1000):
+        for _position in min_jerk_trajectory(observation.position, initial_pose, 700):
             action = robot.Action(position=_position)
             t = robot.frontend.append_desired_action(action)
             robot.frontend.wait_until_timeindex(t)
         observation = robot.frontend.get_observation(t)
 
-        for _position in min_jerk_trajectory(observation.position, goal, 1000):
+        for _position in min_jerk_trajectory(observation.position, goal, 700):
             action = robot.Action(position=_position)
             t = robot.frontend.append_desired_action(action)
             robot.frontend.wait_until_timeindex(t)
