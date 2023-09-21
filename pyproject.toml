@@ -23,6 +23,7 @@ module = [
 
     # our packages
     "robot_interfaces",
+    "robot_properties_fingers",
     "trifinger_cameras.*",
     "trifinger_simulation.*",
     "trifinger_object_tracking.*",

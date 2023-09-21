@@ -7,7 +7,7 @@ and forth on the y-axis.
 For the computation the `Kinematics` class from the trifinger_simulation
 package is used, so this package needs to be installed.
 For complete documentation of the `Kinematics` class see
-https://open-dynamic-robot-initiative.github.io/trifinger_simulation/api/pinocchio_utils.html
+https://open-dynamic-robot-initiative.github.io/robot_properties_fingers/robot_properties_fingers.html#robot_properties_fingers.Kinematics
 """
 import argparse
 import copy
@@ -16,10 +16,10 @@ import os
 import numpy as np
 from ament_index_python.packages import get_package_share_directory
 
-import trifinger_simulation.finger_types_data
-import trifinger_simulation.pinocchio_utils
-import robot_interfaces
 import robot_fingers
+import robot_interfaces
+import robot_properties_fingers
+import trifinger_simulation.finger_types_data
 
 
 def init_kinematics():
@@ -27,7 +27,7 @@ def init_kinematics():
     robot_properties_path = get_package_share_directory("robot_properties_fingers")
     urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf("trifingerpro")
     finger_urdf_path = os.path.join(robot_properties_path, "urdf", urdf_file)
-    kinematics = trifinger_simulation.pinocchio_utils.Kinematics(
+    kinematics = robot_properties_fingers.Kinematics(
         finger_urdf_path,
         ["finger_tip_link_0", "finger_tip_link_120", "finger_tip_link_240"],
     )

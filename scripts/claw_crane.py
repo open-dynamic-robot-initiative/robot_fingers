@@ -12,6 +12,7 @@ from ament_index_python.packages import get_package_share_directory
 import trifinger_simulation
 
 import robot_fingers
+import robot_properties_fingers
 from robot_fingers.curses import SimpleCursesGUI
 
 
@@ -22,7 +23,7 @@ def loop(win, args):
     robot_properties_path = get_package_share_directory("robot_properties_fingers")
     urdf_file = trifinger_simulation.finger_types_data.get_finger_urdf("trifingerpro")
     finger_urdf_path = os.path.join(robot_properties_path, "urdf", urdf_file)
-    kinematics = trifinger_simulation.pinocchio_utils.Kinematics(
+    kinematics = robot_properties_fingers.Kinematics(
         finger_urdf_path,
         ["finger_tip_link_0", "finger_tip_link_120", "finger_tip_link_240"],
     )
