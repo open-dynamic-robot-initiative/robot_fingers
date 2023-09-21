@@ -11,6 +11,7 @@
   if a lens comes loose.
 - Check camera brightness in `trifinger_post_submission.py` to auto-detect
   broken light panels.
+- Python generator `utils.min_jerk_trajectory` for arbitrary min. jerk trajectories.
 
 ### Changed
 - Upgrade to robot_interfaces v2 (not yet released).
