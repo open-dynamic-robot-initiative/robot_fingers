@@ -60,8 +60,8 @@ def min_jerk_trajectory(
     end_position = np.asarray(end_position)
     position_delta = end_position - start_position
 
-    for t in range(num_steps):
-        alpha = t / num_steps
+    for i in range(num_steps):
+        alpha = i / num_steps
         step_position = start_position + position_delta * (
             10.0 * alpha**3 - 15.0 * alpha**4 + 6.0 * alpha**5
         )
