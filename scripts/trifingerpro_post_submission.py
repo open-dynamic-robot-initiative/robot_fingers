@@ -75,6 +75,16 @@ class StructuredMessage:
 SM = StructuredMessage
 
 
+def fail(log: logging.Logger, message: str, /, exit_code: int = 1, **kwargs) -> None:
+    log.error(
+        SM(
+            message,
+            **kwargs,
+        )
+    )
+    sys.exit(exit_code)
+
+
 def orientation_distance(rot1: Rotation, rot2: Rotation) -> float:
     """Compute angular distance between to orientations."""
     error_rot = rot2.inv() * rot1
@@ -151,14 +161,12 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
     observation = robot.frontend.get_observation(t)
 
     if np.linalg.norm(_zero_to_endstop - observation.position) > _position_tolerance:
-        log.error(
-            SM(
-                "End stop not at expected position.",
-                expected_position=_zero_to_endstop,
-                actual_position=observation.position,
-            )
+        fail(
+            log,
+            "End stop not at expected position.",
+            expected_position=_zero_to_endstop,
+            actual_position=observation.position,
         )
-        sys.exit(1)
 
     # move back joint-by-joint
     goals = [
@@ -176,30 +184,25 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
 
     # verify that goal is reached
     if np.linalg.norm(goal - observation.position) > _position_tolerance:
-        log.error(
-            SM(
-                "Robot did not reach goal position",
-                desired_position=goal,
-                actual_position=observation.position,
-            )
+        fail(
+            log,
+            "Robot did not reach goal position",
+            desired_position=goal,
+            actual_position=observation.position,
         )
-        sys.exit(1)
 
 
 def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
     position_tolerance = 0.2
 
-    def _check_position_reached(goal: npt.NDArray, actual: npt.NDArray) -> bool:
+    def _fail_if_position_not_reached(goal: npt.NDArray, actual: npt.NDArray) -> None:
         if np.linalg.norm(goal - actual) > position_tolerance:
-            log.error(
-                SM(
-                    "Robot did not reach goal position",
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
+            fail(
+                log,
+                "Robot did not reach goal position",
+                desired_position=goal,
+                actual_position=observation.position,
             )
-            return False
-        return True
 
     def _has_tip_sensor_contact(
         current_tip_force: npt.NDArray,
@@ -231,8 +234,7 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         t = robot.frontend.append_desired_action(action)
         robot.frontend.wait_until_timeindex(t)
     observation = robot.frontend.get_observation(t)
-    if not _check_position_reached(initial_pose, observation.position):
-        sys.exit(1)
+    _fail_if_position_not_reached(initial_pose, observation.position)
 
     no_contact_tip_force = observation.tip_force
 
@@ -244,19 +246,16 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         observation = robot.frontend.get_observation(t)
 
         # verify that goal is reached
-        if not _check_position_reached(goal, observation.position):
-            sys.exit(1)
+        _fail_if_position_not_reached(goal, observation.position)
 
         if _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
-            log.error(
-                SM(
-                    "Push sensor reports high value in non-contact situation.",
-                    sensor_value=observation.tip_force,
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
+            fail(
+                log,
+                "Push sensor reports high value in non-contact situation.",
+                sensor_value=observation.tip_force,
+                desired_position=goal,
+                actual_position=observation.position,
             )
-            sys.exit(1)
 
     for goal in unreachable_goals:
         # move to initial position first
@@ -274,25 +273,21 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
 
         # verify that goal is not reached
         if np.linalg.norm(goal - observation.position) < position_tolerance:
-            log.error(
-                SM(
-                    "Robot reached a goal which should not be reachable.",
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
+            fail(
+                log,
+                "Robot reached a goal which should not be reachable.",
+                desired_position=goal,
+                actual_position=observation.position,
             )
-            sys.exit(1)
 
         if not _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
-            log.error(
-                SM(
-                    "Push sensor reports low value in contact situation.",
-                    sensor_value=observation.tip_force,
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
+            fail(
+                log,
+                "Push sensor reports low value in contact situation.",
+                sensor_value=observation.tip_force,
+                desired_position=goal,
+                actual_position=observation.position,
             )
-            sys.exit(1)
 
     print("Test successful.")
 
