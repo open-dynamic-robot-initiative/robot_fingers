@@ -11,6 +11,7 @@
   if a lens comes loose.
 - Check camera brightness in `trifinger_post_submission.py` to auto-detect
   broken light panels.
+- Python generator `utils.min_jerk_trajectory` for arbitrary min. jerk trajectories.
 
 ### Changed
 - Upgrade to robot_interfaces v2 (not yet released).
@@ -37,6 +38,8 @@
 - `trifinger_backend`: Use proper timeseries history length if no limit for
   number of actions is specified.
 - pybind11 build error on Ubuntu 22.04
+- Improve the push sensor test in `trifinger_post_submission` to avoid frequent
+  false positives.
 
 
 ## [1.0.0] - 2022-06-28

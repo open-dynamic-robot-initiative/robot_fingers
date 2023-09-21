@@ -18,6 +18,7 @@ import logging
 import logging.handlers
 
 import numpy as np
+import numpy.typing as npt
 import pandas
 from scipy.spatial.transform import Rotation
 from ament_index_python.packages import get_package_share_directory
@@ -25,6 +26,7 @@ import tomli
 
 import robot_interfaces
 import robot_fingers
+from robot_fingers.utils import min_jerk_trajectory
 import trifinger_object_tracking.py_tricamera_types as tricamera
 import trifinger_object_tracking.py_object_tracker as object_tracker
 from trifinger_cameras import utils
@@ -71,6 +73,16 @@ class StructuredMessage:
 
 # for shorter code below
 SM = StructuredMessage
+
+
+def fail(log: logging.Logger, message: str, /, exit_code: int = 1, **kwargs) -> None:
+    log.error(
+        SM(
+            message,
+            **kwargs,
+        )
+    )
+    sys.exit(exit_code)
 
 
 def orientation_distance(rot1: Rotation, rot2: Rotation) -> float:
@@ -149,14 +161,12 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
     observation = robot.frontend.get_observation(t)
 
     if np.linalg.norm(_zero_to_endstop - observation.position) > _position_tolerance:
-        log.error(
-            SM(
-                "End stop not at expected position.",
-                expected_position=_zero_to_endstop,
-                actual_position=observation.position,
-            )
+        fail(
+            log,
+            "End stop not at expected position.",
+            expected_position=_zero_to_endstop,
+            actual_position=observation.position,
         )
-        sys.exit(1)
 
     # move back joint-by-joint
     goals = [
@@ -174,97 +184,112 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
 
     # verify that goal is reached
     if np.linalg.norm(goal - observation.position) > _position_tolerance:
-        log.error(
-            SM(
-                "Robot did not reach goal position",
-                desired_position=goal,
-                actual_position=observation.position,
-            )
+        fail(
+            log,
+            "Robot did not reach goal position",
+            desired_position=goal,
+            actual_position=observation.position,
         )
-        sys.exit(1)
 
 
 def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
     position_tolerance = 0.2
-    push_sensor_threshold = 0.5
 
-    initial_pose = [0.0, 1.1, -1.9] * 3
+    def _fail_if_position_not_reached(goal: npt.NDArray, actual: npt.NDArray) -> None:
+        if np.linalg.norm(goal - actual) > position_tolerance:
+            fail(
+                log,
+                "Robot did not reach goal position",
+                desired_position=goal,
+                actual_position=observation.position,
+            )
 
-    reachable_goals = [
-        [0.9, 1.5, -2.6] * 3,
-        [-0.3, 1.5, -1.7] * 3,
-    ]
+    def _has_tip_sensor_contact(
+        current_tip_force: npt.NDArray,
+        no_contact_reference: npt.NDArray,
+    ) -> bool:
+        contact_delta_threshold = 0.1
+        reference_delta = current_tip_force - no_contact_reference
+        return any(reference_delta > contact_delta_threshold)
 
-    unreachable_goals = [
-        [0.0, 0.0, 0.0] * 3,
-        [-0.5, 1.5, 0.0] * 3,
-    ]
+    initial_pose = np.array([0.0, 1.1, -1.9] * 3)
+
+    reachable_goals = np.array(
+        [
+            [0.9, 1.5, -2.6] * 3,
+            [-0.3, 1.5, -1.7] * 3,
+        ]
+    )
+
+    unreachable_goals = np.array(
+        [
+            [0.0, 0.0, 0.0] * 3,
+            [-0.5, 1.5, 0.0] * 3,
+        ]
+    )
+
+    # move to initial position first to get a no-contact measurement of the push sensor
+    action = robot.Action(position=initial_pose)
+    for _ in range(1000):
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t)
+    observation = robot.frontend.get_observation(t)
+    _fail_if_position_not_reached(initial_pose, observation.position)
+
+    no_contact_tip_force = observation.tip_force
 
     for goal in reachable_goals:
-        action = robot.Action(position=goal)
-        for _ in range(1000):
+        for _position in min_jerk_trajectory(observation.position, goal, 700):
+            action = robot.Action(position=_position)
             t = robot.frontend.append_desired_action(action)
             robot.frontend.wait_until_timeindex(t)
-
         observation = robot.frontend.get_observation(t)
 
         # verify that goal is reached
-        if np.linalg.norm(goal - observation.position) > position_tolerance:
-            log.error(
-                SM(
-                    "Robot did not reach goal position",
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
-            )
-            sys.exit(1)
+        _fail_if_position_not_reached(goal, observation.position)
 
-        if (observation.tip_force > push_sensor_threshold).any():
-            log.error(
-                SM(
-                    "Push sensor reports high value in non-contact situation.",
-                    sensor_value=observation.tip_force,
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
+        if _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
+            fail(
+                log,
+                "Push sensor reports high value in non-contact situation.",
+                sensor_value=observation.tip_force,
+                no_contact_reference=no_contact_tip_force,
+                desired_position=goal,
+                actual_position=observation.position,
             )
-            # sys.exit(1)
 
     for goal in unreachable_goals:
         # move to initial position first
-        action = robot.Action(position=initial_pose)
-        for _ in range(1000):
+        for _position in min_jerk_trajectory(observation.position, initial_pose, 700):
+            action = robot.Action(position=_position)
             t = robot.frontend.append_desired_action(action)
             robot.frontend.wait_until_timeindex(t)
-
-        action = robot.Action(position=goal)
-        for _ in range(1000):
-            t = robot.frontend.append_desired_action(action)
-            robot.frontend.wait_until_timeindex(t)
-
         observation = robot.frontend.get_observation(t)
 
-        # verify that goal is reached
-        if np.linalg.norm(goal - observation.position) < position_tolerance:
-            log.error(
-                SM(
-                    "Robot reached a goal which should not be reachable.",
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
-            )
-            sys.exit(1)
+        for _position in min_jerk_trajectory(observation.position, goal, 700):
+            action = robot.Action(position=_position)
+            t = robot.frontend.append_desired_action(action)
+            robot.frontend.wait_until_timeindex(t)
+        observation = robot.frontend.get_observation(t)
 
-        if (observation.tip_force < push_sensor_threshold).any():
-            log.error(
-                SM(
-                    "Push sensor reports low value in contact situation.",
-                    sensor_value=observation.tip_force,
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
+        # verify that goal is not reached
+        if np.linalg.norm(goal - observation.position) < position_tolerance:
+            fail(
+                log,
+                "Robot reached a goal which should not be reachable.",
+                desired_position=goal,
+                actual_position=observation.position,
             )
-            # sys.exit(1)
+
+        if not _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
+            fail(
+                log,
+                "Push sensor reports low value in contact situation.",
+                sensor_value=observation.tip_force,
+                no_contact_reference=no_contact_tip_force,
+                desired_position=goal,
+                actual_position=observation.position,
+            )
 
     print("Test successful.")
 
@@ -291,6 +316,14 @@ def reset_object(robot, trajectory_file):
 
     # extract the positions from the recorded data
     positions = data[data_keys].to_numpy()
+
+    # move to start position with a smooth trajectory
+    t = robot.frontend.get_current_timeindex()
+    observation = robot.frontend.get_observation(t)
+    for _position in min_jerk_trajectory(observation.position, positions[0], 700):
+        action = robot.Action(position=_position)
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t)
 
     for position in positions:
         action = robot.Action(position=position)
