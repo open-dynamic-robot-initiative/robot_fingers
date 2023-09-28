@@ -12,8 +12,9 @@
 - Check camera brightness in `trifinger_post_submission.py` to auto-detect
   broken light panels.
 - Python generator `utils.min_jerk_trajectory` for arbitrary min. jerk trajectories.
-- Add flag to `trifinger_post_submission.py` to make push sensor test fatal (disabled by
-  default).
+- Add flags to `trifinger_post_submission.py` to make push sensor test fatal (disabled
+  by default) and to set the threshold for the test.
+- Add flag to `trifinger_post_submission.py` to skip camera tests.
 
 ### Changed
 - Upgrade to robot_interfaces v2 (not yet released).
