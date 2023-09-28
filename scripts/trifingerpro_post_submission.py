@@ -192,11 +192,85 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         )
 
 
+def _push_sensor_test(
+    log: logging.Logger,
+    current_tip_force: npt.NDArray,
+    no_contact_reference: npt.NDArray,
+    desired_position: npt.NDArray,
+    actual_position: npt.NDArray,
+    *,
+    expect_contact: bool,
+    log_error: bool,
+    push_sensor_contact_delta_threshold: float = 0.1,
+) -> bool:
+    """Test the push sensors.
+
+    This test checks if either all finger tip push sensors report a contact
+    (expect_contact=True) or all of them report no contact (expect_contact=False).
+
+    Args:
+        log: Logger instance for logging the results.
+        current_tip_force: Measured tip forces of all fingers.
+        no_contact_reference: Reference value with tip force of all fingers if there is
+            no contact.
+        desired_position: Desired joint positions (only for logging in case of failure).
+        actual_position: Actual joint positions (only for logging in case of failure).
+        expect_contact: Whether contact is expected or not in the current situation.
+        log_error: Whether to log a failure as error (otherwise it will be logged as
+            warning).
+        push_sensor_contact_delta_threshold: Threshold on difference between current tip
+            force and non-contact reference; used to determine contact.
+
+    Returns:
+        True if test passed, False if not.
+    """
+    # we assume a contact if the difference between current values and no-contact
+    # reference is greater than the threshold
+    reference_delta = current_tip_force - no_contact_reference
+    above_threshold = reference_delta > push_sensor_contact_delta_threshold
+    # for this test all fingers should match the expected state (i.e. contact or not)
+    if expect_contact:
+        passed = all(above_threshold)
+    else:
+        passed = not any(above_threshold)
+
+    if passed:
+        if expect_contact:
+            msg = "Push sensor test passed (contact)."
+        else:
+            msg = "Push sensor test passed (non-contact)."
+        log.info(
+            SM(
+                msg,
+                sensor_value=current_tip_force,
+                no_contact_reference=no_contact_reference,
+                threshold=push_sensor_contact_delta_threshold,
+            )
+        )
+    else:
+        if expect_contact:
+            msg = "Push sensor reports low value in contact situation."
+        else:
+            msg = "Push sensor reports high value in non-contact situation."
+        _log_meth = log.error if log_error else log.warning
+        _log_meth(
+            SM(
+                msg,
+                sensor_value=current_tip_force,
+                no_contact_reference=no_contact_reference,
+                threshold=push_sensor_contact_delta_threshold,
+                desired_position=desired_position,
+                actual_position=actual_position,
+            )
+        )
+
+    return passed
+
+
 def run_self_test(
     robot: robot_fingers.Robot, log: logging.Logger, /, fatal_push_sensor_test: bool
 ) -> None:
     position_tolerance = 0.2
-    push_sensor_contact_delta_threshold = 0.1
 
     def _fail_if_position_not_reached(goal: npt.NDArray, actual: npt.NDArray) -> None:
         if np.linalg.norm(goal - actual) > position_tolerance:
@@ -206,13 +280,6 @@ def run_self_test(
                 desired_position=goal,
                 actual_position=observation.position,
             )
-
-    def _has_tip_sensor_contact(
-        current_tip_force: npt.NDArray,
-        no_contact_reference: npt.NDArray,
-    ) -> bool:
-        reference_delta = current_tip_force - no_contact_reference
-        return any(reference_delta > push_sensor_contact_delta_threshold)
 
     initial_pose = np.array([0.0, 1.1, -1.9] * 3)
 
@@ -250,29 +317,19 @@ def run_self_test(
         # verify that goal is reached
         _fail_if_position_not_reached(goal, observation.position)
 
-        if _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
-            _log_meth = log.error if fatal_push_sensor_test else log.warning
-            _log_meth(
-                SM(
-                    "Push sensor reports high value in non-contact situation.",
-                    sensor_value=observation.tip_force,
-                    no_contact_reference=no_contact_tip_force,
-                    threshold=push_sensor_contact_delta_threshold,
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
+        if (
+            not _push_sensor_test(
+                log,
+                observation.tip_force,
+                no_contact_tip_force,
+                goal,
+                observation.position,
+                expect_contact=False,
+                log_error=fatal_push_sensor_test,
             )
-            if fatal_push_sensor_test:
-                sys.exit(1)
-        else:
-            log.info(
-                SM(
-                    "Push sensor test passed (non-contact).",
-                    sensor_value=observation.tip_force,
-                    no_contact_reference=no_contact_tip_force,
-                    threshold=push_sensor_contact_delta_threshold,
-                )
-            )
+            and fatal_push_sensor_test
+        ):
+            sys.exit(1)
 
     for goal in unreachable_goals:
         # move to initial position first
@@ -297,29 +354,19 @@ def run_self_test(
                 actual_position=observation.position,
             )
 
-        if not _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
-            _log_meth = log.error if fatal_push_sensor_test else log.warning
-            _log_meth(
-                SM(
-                    "Push sensor reports low value in contact situation.",
-                    sensor_value=observation.tip_force,
-                    no_contact_reference=no_contact_tip_force,
-                    threshold=push_sensor_contact_delta_threshold,
-                    desired_position=goal,
-                    actual_position=observation.position,
-                )
+        if (
+            not _push_sensor_test(
+                log,
+                observation.tip_force,
+                no_contact_tip_force,
+                goal,
+                observation.position,
+                expect_contact=True,
+                log_error=fatal_push_sensor_test,
             )
-            if fatal_push_sensor_test:
-                sys.exit(1)
-        else:
-            log.info(
-                SM(
-                    "Push sensor test passed (contact).",
-                    sensor_value=observation.tip_force,
-                    no_contact_reference=no_contact_tip_force,
-                    threshold=push_sensor_contact_delta_threshold,
-                )
-            )
+            and fatal_push_sensor_test
+        ):
+            sys.exit(1)
 
     print("Test successful.")
 
