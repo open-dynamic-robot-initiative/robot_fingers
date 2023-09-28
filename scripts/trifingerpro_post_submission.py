@@ -192,6 +192,24 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         )
 
 
+def _move(
+    robot: robot_fingers.Robot,
+    initial_position: npt.NDArray,
+    goal_position: npt.NDArray,
+    steps: int = 700,
+) -> robot_interfaces.trifinger.Observation:
+    """Move from initial to goal position on a smooth trajectory.
+
+    Returns:
+        Robot observation from last step.
+    """
+    for _position in min_jerk_trajectory(initial_position, goal_position, steps):
+        action = robot.Action(position=_position)
+        t = robot.frontend.append_desired_action(action)
+        robot.frontend.wait_until_timeindex(t)
+    return robot.frontend.get_observation(t)
+
+
 def _push_sensor_test(
     log: logging.Logger,
     current_tip_force: npt.NDArray,
@@ -308,11 +326,7 @@ def run_self_test(
     no_contact_tip_force = observation.tip_force
 
     for goal in reachable_goals:
-        for _position in min_jerk_trajectory(observation.position, goal, 700):
-            action = robot.Action(position=_position)
-            t = robot.frontend.append_desired_action(action)
-            robot.frontend.wait_until_timeindex(t)
-        observation = robot.frontend.get_observation(t)
+        observation = _move(robot, observation.position, goal)
 
         # verify that goal is reached
         _fail_if_position_not_reached(goal, observation.position)
@@ -333,17 +347,9 @@ def run_self_test(
 
     for goal in unreachable_goals:
         # move to initial position first
-        for _position in min_jerk_trajectory(observation.position, initial_pose, 700):
-            action = robot.Action(position=_position)
-            t = robot.frontend.append_desired_action(action)
-            robot.frontend.wait_until_timeindex(t)
-        observation = robot.frontend.get_observation(t)
-
-        for _position in min_jerk_trajectory(observation.position, goal, 700):
-            action = robot.Action(position=_position)
-            t = robot.frontend.append_desired_action(action)
-            robot.frontend.wait_until_timeindex(t)
-        observation = robot.frontend.get_observation(t)
+        observation = _move(robot, observation.position, initial_pose)
+        # now try to move to the unreachable goal
+        observation = _move(robot, observation.position, goal)
 
         # verify that goal is not reached
         if np.linalg.norm(goal - observation.position) < position_tolerance:
@@ -397,10 +403,7 @@ def reset_object(robot, trajectory_file):
     # move to start position with a smooth trajectory
     t = robot.frontend.get_current_timeindex()
     observation = robot.frontend.get_observation(t)
-    for _position in min_jerk_trajectory(observation.position, positions[0], 700):
-        action = robot.Action(position=_position)
-        t = robot.frontend.append_desired_action(action)
-        robot.frontend.wait_until_timeindex(t)
+    _move(robot, observation.position, positions[0])
 
     for position in positions:
         action = robot.Action(position=position)
