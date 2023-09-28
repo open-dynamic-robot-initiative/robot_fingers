@@ -264,6 +264,15 @@ def run_self_test(
             )
             if fatal_push_sensor_test:
                 sys.exit(1)
+        else:
+            log.info(
+                SM(
+                    "Push sensor test passed (non-contact).",
+                    sensor_value=observation.tip_force,
+                    no_contact_reference=no_contact_tip_force,
+                    threshold=push_sensor_contact_delta_threshold,
+                )
+            )
 
     for goal in unreachable_goals:
         # move to initial position first
@@ -302,6 +311,15 @@ def run_self_test(
             )
             if fatal_push_sensor_test:
                 sys.exit(1)
+        else:
+            log.info(
+                SM(
+                    "Push sensor test passed (contact).",
+                    sensor_value=observation.tip_force,
+                    no_contact_reference=no_contact_tip_force,
+                    threshold=push_sensor_contact_delta_threshold,
+                )
+            )
 
     print("Test successful.")
 
