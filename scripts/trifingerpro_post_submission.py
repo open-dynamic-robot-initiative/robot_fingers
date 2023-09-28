@@ -286,7 +286,11 @@ def _push_sensor_test(
 
 
 def run_self_test(
-    robot: robot_fingers.Robot, log: logging.Logger, /, fatal_push_sensor_test: bool
+    robot: robot_fingers.Robot,
+    log: logging.Logger,
+    *,
+    fatal_push_sensor_test: bool,
+    push_sensor_threshold: float,
 ) -> None:
     position_tolerance = 0.2
 
@@ -340,6 +344,7 @@ def run_self_test(
                 observation.position,
                 expect_contact=False,
                 log_error=fatal_push_sensor_test,
+                push_sensor_contact_delta_threshold=push_sensor_threshold,
             )
             and fatal_push_sensor_test
         ):
@@ -369,6 +374,7 @@ def run_self_test(
                 observation.position,
                 expect_contact=True,
                 log_error=fatal_push_sensor_test,
+                push_sensor_contact_delta_threshold=push_sensor_threshold,
             )
             and fatal_push_sensor_test
         ):
@@ -720,6 +726,12 @@ def main():
             warning and not result in failing the self-test.
         """,
     )
+    parser.add_argument(
+        "--push-sensor-threshold",
+        type=float,
+        default=0.1,
+        help="Threshold for the push sensor test.",
+    )
     args = parser.parse_args()
 
     # configure logger
@@ -764,7 +776,10 @@ def main():
         end_stop_check(robot, logging.getLogger("end_stop_test"))
         print("Position reachability test")
         run_self_test(
-            robot, logging.getLogger("self_test"), args.fatal_push_sensor_test
+            robot,
+            logging.getLogger("self_test"),
+            args.fatal_push_sensor_test,
+            args.push_sensor_threshold,
         )
 
     if args.reset:
