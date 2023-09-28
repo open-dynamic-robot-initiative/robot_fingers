@@ -192,8 +192,11 @@ def end_stop_check(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         )
 
 
-def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
+def run_self_test(
+    robot: robot_fingers.Robot, log: logging.Logger, /, fatal_push_sensor_test: bool
+) -> None:
     position_tolerance = 0.2
+    push_sensor_contact_delta_threshold = 0.1
 
     def _fail_if_position_not_reached(goal: npt.NDArray, actual: npt.NDArray) -> None:
         if np.linalg.norm(goal - actual) > position_tolerance:
@@ -208,9 +211,8 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         current_tip_force: npt.NDArray,
         no_contact_reference: npt.NDArray,
     ) -> bool:
-        contact_delta_threshold = 0.1
         reference_delta = current_tip_force - no_contact_reference
-        return any(reference_delta > contact_delta_threshold)
+        return any(reference_delta > push_sensor_contact_delta_threshold)
 
     initial_pose = np.array([0.0, 1.1, -1.9] * 3)
 
@@ -249,14 +251,19 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
         _fail_if_position_not_reached(goal, observation.position)
 
         if _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
-            fail(
-                log,
-                "Push sensor reports high value in non-contact situation.",
-                sensor_value=observation.tip_force,
-                no_contact_reference=no_contact_tip_force,
-                desired_position=goal,
-                actual_position=observation.position,
+            _log_meth = log.error if fatal_push_sensor_test else log.warning
+            _log_meth(
+                SM(
+                    "Push sensor reports high value in non-contact situation.",
+                    sensor_value=observation.tip_force,
+                    no_contact_reference=no_contact_tip_force,
+                    threshold=push_sensor_contact_delta_threshold,
+                    desired_position=goal,
+                    actual_position=observation.position,
+                )
             )
+            if fatal_push_sensor_test:
+                sys.exit(1)
 
     for goal in unreachable_goals:
         # move to initial position first
@@ -282,14 +289,19 @@ def run_self_test(robot: robot_fingers.Robot, log: logging.Logger) -> None:
             )
 
         if not _has_tip_sensor_contact(observation.tip_force, no_contact_tip_force):
-            fail(
-                log,
-                "Push sensor reports low value in contact situation.",
-                sensor_value=observation.tip_force,
-                no_contact_reference=no_contact_tip_force,
-                desired_position=goal,
-                actual_position=observation.position,
+            _log_meth = log.error if fatal_push_sensor_test else log.warning
+            _log_meth(
+                SM(
+                    "Push sensor reports low value in contact situation.",
+                    sensor_value=observation.tip_force,
+                    no_contact_reference=no_contact_tip_force,
+                    threshold=push_sensor_contact_delta_threshold,
+                    desired_position=goal,
+                    actual_position=observation.position,
+                )
             )
+            if fatal_push_sensor_test:
+                sys.exit(1)
 
     print("Test successful.")
 
@@ -631,6 +643,15 @@ def main():
         action="store_true",
         help="Skip the robot self-test.",
     )
+    parser.add_argument(
+        "--fatal-push-sensor-test",
+        action="store_true",
+        help="""Fail self-test if the push-sensor test fails.  This test has a high
+            probability of false positives and is therefore disabled by default.  If not
+            enabled, the test is still performed but a failure will only be reported as
+            warning and not result in failing the self-test.
+        """,
+    )
     args = parser.parse_args()
 
     # configure logger
@@ -674,7 +695,9 @@ def main():
         print("End stop test")
         end_stop_check(robot, logging.getLogger("end_stop_test"))
         print("Position reachability test")
-        run_self_test(robot, logging.getLogger("self_test"))
+        run_self_test(
+            robot, logging.getLogger("self_test"), args.fatal_push_sensor_test
+        )
 
     if args.reset:
         if args.object == "cube":
