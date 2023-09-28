@@ -718,6 +718,11 @@ def main():
         help="Skip the robot self-test.",
     )
     parser.add_argument(
+        "--skip-camera-test",
+        action="store_true",
+        help="Skip the camera self-test.",
+    )
+    parser.add_argument(
         "--fatal-push-sensor-test",
         action="store_true",
         help="""Fail self-test if the push-sensor test fails.  This test has a high
@@ -778,8 +783,8 @@ def main():
         run_self_test(
             robot,
             logging.getLogger("self_test"),
-            args.fatal_push_sensor_test,
-            args.push_sensor_threshold,
+            fatal_push_sensor_test=args.fatal_push_sensor_test,
+            push_sensor_threshold=args.push_sensor_threshold,
         )
 
     if args.reset:
@@ -796,27 +801,30 @@ def main():
     # terminate the robot
     del robot
 
-    print("Check cameras")
-    camera_observations = record_camera_observations(args.object, num_observations=30)
+    if not args.skip_camera_test:
+        print("Check cameras")
+        camera_observations = record_camera_observations(
+            args.object, num_observations=30
+        )
 
-    if not check_camera_brightness(
-        camera_observations, logging.getLogger("camera_brightness")
-    ):
-        sys.exit(2)
-
-    if not check_camera_sharpness(
-        camera_observations, logging.getLogger("camera_sharpness")
-    ):
-        sys.exit(2)
-
-    if args.object in ["cube", "cuboid"]:
-        print("Check object detection")
-        if not check_object_detection_noise(
-            args.object,
-            camera_observations,
-            logging.getLogger("object_detection"),
+        if not check_camera_brightness(
+            camera_observations, logging.getLogger("camera_brightness")
         ):
             sys.exit(2)
+
+        if not check_camera_sharpness(
+            camera_observations, logging.getLogger("camera_sharpness")
+        ):
+            sys.exit(2)
+
+        if args.object in ["cube", "cuboid"]:
+            print("Check object detection")
+            if not check_object_detection_noise(
+                args.object,
+                camera_observations,
+                logging.getLogger("object_detection"),
+            ):
+                sys.exit(2)
 
 
 if __name__ == "__main__":
