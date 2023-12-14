@@ -1,4 +1,5 @@
 [intersphinx.mapping]
+trifinger_docs = "https://open-dynamic-robot-initiative.github.io/trifinger_docs"
 robot_interfaces = "https://open-dynamic-robot-initiative.github.io/robot_interfaces"
 
 [mainpage]
