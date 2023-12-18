@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Basic demo on how to use pyBullet through the robot_interfaces pipeline.
+"""Basic demo on how to use PyBullet through the robot_interfaces pipeline.
 
-This demo illustrates how to use the pyBullet simulation in the backend of the
+This demo illustrates how to use the PyBullet simulation in the backend of the
 robot_interfaces pipeline.  When used like this, the same code can be executed
 in simulation and on the real robot with only changing a single line, namely
 the one for creating the backend.
@@ -36,9 +36,9 @@ def main():
         "--real-time-mode",
         "-r",
         action="store_true",
-        help="""Run simulation in real time.  If not set,
-                        the simulation runs as fast as possible.
-                        """,
+        help="""Run simulation in real time.  If not set, the simulation runs as fast as
+            possible.
+            """,
     )
     args = parser.parse_args()
 

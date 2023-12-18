@@ -19,14 +19,14 @@ PYBIND11_MODULE(pybullet_drivers, m)
           "first_action_timeout"_a = std::numeric_limits<double>::infinity(),
           "max_number_of_actions"_a = 0,
           R"XXX(
-            Create backend for the Single Finger robot using pyBullet simulation.
+            Create backend for the Single Finger robot using PyBullet simulation.
 
             Args:
                 robot_data (robot_interfaces.finger.Data):  Robot data instance
                     for the Finger robot.
                 real_time_mode (bool):  If True, step the simulation in real
                     time, otherwise as fast as possible.
-                visualize (bool):  If True, the pyBullet GUI is started for
+                visualize (bool):  If True, the PyBullet GUI is started for
                     visualization.
                 first_action_timeout (float): Timeout for the first action to
                     arrive.  If exceeded, the backend shuts down.  Set to
@@ -50,14 +50,14 @@ PYBIND11_MODULE(pybullet_drivers, m)
           "first_action_timeout"_a = std::numeric_limits<double>::infinity(),
           "max_number_of_actions"_a = 0,
           R"XXX(
-            Create a backend for the TriFinger robot using pyBullet simulation.
+            Create a backend for the TriFinger robot using PyBullet simulation.
 
             Args:
                 robot_data (robot_interfaces.trifinger.Data):  Robot data instance
                     for the TriFinger robot.
                 real_time_mode (bool):  If True, step the simulation in real
                     time, otherwise as fast as possible.
-                visualize (bool):  If True, the pyBullet GUI is started for
+                visualize (bool):  If True, the PyBullet GUI is started for
                     visualization.
                 first_action_timeout (float): Timeout for the first action to
                     arrive.  If exceeded, the backend shuts down.  Set to
