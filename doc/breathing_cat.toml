@@ -1,6 +1,7 @@
 [intersphinx.mapping]
 trifinger_docs = "https://open-dynamic-robot-initiative.github.io/trifinger_docs"
 robot_interfaces = "https://open-dynamic-robot-initiative.github.io/robot_interfaces"
+trifinger_simulation = "https://open-dynamic-robot-initiative.github.io/trifinger_simulation"
 
 [mainpage]
 title = "robot_fingers: (Tri-)Finger Robot Driver and Tools"

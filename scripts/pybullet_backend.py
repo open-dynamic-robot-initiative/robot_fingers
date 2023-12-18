@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run robot_interfaces Backend for pyBullet using multi-process robot data.
+"""Run robot_interfaces Backend for PyBullet using multi-process robot data.
 
 This is intended to be used together with trifinger_data_backend.py and can
 serve as a replacement for the real robot backend.
