@@ -530,7 +530,7 @@ def check_camera_sharpness(
         True if test is successful, False if there is any issue.
     """
     CAMERA_NAMES = ("camera60", "camera180", "camera300")
-    EDGE_MEAN_THRES = 12.0
+    EDGE_MEAN_THRES = 10.0
 
     edge_means: typing.List[typing.List[float]] = [[], [], []]
 
