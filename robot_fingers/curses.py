@@ -1,4 +1,5 @@
 """Tools for creating simple curses interfaces."""
+
 import curses
 
 
