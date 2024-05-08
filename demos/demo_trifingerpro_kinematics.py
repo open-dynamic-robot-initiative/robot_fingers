@@ -4,8 +4,10 @@
 Uses forward and inverse kinematics to move the finger tips synchronously back
 and forth on the y-axis.
 
-For the computation the `Kinematics` class from the trifinger_simulation
-package is used, so this package needs to be installed.
+For the computation the `Kinematics` class from the robot_properties_fingers package is
+used.  The path to the robots URDF model is acquired using a helper function from the
+trifinger_simulation package.  So these packages need to be installed.
+
 For complete documentation of the `Kinematics` class see
 https://open-dynamic-robot-initiative.github.io/robot_properties_fingers/robot_properties_fingers.html#robot_properties_fingers.Kinematics
 """
