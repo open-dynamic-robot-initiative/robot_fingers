@@ -22,7 +22,7 @@ ROBOT_TIME_SERIES_LENGTH = 1000
 ROBOT_RATE_Hz = 1000
 
 
-def main():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--max-number-of-actions",
@@ -60,6 +60,15 @@ def main():
         """,
     )
     args = parser.parse_args()
+
+    if args.camera_logfile and not (args.cameras or args.cameras_with_tracker):
+        parser.error("--camera-logfile requires --cameras or --cameras-with-tracker")
+
+    return args
+
+
+def main() -> int:
+    args = parse_args()
 
     rclpy.init()
     node = NotificationNode("trifinger_data")
