@@ -15,11 +15,8 @@ from robot_fingers.ros import NotificationNode
 from trifinger_cameras import camera
 
 
-# make sure camera time series covers at least one second
-CAMERA_TIME_SERIES_LENGTH = 15
-
 ROBOT_TIME_SERIES_LENGTH = 1000
-ROBOT_RATE_Hz = 1000
+ROBOT_RATE_HZ = 1000
 
 
 def parse_args() -> argparse.Namespace:
@@ -86,8 +83,21 @@ def main() -> int:
     if cameras_enabled:
         logger.info("Start camera data")
 
+        camera_settings = camera.Settings()
+        camera_rate_hz = camera_settings.get_tricamera_driver_settings().frame_rate_fps
+        logger.debug("Loaded camera frame rate from settings: %f fps", camera_rate_hz)
+
+        # make sure camera time series covers at least the same duration as the robot
+        # time series (add some margin to avoid problems)
+        time_series_length_seconds = ROBOT_TIME_SERIES_LENGTH / ROBOT_RATE_HZ
+        length_margin_ratio = 1.5
+        camera_time_series_length = int(
+            camera_rate_hz * time_series_length_seconds * length_margin_ratio
+        )
+        logger.debug("Set camera time series length to %d", camera_time_series_length)
+
         camera_data = tricamera.MultiProcessData(
-            "tricamera", True, CAMERA_TIME_SERIES_LENGTH
+            "tricamera", True, camera_time_series_length
         )
 
     logger.info("Start robot data")
@@ -104,16 +114,12 @@ def main() -> int:
         robot_logger.start()
 
     if cameras_enabled and args.camera_logfile:
-        camera_settings = camera.Settings()
-        camera_fps = camera_settings.get_tricamera_driver_settings().frame_rate_fps
-        logger.debug("Loaded camera frame rate from settings: %f fps", camera_fps)
-
         # make the logger buffer a bit bigger as needed to be on the safe side
         buffer_length_factor = 1.5
 
-        episode_length_s = args.max_number_of_actions / ROBOT_RATE_Hz
+        episode_length_s = args.max_number_of_actions / ROBOT_RATE_HZ
         # Compute camera log size based on number of robot actions plus some buffer
-        log_size = int(camera_fps * episode_length_s * buffer_length_factor)
+        log_size = int(camera_rate_hz * episode_length_s * buffer_length_factor)
 
         logger.info("Initialize camera logger with buffer size %d", log_size)
         camera_logger = tricamera.Logger(camera_data, log_size)
