@@ -85,7 +85,7 @@ def main() -> int:
 
         camera_settings = camera.Settings()
         camera_rate_hz = camera_settings.get_tricamera_driver_settings().frame_rate_fps
-        logger.debug("Loaded camera frame rate from settings: %f fps", camera_rate_hz)
+        logger.debug("Loaded camera frame rate from settings: %f fps" % camera_rate_hz)
 
         # make sure camera time series covers at least the same duration as the robot
         # time series (add some margin to avoid problems)
@@ -94,7 +94,7 @@ def main() -> int:
         camera_time_series_length = int(
             camera_rate_hz * time_series_length_seconds * length_margin_ratio
         )
-        logger.debug("Set camera time series length to %d", camera_time_series_length)
+        logger.debug("Set camera time series length to %d" % camera_time_series_length)
 
         camera_data = tricamera.MultiProcessData(
             "tricamera", True, camera_time_series_length
@@ -121,7 +121,7 @@ def main() -> int:
         # Compute camera log size based on number of robot actions plus some buffer
         log_size = int(camera_rate_hz * episode_length_s * buffer_length_factor)
 
-        logger.info("Initialize camera logger with buffer size %d", log_size)
+        logger.info("Initialize camera logger with buffer size %d" % log_size)
         camera_logger = tricamera.Logger(camera_data, log_size)
 
     logger.info("Data backend is ready")
@@ -147,11 +147,11 @@ def main() -> int:
     logger.debug("Received shutdown signal")
 
     if cameras_enabled and args.camera_logfile:
-        logger.info("Save recorded camera data to file %s", args.camera_logfile)
+        logger.info("Save recorded camera data to file %s" % args.camera_logfile)
         camera_logger.stop_and_save(args.camera_logfile)
 
     if args.robot_logfile:
-        logger.info("Save robot data to file %s", args.robot_logfile)
+        logger.info("Save robot data to file %s" % args.robot_logfile)
         robot_logger.stop_and_save(
             args.robot_logfile, robot_interfaces.trifinger.Logger.Format.BINARY
         )
