@@ -18,6 +18,7 @@ software, see also our paper_ on the open-source version of the TriFinger robot.
    doc/installation.rst
    doc/getting_started.rst
    doc/singularity.rst
+   doc/configuration.rst
    doc/homing.rst
    doc/simulation_backend.rst
    doc/hardware_testing.rst
