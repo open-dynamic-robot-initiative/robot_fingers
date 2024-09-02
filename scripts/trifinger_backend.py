@@ -14,8 +14,6 @@ import robot_interfaces
 import robot_fingers
 
 
-# Frame rate of the cameras
-CAMERA_FPS = 10
 # Control rate of the robot
 ROBOT_RATE_HZ = 1000
 
@@ -128,7 +126,7 @@ def parse_arguments() -> argparse.Namespace:
     # not possible to decide the logger buffer size)
     if (args.robot_logfile or args.camera_logfile) and not args.max_number_of_actions:
         parser.error(
-            "--max-number-of-actions must be specified when using data" " logging."
+            "--max-number-of-actions must be specified when using data logging."
         )
 
     if not args.config_dir.is_dir():
@@ -172,14 +170,17 @@ def main() -> int:
     if cameras_enabled:
         logging.info("Start camera backend")
 
+        camera_driver = CameraDriver("camera60", "camera180", "camera300")
+        # all cameras have the same frame rate, so just use the first one
+        camera_fps = camera_driver.get_sensor_info().camera[0].frame_rate_fps
+
         # make sure camera time series covers at least one second (add some
         # margin to avoid problems)
-        CAMERA_TIME_SERIES_LENGTH = int(CAMERA_FPS * 1.5)
+        camera_time_series_length = int(camera_fps * 1.5)
 
         camera_data = tricamera.MultiProcessData(
-            "tricamera", True, CAMERA_TIME_SERIES_LENGTH
+            "tricamera", True, camera_time_series_length
         )
-        camera_driver = CameraDriver("camera60", "camera180", "camera300")
         camera_backend = tricamera.Backend(camera_driver, camera_data)
 
         logging.info("Camera backend ready.")
@@ -229,7 +230,7 @@ def main() -> int:
         episode_length_s = args.max_number_of_actions / ROBOT_RATE_HZ
         # Compute camera log size based on number of robot actions plus a 10%
         # buffer
-        log_size = int(CAMERA_FPS * episode_length_s * buffer_length_factor)
+        log_size = int(camera_fps * episode_length_s * buffer_length_factor)
 
         logging.info("Initialize camera logger with buffer size %d", log_size)
         camera_logger = tricamera.Logger(camera_data, log_size)
