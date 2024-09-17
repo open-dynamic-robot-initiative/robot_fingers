@@ -30,6 +30,9 @@
 - Disable position limit checks during shutdown trajectory.  This allows setting
   the rest position of the TriFingerPro to a more suitable position which is
   outside of the operation limits.
+- Camera frame rate is not hard-coded anymore in `trifinger_data_backend` and
+  `trifinger_backend`.  Instead it is fetched from the camera settings
+  (`trifinger_data_backend`) or the camera driver directly (`trifinger_backend`).
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.
