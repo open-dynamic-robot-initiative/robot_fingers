@@ -39,6 +39,8 @@ Options
    Maximum current [in Ampere] that can be sent to the motor.  Commands that result in
    higher torques will be clipped to the maximum.
 
+   See :ref:`safety_checks`.
+
 .. confval:: has_endstop: bool = false
 
    Specify whether the joints have physical end stops or not.
@@ -84,6 +86,7 @@ Options
 
    Set to zero to completely disable damping.
 
+   See :ref:`safety_checks`.
 
 .. confval:: position_control_gains
 
@@ -114,6 +117,8 @@ Options
 
    Exceeding this limit with some joints results in the action for that joint being
    adjusted to move the joint back inside the limits.
+
+   See :ref:`safety_checks`.
 
 .. confval:: soft_position_limits_upper: list[N_joints] = [inf, ...]
 
