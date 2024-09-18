@@ -9,7 +9,8 @@ depends on the robot.
 
 .. todo:: Add dedicated page about joint order
 
-
+A simple but complete example, using actions and observations can be found in
+:doc:`examples/demo_single_finger_position_control`.
 
 .. note::
 

@@ -14,12 +14,12 @@ examples.  Good starting points are:
   <https://github.com/open-dynamic-robot-initiative/robot_fingers/blob/master/demos/demo_fake_finger.py>`_
   Basic example using a fake robot (i.e. not real robot involved).  Mostly
   useful for testing if the package was installed correctly.
-- `demo_single_finger_torque_control <https://github.com/open-dynamic-robot-initiative/robot_fingers/blob/master/demos/demo_single_finger_torque_control.py>`_:
+- :doc:`examples/demo_single_finger_torque_control`:
   Basic example on how to control the robot using torque commands.  This uses
   only a single finger but the principle is the same for the TriFinger.
-- `demo_single_finger_position_control <https://github.com/open-dynamic-robot-initiative/robot_fingers/blob/master/demos/demo_single_finger_position_control.py>`_:
+- :doc:`examples/demo_single_finger_position_control`:
   Same as above but using position commands instead of torque commands.
-- `demo_trifinger <https://github.com/open-dynamic-robot-initiative/robot_fingers/blob/master/demos/demo_trifinger.py>`_:
+- :doc:`examples/demo_trifinger`:
   Demo for the TriFinger, moving it in a hard-coded choreography.
 
 .. note::

@@ -23,6 +23,7 @@ software, see also our paper_ on the open-source version of the TriFinger robot.
    doc/homing.rst
    doc/simulation_backend.rst
    doc/hardware_testing.rst
+   doc/examples/index.rst
 
 
 .. _GitHub: https://github.com/open-dynamic-robot-initiative/robot_fingers
