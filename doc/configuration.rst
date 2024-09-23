@@ -7,7 +7,7 @@ Configuration File
 
 The robot drivers based on :cpp:class:`~robot_fingers::NJointBlmcRobotDriver` are
 configured via YAML files, which has to be passed to the function that creates the
-backend (for example, see demo_single_finger_position_control_).
+backend (for example, see :doc:`examples/demo_single_finger_position_control`).
 
 Default configurations for the different (Tri-)Finger robots can be found in the
 ``config/`` folder of the robot_fingers package.
@@ -23,6 +23,9 @@ Options
    the number of joints of the robot.  The order of the joints is implicitly defined by
    :confval:`can_ports`.
 
+   For (Tri-)Finger robots, the order is expected to be as described in
+   :doc:`joint_order`.
+
 
 .. confval:: can_ports: list
 
@@ -32,6 +35,10 @@ Options
    The joints will be ordered accordingly (e.g. in actions and observations), i.e. for
    the above example, the joint order will be
    ``[can0-motorA, can0-motorB, can1-motorA, ...]``
+
+   Note: For (Tri-)Finger robots, the order is expected to be as described in
+   :doc:`joint_order`.  So make sure to connect/configure the CAN interfaces
+   accordingly.
 
 
 .. confval:: max_current_A: float = 0.0

@@ -14,10 +14,12 @@ software, see also our paper_ on the open-source version of the TriFinger robot.
 .. toctree::
    :caption: General Documentation
    :maxdepth: 1
+   :hidden:
 
    doc/installation.rst
    doc/getting_started.rst
    doc/actions_and_observations.rst
+   doc/joint_order.rst
    doc/singularity.rst
    doc/configuration.rst
    doc/homing.rst

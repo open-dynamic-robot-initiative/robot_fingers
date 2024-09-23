@@ -5,9 +5,7 @@ Actions and Observations
 This page describes the structure of actions and observations used by the robot drivers
 implemented in ``robot_fingers``.  The fields of both actions and observations are
 typically arrays with one element per robot joint.  The order of joints in the list
-depends on the robot.
-
-.. todo:: Add dedicated page about joint order
+depends on the robot (see :doc:`joint_order`).
 
 A simple but complete example, using actions and observations can be found in
 :doc:`examples/demo_single_finger_position_control`.
