@@ -7,7 +7,7 @@ jobs:
     name: New FIXMEs
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Check for FIXMEs
       uses: luator/github_action_check_new_todos@v2
       with:
@@ -18,7 +18,7 @@ jobs:
     name: New TODOs
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Check for TODOs
       uses: luator/github_action_check_new_todos@v2
       with:
