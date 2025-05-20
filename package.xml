@@ -28,7 +28,7 @@
   <exec_depend>ament_index_python</exec_depend>
   <exec_depend>trifinger_simulation</exec_depend>
 
-  <test_depend>ament_cmake_nose</test_depend>
+  <test_depend>ament_cmake_pytest</test_depend>
   <test_depend>ament_cmake_gtest</test_depend>
 
   <export>

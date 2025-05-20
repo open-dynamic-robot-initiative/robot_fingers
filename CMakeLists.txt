@@ -193,11 +193,11 @@ install(
 
 # Tests
 if (BUILD_TESTING)
-    find_package(ament_cmake_nose REQUIRED)
+    find_package(ament_cmake_pytest REQUIRED)
     find_package(ament_cmake_gtest REQUIRED)
 
     # Python tests
-    ament_add_nose_test(test_pybullet_backend_py test/test_pybullet_backend.py)
+    ament_add_pytest_test(test_pybullet_backend_py test/test_pybullet_backend.py)
 
     # C++ tests
     ament_add_gtest(test_pybullet_backend
