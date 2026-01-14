@@ -15,6 +15,7 @@
 - Add flags to `trifinger_post_submission.py` to make push sensor test fatal (disabled
   by default) and to set the threshold for the test.
 - Add flag to `trifinger_post_submission.py` to skip camera tests.
+- Support new object "stag_cube" in `pybullet_backend`.
 
 ### Changed
 - Upgrade to robot_interfaces v2 (not yet released).
