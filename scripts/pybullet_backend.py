@@ -48,7 +48,7 @@ def main():
     parser.add_argument(
         "--object",
         type=str,
-        choices=["cube", "dice", "none"],
+        choices=["cube", "stag_cube", "dice", "none"],
         default="cube",
         metavar="OBJECT_TYPE",
         help="Which type of object to use (if any).",
@@ -104,9 +104,15 @@ def main():
             position=[0.0, 0.0, 0.0325],
             orientation=[0, 0, 0, 1],
         )
+    elif args.object == "stag_cube":
+        # spawn a cube in the centre of the arena
+        cube = collision_objects.StagCube(
+            position=[0.0, 0.0, 0.0325],
+            orientation=[0, 0, 0, 1],
+        )
     elif args.object == "dice":
-        from trifinger_simulation.tasks import rearrange_dice
-        from trifinger_simulation.sim_finger import int_to_rgba
+        from trifinger_simulation.tasks import rearrange_dice  # noqa: PLC0415
+        from trifinger_simulation.sim_finger import int_to_rgba  # noqa: PLC0415
 
         die_mass = 0.012
         # use a random goal for initial positions
@@ -127,7 +133,7 @@ def main():
     # initialized (i.e. after the SimFinger instance is created).
     #
     if args.cameras:
-        if args.object == "cube":
+        if args.object in ["cube", "stag_cube"]:
             # If the cube is enabled, use the
             # PyBulletTriCameraObjectTrackerDriver.
             import trifinger_object_tracking.py_tricamera_types as tricamera
@@ -171,7 +177,7 @@ def main():
     logger.debug("Backend termination reason: %d" % termination_reason)
 
     # cleanup stuff before the simulation (backend) is terminated
-    if args.object == "cube":
+    if args.object in ["cube", "stag_cube"]:
         del cube
     elif args.object == "dice":
         del dice[:]
