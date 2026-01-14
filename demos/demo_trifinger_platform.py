@@ -40,11 +40,14 @@ def parse_arguments() -> argparse.Namespace:
         action="store_true",
         help="Set if backend provides object tracking data.",
     )
+    parser.add_argument(
+        "--show-images", action="store_true", help="Show the camera images."
+    )
 
     return parser.parse_args()
 
 
-def main() -> None:  # noqa[D103]
+def main() -> None:  # noqa: D103
     args = parse_arguments()
 
     if args.with_object:
@@ -61,6 +64,22 @@ def main() -> None:  # noqa[D103]
 
         robot_observation = robot.get_robot_observation(t)
         camera_observation = robot.get_camera_observation(t)
+
+        if args.show_images:
+            import cv2  # noqa: PLC0415
+
+            viz_image = np.hstack(
+                [
+                    cv2.cvtColor(img, cv2.COLOR_BAYER_BG2BGR_EA)
+                    for img in (
+                        camera_observation.cameras[0].image,
+                        camera_observation.cameras[1].image,
+                        camera_observation.cameras[2].image,
+                    )
+                ]
+            )
+            cv2.imshow("camera60 | camera180 | camera300", viz_image)
+            cv2.waitKey(1)
 
         if t % 100 == 0:
             print(f"[{t}] target joint positions: {action.position}")
