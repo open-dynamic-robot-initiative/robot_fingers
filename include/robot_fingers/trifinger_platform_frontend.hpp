@@ -336,13 +336,14 @@ public:
      * @brief Append a desired robot action to the action queue.
      * @see robot_interfaces::TriFingerTypes::Frontend::append_desired_action
      *
-     * @return The index of the time step at which this action is going to be
-     *     executed.
+     * Different to robot_interfaces::TriFingerTypes::Frontend::append_desired_action,
+     * this method does not return a time index.  This is because it is not so easy to
+     * determine the _camera_ time step in which this action will be applied (or if it
+     * even aligns with a specific camera step).
      */
-    time_series::Index append_desired_action(const Action &desired_action)
+    void append_desired_action(const Action &desired_action)
     {
-        // FIXME what should this function return?
-        return robot_frontend_.append_desired_action(desired_action);
+        robot_frontend_.append_desired_action(desired_action);
     }
 
     /**
