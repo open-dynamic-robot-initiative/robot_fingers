@@ -139,13 +139,43 @@ void pybind_trifinger_platform_frontend(pybind11::module &m,
 
                 If t is in the future, this method will block and wait.
 )XXX")
-        .def("get_timestamp_ms",
-             &T::get_timestamp_ms,
+        .def(
+            "get_timestamp_ms",
+            [](pybind11::object &self, int t)
+            {
+                auto warnings = pybind11::module::import("warnings");
+                auto builtins = pybind11::module::import("builtins");
+                warnings.attr("warn")(
+                    "get_timestamp_ms() is deprecated, use "
+                    "get_robot_timestamp_ms() instead.",
+                    builtins.attr("FutureWarning"));
+
+                return self.attr("get_robot_timestamp_ms")(t);
+            },
+            R"XXX(
+                get_timestamp_ms(t: int) -> float
+
+                Deprecated, use get_robot_timestamp_ms() instead, which behaves the
+                same.
+)XXX")
+        .def("get_robot_timestamp_ms",
+             &T::get_robot_timestamp_ms,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              R"XXX(
                 get_timestamp_ms(t: int) -> float
 
                 Get timestamp in milliseconds of time step t.
+
+                If t is in the future, this method will block and wait.
+)XXX")
+        .def("get_camera_timestamp_ms",
+             &T::get_camera_timestamp_ms,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_camera_timestamp_ms(t: int) -> float
+
+                Get timestamp of the camera observation of time step t (in
+                milliseconds).
 
                 If t is in the future, this method will block and wait.
 )XXX")
@@ -292,6 +322,14 @@ PYBIND11_MODULE(py_trifinger, m)
         m, "TriFingerPlatformFrontend");
     pybind_trifinger_platform_frontend<TriFingerPlatformWithObjectFrontend>(
         m, "TriFingerPlatformWithObjectFrontend");
+
+    // FIXME using pybind_trifinger_platform_frontend here will likely result in
+    // wrong docstrings
+    pybind_trifinger_platform_frontend<TriFingerPlatformFrontendCameraSynced>(
+        m, "TriFingerPlatformFrontendCameraSynced");
+    pybind_trifinger_platform_frontend<
+        TriFingerPlatformWithObjectFrontendCameraSynced>(
+        m, "TriFingerPlatformWithObjectFrontendCameraSynced");
 
     pybind_trifinger_platform_log<TriFingerPlatformLog>(m,
                                                         "TriFingerPlatformLog");
