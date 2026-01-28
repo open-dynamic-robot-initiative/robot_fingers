@@ -1,0 +1,63 @@
+#include <gtest/gtest.h>
+
+#include <real_time_tools/timer.hpp>
+#include <robot_fingers/trifinger_platform_frontend.hpp>
+#include <robot_interfaces/sensors/sensor_data.hpp>
+
+namespace
+{
+using CameraObservation = trifinger_cameras::TriCameraObservation;
+using Action = robot_interfaces::TriFingerTypes::Action;
+using Observation = robot_interfaces::TriFingerTypes::Observation;
+using Frontend =
+    robot_fingers::T_TriFingerPlatformFrontendCameraSynced<CameraObservation>;
+
+Observation make_observation(double marker)
+{
+    Observation observation;
+    observation.position[0] = marker;
+    return observation;
+}
+
+CameraObservation make_camera_observation(double timestamp_ms)
+{
+    CameraObservation observation;
+    for (auto &camera : observation.cameras)
+    {
+        camera.timestamp = timestamp_ms;
+    }
+    return observation;
+}
+}  // namespace
+
+TEST(TriFingerPlatformFrontendCameraSynced, PicksClosestRobotTimestamp)
+{
+    auto robot_data =
+        std::make_shared<robot_interfaces::TriFingerTypes::SingleProcessData>(
+            10);
+    auto camera_data = std::make_shared<
+        robot_interfaces::SingleProcessSensorData<CameraObservation>>(10);
+
+    Frontend frontend(robot_data, camera_data);
+
+    robot_data->observation->append(make_observation(1.0));
+    real_time_tools::Timer::sleep_ms(2);
+    robot_data->observation->append(make_observation(2.0));
+    real_time_tools::Timer::sleep_ms(2);
+    robot_data->observation->append(make_observation(3.0));
+
+    const auto t1 = robot_data->observation->timestamp_ms(1);
+    const auto t2 = robot_data->observation->timestamp_ms(2);
+
+    const double avg_close_to_t1 = t1 + (t2 - t1) * 0.25;
+    const double avg_close_to_t2 = t1 + (t2 - t1) * 0.75;
+    const double avg_after_t2 = t2 + 1000.0;
+
+    camera_data->observation->append(make_camera_observation(avg_close_to_t1));
+    camera_data->observation->append(make_camera_observation(avg_close_to_t2));
+    camera_data->observation->append(make_camera_observation(avg_after_t2));
+
+    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(0).position[0], 2.0);
+    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(1).position[0], 3.0);
+    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(2).position[0], 3.0);
+}
