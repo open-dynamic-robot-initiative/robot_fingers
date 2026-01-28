@@ -24,7 +24,7 @@ CameraObservation make_camera_observation(double timestamp_ms)
     CameraObservation observation;
     for (auto &camera : observation.cameras)
     {
-        camera.timestamp = timestamp_ms;
+        camera.timestamp = timestamp_ms / 1000;
     }
     return observation;
 }

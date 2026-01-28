@@ -508,14 +508,17 @@ private:
     time_series::Timestamp get_average_image_timestamp_ms(
         const CameraObservation &camera_observation) const
     {
-        // FIXME double-check that camera timestamps are in ms
-        time_series::Timestamp sum = 0;
+        double sum_sec = 0;
         for (const auto &camera : camera_observation.cameras)
         {
-            sum += static_cast<time_series::Timestamp>(camera.timestamp);
+            sum_sec += static_cast<time_series::Timestamp>(camera.timestamp);
         }
-        return sum / static_cast<time_series::Timestamp>(
-                         camera_observation.cameras.size());
+
+        // camera timestamps are in seconds, so convert to ms here
+        double sum_ms = sum_sec * 1000;
+
+        return static_cast<time_series::Timestamp>(
+            sum_ms / camera_observation.cameras.size());
     }
 };
 
