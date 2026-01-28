@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <stdexcept>
+
 #include <robot_interfaces/finger_types.hpp>
 #include <robot_interfaces/sensors/sensor_frontend.hpp>
 #include <trifinger_cameras/tricamera_observation.hpp>
@@ -281,7 +283,7 @@ public:
      *     tracker frontend.
      * @param camera_data SensorData instance, used by the camera frontend.
      */
-    T_TriFingerPlatformFrontend(
+    T_TriFingerPlatformFrontendCameraSynced(
         robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
         std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
             camera_data)
@@ -296,7 +298,7 @@ public:
      * instance with the default shared memory ID for the corresponding data
      * type.
      */
-    T_TriFingerPlatformFrontend()
+    T_TriFingerPlatformFrontendCameraSynced()
         : robot_frontend_(std::make_shared<
                           robot_interfaces::TriFingerTypes::MultiProcessData>(
               "trifinger", false)),
@@ -393,7 +395,9 @@ public:
      */
     void wait_until_timeindex(const time_series::Index &t_camera) const
     {
-        camera_frontend_.wait_until_timeindex(t);
+        // sensor frontend doesn't have a dedicated "wait"-method, so use
+        // get_timestamp_ms instead
+        camera_frontend_.get_timestamp_ms(t_camera);
     }
 
     /**
@@ -413,72 +417,64 @@ private:
     robot_interfaces::SensorFrontend<CameraObservation> camera_frontend_;
 
     /**
-     * FIXME: revise this documentation
+     * @brief Find robot time index matching camera time step t_camera.
      *
-     * @brief Find time index of frontend that matches with the given robot time
-     *        index.
-     *
-     * The given time index t_robot refers to the robot data time series.  To
-     * provide the correct observation from the other frontend for this time
-     * step, find the highest time index t_other of the other frontend where
-     *
-     *      timestamp(t_other) <= timestamp(t_robot)
-     *
-     * Note that this is not always the one that is closest w.r.t. to the
-     * timestamp, i.e.
-     *
-     *      t_other != argmin(|timestamp(t_other) - timestamp(t_robot)|)
-     *
-     * The latter would not be deterministic: the outcome could change when
-     * called twice with the same `t_robot` if a new "other" observation
-     * arrived in between the calls.
-     *
-     * @todo The implementation below is very naive.
-     *       It simply does a linear search starting from the latest time index.
-     *       So worst case performance is O(n) where n is the number of "other"
-     *       observations over the period that is covered by the buffer of the
-     *       robot data.
-     *
-     *       Options to speed this up:
-     *        - binary search (?)
-     *        - estimate time step size based on last observations
-     *        - store matched indices of last call
-     *
-     *       Note, however, that `t_robot` is very likely the latest time index
-     *       in most cases.  In this case the match for `t_other` will also be
-     *       the latest index of the corresponding time series.  In this case,
-     *       the complexity is O(1).  So even when implementing a more complex
-     *       search algorithm, the first candidate for `t_other` that is checked
-     *       should always be the latest one.
-     *
-     * @tparam FrontendType Type of the frontend.  This is templated so that the
-     *     same implementation can be used for both camera and object tracker
-     *     frontend.
-     * @param other_frontend The frontend for which a matching time index needs
-     *     to be found.
-     * @param t_robot Time index of the robot frontend.
-     *
-     * @return Time index for other_frontend which is/was active at the time of
-     *     t_robot.
+     * Uses the average timestamp of the three camera images in the given camera
+     * observation and finds the robot time index whose observation timestamp is
+     * closest to it.
      */
-    template <typename FrontendType>
     time_series::Index find_matching_robot_timeindex(
-        const FrontendType &other_frontend,
-        const time_series::Index t_robot) const
+        const time_series::Index t_camera) const
     {
-        time_series::Timestamp stamp_robot = get_timestamp_ms(t_robot);
+        const CameraObservation camera_observation =
+            camera_frontend_.get_observation(t_camera);
+        const time_series::Timestamp timestamp_images =
+            get_average_image_timestamp_ms(camera_observation);
 
-        time_series::Index t_other = other_frontend.get_current_timeindex();
-        time_series::Timestamp stamp_other =
-            other_frontend.get_timestamp_ms(t_other);
+        time_series::Index t_robot = robot_frontend_.get_current_timeindex();
+        time_series::Timestamp timestamp_robot =
+            robot_frontend_.get_timestamp_ms(t_robot);
 
-        while (stamp_robot < stamp_other)
+        if (timestamp_robot <= timestamp_images)
         {
-            t_other--;
-            stamp_other = other_frontend.get_timestamp_ms(t_other);
+            return t_robot;
         }
 
-        return t_other;
+        time_series::Index t_next = t_robot;
+        time_series::Timestamp timestamp_next = timestamp_robot;
+
+        while (timestamp_robot > timestamp_images)
+        {
+            t_next = t_robot;
+            timestamp_next = timestamp_robot;
+
+            t_robot--;
+            try
+            {
+                timestamp_robot = robot_frontend_.get_timestamp_ms(t_robot);
+            }
+            catch (const std::invalid_argument &)
+            {
+                return t_next;
+            }
+        }
+
+        const time_series::Timestamp diff_prev = timestamp_images - timestamp_robot;
+        const time_series::Timestamp diff_next = timestamp_next - timestamp_images;
+        return (diff_prev <= diff_next) ? t_robot : t_next;
+    }
+
+    time_series::Timestamp get_average_image_timestamp_ms(
+        const CameraObservation &camera_observation) const
+    {
+        // FIXME double-check that camera timestamps are in ms
+        time_series::Timestamp sum = 0;
+        for (const auto &camera : camera_observation.cameras)
+        {
+            sum += static_cast<time_series::Timestamp>(camera.timestamp);
+        }
+        return sum / static_cast<time_series::Timestamp>(
+                          camera_observation.cameras.size());
     }
 };
 
