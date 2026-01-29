@@ -336,10 +336,11 @@ public:
      * @brief Append a desired robot action to the action queue.
      * @see robot_interfaces::TriFingerTypes::Frontend::append_desired_action
      *
-     * Different to robot_interfaces::TriFingerTypes::Frontend::append_desired_action,
-     * this method does not return a time index.  This is because it is not so easy to
-     * determine the _camera_ time step in which this action will be applied (or if it
-     * even aligns with a specific camera step).
+     * Different to
+     * robot_interfaces::TriFingerTypes::Frontend::append_desired_action, this
+     * method does not return a time index.  This is because it is not so easy
+     * to determine the _camera_ time step in which this action will be applied
+     * (or if it even aligns with a specific camera step).
      */
     void append_desired_action(const Action &desired_action)
     {
@@ -387,16 +388,6 @@ public:
     {
         auto t_robot = find_matching_robot_timeindex(t_camera);
         return robot_frontend_.get_status(t_robot);
-    }
-
-    /**
-     * @brief Deprecated, use @ref get_robot_timestamp_ms instead.
-     */
-    [[deprecated(
-        "Replaced by get_robot_timestamp_ms()")]] time_series::Timestamp
-    get_timestamp_ms(const time_series::Index &t) const
-    {
-        return get_robot_timestamp_ms(t);
     }
 
     /**
