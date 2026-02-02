@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Construct a "swipe" trajectory to bring the object back to the centre."""
+
 import argparse
 import time
 import progressbar

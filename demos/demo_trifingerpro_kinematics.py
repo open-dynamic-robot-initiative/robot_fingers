@@ -11,6 +11,7 @@ trifinger_simulation package.  So these packages need to be installed.
 For complete documentation of the `Kinematics` class see
 https://open-dynamic-robot-initiative.github.io/robot_properties_fingers/robot_properties_fingers.html#robot_properties_fingers.Kinematics
 """
+
 import argparse
 import copy
 import os

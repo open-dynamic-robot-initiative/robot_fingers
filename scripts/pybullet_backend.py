@@ -4,6 +4,7 @@
 This is intended to be used together with trifinger_data_backend.py and can
 serve as a replacement for the real robot backend.
 """
+
 import argparse
 import logging
 import math

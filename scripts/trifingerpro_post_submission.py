@@ -9,6 +9,7 @@ Performs the following actions:
 - use the cameras to check if the cube is still inside the arena (not
   implemented yet)
 """
+
 import argparse
 import json
 import os
@@ -30,7 +31,6 @@ from robot_fingers.utils import min_jerk_trajectory
 import trifinger_object_tracking.py_tricamera_types as tricamera
 import trifinger_object_tracking.py_object_tracker as object_tracker
 from trifinger_cameras import utils
-
 
 # Distance from the zero position (finger pointing straight down) to the
 # end-stop.

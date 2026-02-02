@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Move TriFingerPro on simple sine position profile."""
+
 import argparse
 
 import numpy as np

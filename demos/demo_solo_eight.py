@@ -4,6 +4,7 @@
 Moves the Solo8 robot with a hard-coded choreography for show-casing and
 testing.
 """
+
 import argparse
 import numpy as np
 

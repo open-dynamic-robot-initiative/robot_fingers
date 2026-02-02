@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run TriFinger back-end using multi-process robot data."""
+
 import argparse
 import enum
 import functools
@@ -12,7 +13,6 @@ import typing
 
 import robot_interfaces
 import robot_fingers
-
 
 # Control rate of the robot
 ROBOT_RATE_HZ = 1000

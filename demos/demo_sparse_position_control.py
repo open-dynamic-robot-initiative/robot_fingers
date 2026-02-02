@@ -4,6 +4,7 @@
 This demo shows how to run a position controller on only the upper two joints
 of the Finger robot while controlling zero-torque on the tip joint.
 """
+
 import os
 import numpy as np
 from ament_index_python.packages import get_package_share_directory

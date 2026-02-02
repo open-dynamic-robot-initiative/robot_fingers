@@ -9,10 +9,10 @@ enter to determine the home offset.  The home offset values that are printed
 can directly be copied to the configuration file of the robot.
 
 """
+
 import numpy as np
 
 import robot_fingers
-
 
 # Distance from the zero position (finger pointing straight down) to the
 # end-stop.  This is independent of the placement of the encoder disc and thus

@@ -6,6 +6,7 @@ uses a fake driver, i.e. it can be executed without an actual robot.  The fake
 driver will simply provide fake observations and ignore any actions that are
 sent to it.
 """
+
 import numpy as np
 
 import robot_interfaces

@@ -2,6 +2,7 @@
 """
 Load a TriFingerPro log file and apply the actions from the log on the robot.
 """
+
 import argparse
 import pathlib
 import sys

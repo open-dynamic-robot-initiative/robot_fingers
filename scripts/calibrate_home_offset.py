@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Calibration of home offset for various finger robots."""
+
 import argparse
 
 import robot_interfaces

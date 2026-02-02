@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Move TriFingerPro to random positions (with collisions)."""
+
 import numpy as np
 
 import robot_fingers

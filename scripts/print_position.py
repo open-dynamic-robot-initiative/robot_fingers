@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Send zero-torque commands to the robot and print joint positions."""
+
 import argparse
 
 import robot_fingers

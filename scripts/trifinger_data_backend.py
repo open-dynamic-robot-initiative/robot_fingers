@@ -14,7 +14,6 @@ import robot_interfaces
 from robot_fingers.ros import NotificationNode
 from trifinger_cameras import camera
 
-
 ROBOT_TIME_SERIES_LENGTH = 1000
 ROBOT_RATE_HZ = 1000
 

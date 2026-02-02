@@ -6,6 +6,7 @@ robot_interfaces pipeline.  When used like this, the same code can be executed
 in simulation and on the real robot with only changing a single line, namely
 the one for creating the backend.
 """
+
 import argparse
 import numpy as np
 

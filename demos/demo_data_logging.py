@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Demo showing how to use the robot data logger."""
+
 import numpy as np
 
 from robot_interfaces import finger
