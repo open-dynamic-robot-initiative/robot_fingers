@@ -5,6 +5,7 @@ The script trifingerpro_post_submission.py can write results of the tests to a
 log file. This script reads that log to plot the results of the object
 detection test over time.
 """
+
 import argparse
 import json
 import os
@@ -13,7 +14,6 @@ import sys
 
 import numpy as np
 import matplotlib
-
 
 try:
     import plotext

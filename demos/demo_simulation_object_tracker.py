@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Demo showing how to use the Object Tracker Interface in simulation."""
+
 import argparse
 import numpy as np
 import time

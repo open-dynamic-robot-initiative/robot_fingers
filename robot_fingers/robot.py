@@ -11,7 +11,6 @@ from ament_index_python.packages import get_package_share_directory
 import robot_interfaces
 import robot_fingers
 
-
 #: Default configurations for various robots.
 #: Maps robot names to a tuple of
 #:  1) the module defining the corresponding types for this robot,

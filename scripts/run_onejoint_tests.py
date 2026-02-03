@@ -10,7 +10,6 @@ from ament_index_python.packages import get_package_share_directory
 from robot_interfaces import one_joint
 import robot_fingers
 
-
 N_JOINTS = 1
 
 Action = one_joint.Action

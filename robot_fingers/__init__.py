@@ -19,7 +19,6 @@ from .py_solo_eight import create_solo_eight_backend, SoloEightConfig
 
 from .robot import Robot, demo_print_position
 
-
 __all__ = (
     "utils",
     "create_real_finger_backend",

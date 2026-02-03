@@ -4,6 +4,7 @@
 Moves the TriFingerEdu robot with a hard-coded choreography for show-casing and
 testing.
 """
+
 import argparse
 
 import robot_interfaces

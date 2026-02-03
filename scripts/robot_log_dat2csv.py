@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Convert a binary log file into a plain text csv file."""
+
 import argparse
 import numpy as np
 import progressbar

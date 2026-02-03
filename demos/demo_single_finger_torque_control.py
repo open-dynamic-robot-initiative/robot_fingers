@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Basic demo on how to run a Finger Robot with torque control."""
+
 import os
 import numpy as np
 from ament_index_python.packages import get_package_share_directory

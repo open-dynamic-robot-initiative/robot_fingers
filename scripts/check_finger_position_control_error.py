@@ -4,6 +4,7 @@
 Samples random joint positions and uses them as targets for position actions.
 For each goal, compute the error in the end-effector position.
 """
+
 import os
 import numpy as np
 from ament_index_python.packages import get_package_share_directory

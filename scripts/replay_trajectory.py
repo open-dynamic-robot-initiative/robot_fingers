@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Move the robot on the trajectory of a previously recorded log file."""
+
 import argparse
 
 import pandas

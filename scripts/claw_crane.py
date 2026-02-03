@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Move the TriFingerPro robot like a claw crane using the keyboard."""
+
 import argparse
 import curses
 import os

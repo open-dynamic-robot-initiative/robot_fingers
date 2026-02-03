@@ -5,6 +5,7 @@ Moves the finger around to random positions.  The joint ranges are limited a
 bit to avoid self-collisions with the base.  Apart from this it is assumed that
 the finger can move freely within its valid range without collisions.
 """
+
 import argparse
 
 import numpy as np

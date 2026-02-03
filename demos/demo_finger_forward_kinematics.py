@@ -3,6 +3,7 @@
 
 Sends zero-torque commands to the robot and prints finger tip position.
 """
+
 import os
 import numpy as np
 from ament_index_python.packages import get_package_share_directory

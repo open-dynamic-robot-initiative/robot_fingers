@@ -7,6 +7,7 @@ zero-torque control.  So it can be used to manually move the joints to some
 position (in zero-torque mode) and then lock them there by enabling the
 position control.
 """
+
 import argparse
 import curses
 

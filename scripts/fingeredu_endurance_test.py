@@ -4,6 +4,7 @@
 Moves the finger around to random positions.  The joint ranges are limited to
 ensure that the finger does not hit, e.g. the electronics above it.
 """
+
 import os
 import numpy as np
 from ament_index_python.packages import get_package_share_directory

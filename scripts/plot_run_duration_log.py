@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Plot the data of a given run duration log file."""
+
 import argparse
 import datetime
 import pathlib

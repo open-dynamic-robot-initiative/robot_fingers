@@ -19,7 +19,6 @@ from ament_index_python.packages import get_package_share_directory
 from robot_interfaces import one_joint
 import robot_fingers
 
-
 N_JOINTS = 1
 
 CURRENT_TO_TORQUE_FACTOR = 0.02 * 9

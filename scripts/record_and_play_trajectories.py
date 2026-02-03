@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Record data while the user is manually moving the robot."""
+
 import numpy as np
 import robot_fingers
 import typing

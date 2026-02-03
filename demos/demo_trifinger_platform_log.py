@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Demo showing how to use TriFingerPlatformLog."""
+
 import argparse
 
 import cv2

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run some analysis on a TriFinger platform log (i.e. robot + camera log)."""
+
 import argparse
 
 import matplotlib.pyplot as plt

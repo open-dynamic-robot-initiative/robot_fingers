@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Compute cumulative reward for a given log file."""
+
 import argparse
 import json
 import pathlib

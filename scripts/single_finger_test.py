@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 """Run single finger in position control mode and print all robot data."""
+
 import os
 import curses
 import numpy as np
