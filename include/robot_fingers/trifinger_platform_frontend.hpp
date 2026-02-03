@@ -6,6 +6,8 @@
  */
 #pragma once
 
+#include <stdexcept>
+
 #include <robot_interfaces/finger_types.hpp>
 #include <robot_interfaces/sensors/sensor_frontend.hpp>
 #include <trifinger_cameras/tricamera_observation.hpp>
@@ -24,8 +26,6 @@ namespace robot_fingers
  * one that belongs to the robot frontend.  When accessing observations of the
  * other frontends, it also takes this index t and internally matches it to the
  * time index t_o that was active in the other frontend at the time of t.
- *
- * @todo Methods to get timestamp from camera or object tracker?
  */
 template <typename CameraObservation_t>
 class T_TriFingerPlatformFrontend
@@ -123,12 +123,37 @@ public:
     }
 
     /**
+     * @brief Deprecated, use @ref get_robot_timestamp_ms instead.
+     */
+    [[deprecated(
+        "Replaced by get_robot_timestamp_ms()")]] time_series::Timestamp
+    get_timestamp_ms(const time_series::Index &t) const
+    {
+        return get_robot_timestamp_ms(t);
+    }
+
+    /**
      * @brief Get timestamp (in milliseconds) of time step t.
      * @see robot_interfaces::TriFingerTypes::Frontend::get_timestamp_ms
      */
-    time_series::Timestamp get_timestamp_ms(const time_series::Index &t) const
+    time_series::Timestamp get_robot_timestamp_ms(
+        const time_series::Index &t) const
     {
         return robot_frontend_.get_timestamp_ms(t);
+    }
+
+    /**
+     * @brief Get timestamp (in milliseconds) of the camera observation at time
+     * step t.
+     *
+     * @param t  Time index of the robot time series.  This is internally
+     *      mapped to the corresponding time index of the camera time series.
+     */
+    time_series::Timestamp get_camera_timestamp_ms(
+        const time_series::Index &t) const
+    {
+        auto t_camera = find_matching_timeindex(camera_frontend_, t);
+        return camera_frontend_.get_timestamp_ms(t_camera);
     }
 
     /**
@@ -241,4 +266,259 @@ typedef T_TriFingerPlatformFrontend<
     TriFingerPlatformWithObjectFrontend;
 typedef T_TriFingerPlatformFrontend<trifinger_cameras::TriCameraObservation>
     TriFingerPlatformFrontend;
+
+///////////////////////////////////////////////////////////////
+
+/**
+ * @brief Combined front end for the TriFinger Platform, synchronizing robot
+ * observations with the camera.
+ *
+ * This class combines the frontends for robot and cameras in one class using
+ * unified time indices.
+ *
+ * It is similar to @ref T_TriFingerPlatformFrontend but uses the camera time
+ * steps as base for accessing observations.
+ *
+ * So methods for accessing robot observations/actions/status take as input a
+ * camera time step t_c and internally map it to the robot time step t_r which
+ * is closest to the moment when the images where fetched from the cameras (i.e.
+ * it uses the _image timestamps_ for synchronizing, not the timestamp of the
+ * _camera observation_).
+ */
+template <typename CameraObservation_t>
+class T_TriFingerPlatformFrontendCameraSynced
+{
+public:
+    // typedefs for easy access
+    typedef robot_interfaces::TriFingerTypes::Action Action;
+    typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
+    typedef robot_interfaces::Status RobotStatus;
+    // typedef trifinger_object_tracking::TriCameraObjectObservation
+    //    CameraObservation;
+    typedef CameraObservation_t CameraObservation;
+
+    /**
+     * @brief Initialize with data instances for all internal frontends.
+     *
+     * @param robot_data  RobotData instance used by the robot frontend.
+     * @param object_tracker_data ObjectTrackerData instance used by the object
+     *     tracker frontend.
+     * @param camera_data SensorData instance, used by the camera frontend.
+     */
+    T_TriFingerPlatformFrontendCameraSynced(
+        robot_interfaces::TriFingerTypes::BaseDataPtr robot_data,
+        std::shared_ptr<robot_interfaces::SensorData<CameraObservation>>
+            camera_data)
+        : robot_frontend_(robot_data), camera_frontend_(camera_data)
+    {
+    }
+
+    /**
+     * @brief Initialize with default data instances.
+     *
+     * Creates for each internal frontend a corresponding mutli-process data
+     * instance with the default shared memory ID for the corresponding data
+     * type.
+     */
+    T_TriFingerPlatformFrontendCameraSynced()
+        : robot_frontend_(std::make_shared<
+                          robot_interfaces::TriFingerTypes::MultiProcessData>(
+              "trifinger", false)),
+          camera_frontend_(
+              std::make_shared<
+                  robot_interfaces::MultiProcessSensorData<CameraObservation>>(
+                  "tricamera", false))
+
+    {
+    }
+
+    /**
+     * @brief Append a desired robot action to the action queue.
+     * @see robot_interfaces::TriFingerTypes::Frontend::append_desired_action
+     *
+     * Different to
+     * robot_interfaces::TriFingerTypes::Frontend::append_desired_action, this
+     * method does not return a time index.  This is because it is not so easy
+     * to determine the _camera_ time step in which this action will be applied
+     * (or if it even aligns with a specific camera step).
+     */
+    void append_desired_action(const Action &desired_action)
+    {
+        robot_frontend_.append_desired_action(desired_action);
+    }
+
+    /**
+     * @brief Get robot observation matching images in camera time step
+     * t_camera.
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_observation
+     */
+    RobotObservation get_robot_observation(
+        const time_series::Index &t_camera) const
+    {
+        auto t_robot = find_matching_robot_timeindex(t_camera);
+        return robot_frontend_.get_observation(t_robot);
+    }
+
+    /**
+     * @brief Get desired action matching images in camera time step t_camera.
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_desired_action
+     */
+    Action get_desired_action(const time_series::Index &t_camera) const
+    {
+        auto t_robot = find_matching_robot_timeindex(t_camera);
+        return robot_frontend_.get_desired_action(t_robot);
+    }
+
+    /**
+     * @brief Get actually applied action matching images in camera time step
+     * t_camera.
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_applied_action
+     */
+    Action get_applied_action(const time_series::Index &t_camera) const
+    {
+        auto t_robot = find_matching_robot_timeindex(t_camera);
+        return robot_frontend_.get_applied_action(t_robot);
+    }
+
+    /**
+     * @brief Get robot status matching images in camera time step t_camera.
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_status
+     */
+    RobotStatus get_robot_status(const time_series::Index &t_camera) const
+    {
+        auto t_robot = find_matching_robot_timeindex(t_camera);
+        return robot_frontend_.get_status(t_robot);
+    }
+
+    /**
+     * @brief Get timestamp (in milliseconds) matching images in camera time
+     * step t_camera.
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_timestamp_ms
+     */
+    time_series::Timestamp get_robot_timestamp_ms(
+        const time_series::Index &t_camera) const
+    {
+        auto t_robot = find_matching_robot_timeindex(t_camera);
+        return robot_frontend_.get_timestamp_ms(t_robot);
+    }
+
+    /**
+     * @brief Get timestamp (in milliseconds) of camera time step t_camera.
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_timestamp_ms
+     */
+    time_series::Timestamp get_camera_timestamp_ms(
+        const time_series::Index &t_camera) const
+    {
+        return camera_frontend_.get_timestamp_ms(t_camera);
+    }
+
+    /**
+     * @brief Get the current camera time index.
+     */
+    time_series::Index get_current_timeindex() const
+    {
+        return camera_frontend_.get_current_timeindex();
+    }
+
+    /**
+     * @brief Wait until camera time step t_camera.
+     */
+    void wait_until_timeindex(const time_series::Index &t_camera) const
+    {
+        // sensor frontend doesn't have a dedicated "wait"-method, so use
+        // get_timestamp_ms instead
+        camera_frontend_.get_timestamp_ms(t_camera);
+    }
+
+    /**
+     * @brief Get camera images of time step t_camera.
+     *
+     * @param t_camera  Time index of the camera time series.
+     *
+     * @return Camera images of time step t_camera.
+     */
+    CameraObservation get_camera_observation(
+        const time_series::Index t_camera) const
+    {
+        return camera_frontend_.get_observation(t_camera);
+    }
+
+private:
+    robot_interfaces::TriFingerTypes::Frontend robot_frontend_;
+    robot_interfaces::SensorFrontend<CameraObservation> camera_frontend_;
+
+    /**
+     * @brief Find robot time index matching camera time step t_camera.
+     *
+     * Uses the average timestamp of the three camera images in the given camera
+     * observation and finds the robot time index whose observation timestamp is
+     * closest to it.
+     */
+    time_series::Index find_matching_robot_timeindex(
+        const time_series::Index t_camera) const
+    {
+        const CameraObservation camera_observation =
+            camera_frontend_.get_observation(t_camera);
+        const time_series::Timestamp timestamp_images =
+            get_average_image_timestamp_ms(camera_observation);
+
+        time_series::Index t_robot = robot_frontend_.get_current_timeindex();
+        time_series::Timestamp timestamp_robot =
+            robot_frontend_.get_timestamp_ms(t_robot);
+
+        if (timestamp_robot <= timestamp_images)
+        {
+            return t_robot;
+        }
+
+        time_series::Index t_next = t_robot;
+        time_series::Timestamp timestamp_next = timestamp_robot;
+
+        while (timestamp_robot > timestamp_images)
+        {
+            t_next = t_robot;
+            timestamp_next = timestamp_robot;
+
+            t_robot--;
+            try
+            {
+                timestamp_robot = robot_frontend_.get_timestamp_ms(t_robot);
+            }
+            catch (const std::invalid_argument &)
+            {
+                return t_next;
+            }
+        }
+
+        const time_series::Timestamp diff_prev =
+            timestamp_images - timestamp_robot;
+        const time_series::Timestamp diff_next =
+            timestamp_next - timestamp_images;
+        return (diff_prev <= diff_next) ? t_robot : t_next;
+    }
+
+    time_series::Timestamp get_average_image_timestamp_ms(
+        const CameraObservation &camera_observation) const
+    {
+        double sum_sec = 0;
+        for (const auto &camera : camera_observation.cameras)
+        {
+            sum_sec += static_cast<time_series::Timestamp>(camera.timestamp);
+        }
+
+        // camera timestamps are in seconds, so convert to ms here
+        double sum_ms = sum_sec * 1000;
+
+        return static_cast<time_series::Timestamp>(
+            sum_ms / camera_observation.cameras.size());
+    }
+};
+
+typedef T_TriFingerPlatformFrontendCameraSynced<
+    trifinger_object_tracking::TriCameraObjectObservation>
+    TriFingerPlatformWithObjectFrontendCameraSynced;
+typedef T_TriFingerPlatformFrontendCameraSynced<
+    trifinger_cameras::TriCameraObservation>
+    TriFingerPlatformFrontendCameraSynced;
+
 }  // namespace robot_fingers

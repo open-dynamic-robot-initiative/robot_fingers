@@ -139,13 +139,43 @@ void pybind_trifinger_platform_frontend(pybind11::module &m,
 
                 If t is in the future, this method will block and wait.
 )XXX")
-        .def("get_timestamp_ms",
-             &T::get_timestamp_ms,
+        .def(
+            "get_timestamp_ms",
+            [](pybind11::object &self, int t)
+            {
+                auto warnings = pybind11::module::import("warnings");
+                auto builtins = pybind11::module::import("builtins");
+                warnings.attr("warn")(
+                    "get_timestamp_ms() is deprecated, use "
+                    "get_robot_timestamp_ms() instead.",
+                    builtins.attr("FutureWarning"));
+
+                return self.attr("get_robot_timestamp_ms")(t);
+            },
+            R"XXX(
+                get_timestamp_ms(t: int) -> float
+
+                Deprecated, use get_robot_timestamp_ms() instead, which behaves the
+                same.
+)XXX")
+        .def("get_robot_timestamp_ms",
+             &T::get_robot_timestamp_ms,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              R"XXX(
                 get_timestamp_ms(t: int) -> float
 
                 Get timestamp in milliseconds of time step t.
+
+                If t is in the future, this method will block and wait.
+)XXX")
+        .def("get_camera_timestamp_ms",
+             &T::get_camera_timestamp_ms,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_camera_timestamp_ms(t: int) -> float
+
+                Get timestamp of the camera observation of time step t (in
+                milliseconds).
 
                 If t is in the future, this method will block and wait.
 )XXX")
@@ -164,6 +194,159 @@ void pybind_trifinger_platform_frontend(pybind11::module &m,
                 get_current_timeindex() -> int
 
                 Get the current time index.
+)XXX");
+}
+
+template <typename T>
+void pybind_trifinger_platform_frontend_camera_synced(pybind11::module &m,
+                                                      const std::string &name)
+{
+    auto trifinger_types =
+        pybind11::module::import("robot_interfaces.py_trifinger_types");
+
+    pybind11::class_<T, std::shared_ptr<T>> PyT(m, name.c_str());
+
+    // expose the "Action" typedef to Python
+    PyT.attr("Action") = trifinger_types.attr("Action");
+
+    PyT.def(pybind11::init<>())
+        .def("append_desired_action",
+             &T::append_desired_action,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             "desired_action"_a,
+             R"XXX(
+             append_desired_action(action: robot_interfaces.trifinger.Action)
+
+             Append a desired action to the action time series.
+
+             Append an action to the "desired actions" time series.
+             Note that this does *not* block until the action is actually
+             executed. The time series acts like a queue from which the
+             actions are taken one by one to send them to the actual robot.
+             It is possible to call this method multiple times in a row to
+             already provide actions for the next time steps.
+
+             Args:
+                 desired_action:  The action that shall be applied on the
+                     robot.  Note that the actually applied action might be
+                     different (see :meth:`get_applied_action`).
+)XXX")
+        .def("get_robot_observation",
+             &T::get_robot_observation,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_robot_observation(t_camera: int) -> robot_interfaces.trifinger.Observation
+
+                Get robot observation matching images in camera time step t_camera.
+
+                If t_camera is in the future, this method will block and wait.
+
+                Args:
+                    t_camera: Index of the time step.
+
+                Returns:
+                    Robot observation of time step t_camera.
+
+                Raises:
+                    Exception: if t_camera is too old and not in the time series buffer
+                        anymore.
+)XXX")
+        .def("get_camera_observation",
+             &T::get_camera_observation,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_camera_observation(t_camera: int)
+
+                Get camera images of time step t_camera.
+
+                If t_camera is in the future, this method will block and wait.
+
+                Args:
+                    t_camera:  Time index of the camera time series.
+
+                Returns:
+                    Camera images of time step t_camera.
+
+                Raises:
+                    Exception: if t_camera is too old and not in the time series buffer
+                        anymore.
+)XXX")
+        .def("get_desired_action",
+             &T::get_desired_action,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_desired_action(t_camera: int) -> robot_interfaces.trifinger.Action
+
+                Get desired action matching images in camera time step t_camera.
+
+                This corresponds to the action that was appended using
+                `append_desired_action()`.  Note that the actually applied
+                action may differ, see `get_applied_action()`.
+
+                If t_camera is in the future, this method will block and wait.
+)XXX")
+        .def("get_applied_action",
+             &T::get_applied_action,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_applied_action(t_camera: int) -> robot_interfaces.trifinger.Action
+
+                Get actually applied action matching images in camera time step
+                t_camera.
+
+                The applied action is the one that was actually applied to the
+                robot based on the desired action of that time step.  It may
+                differ from the desired one e.g. due to safety checks which
+                limit the maximum torque and enforce the position limits.
+
+                If t_camera is in the future, this method will block and wait.
+)XXX")
+        .def("get_robot_status",
+             &T::get_robot_status,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_robot_status(t_camera: int) -> robot_interfaces.Status
+
+                Get robot status matching images in camera time step t_camera.
+
+                If t_camera is in the future, this method will block and wait.
+)XXX")
+        .def("get_robot_timestamp_ms",
+             &T::get_robot_timestamp_ms,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_robot_timestamp_ms(t_camera: int) -> float
+
+                Get timestamp in milliseconds matching images in camera time step
+                t_camera.
+
+                If t_camera is in the future, this method will block and wait.
+)XXX")
+        .def("get_camera_timestamp_ms",
+             &T::get_camera_timestamp_ms,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_camera_timestamp_ms(t_camera: int) -> float
+
+                Get timestamp of camera time step t_camera (in milliseconds).
+
+                If t_camera is in the future, this method will block and wait.
+)XXX")
+        .def("wait_until_timeindex",
+             &T::wait_until_timeindex,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                wait_until_timeindex(t_camera: int)
+
+                Wait until camera time step t_camera is reached.
+)XXX")
+        .def("get_current_timeindex",
+             &T::get_current_timeindex,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                get_current_timeindex() -> int
+
+                Get the current camera time index.
 )XXX");
 }
 
@@ -292,6 +475,13 @@ PYBIND11_MODULE(py_trifinger, m)
         m, "TriFingerPlatformFrontend");
     pybind_trifinger_platform_frontend<TriFingerPlatformWithObjectFrontend>(
         m, "TriFingerPlatformWithObjectFrontend");
+
+    pybind_trifinger_platform_frontend_camera_synced<
+        TriFingerPlatformFrontendCameraSynced>(
+        m, "TriFingerPlatformFrontendCameraSynced");
+    pybind_trifinger_platform_frontend_camera_synced<
+        TriFingerPlatformWithObjectFrontendCameraSynced>(
+        m, "TriFingerPlatformWithObjectFrontendCameraSynced");
 
     pybind_trifinger_platform_log<TriFingerPlatformLog>(m,
                                                         "TriFingerPlatformLog");

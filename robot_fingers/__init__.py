@@ -10,6 +10,8 @@ from .py_trifinger import (
     TriFingerConfig,
     TriFingerPlatformFrontend,
     TriFingerPlatformWithObjectFrontend,
+    TriFingerPlatformFrontendCameraSynced,
+    TriFingerPlatformWithObjectFrontendCameraSynced,
     TriFingerPlatformLog,
     TriFingerPlatformWithObjectLog,
 )
@@ -28,6 +30,8 @@ __all__ = (
     "TriFingerConfig",
     "TriFingerPlatformFrontend",
     "TriFingerPlatformWithObjectFrontend",
+    "TriFingerPlatformFrontendCameraSynced",
+    "TriFingerPlatformWithObjectFrontendCameraSynced",
     "TriFingerPlatformLog",
     "TriFingerPlatformWithObjectLog",
     "create_one_joint_backend",

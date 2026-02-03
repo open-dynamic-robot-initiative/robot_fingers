@@ -16,6 +16,11 @@
   by default) and to set the threshold for the test.
 - Add flag to `trifinger_post_submission.py` to skip camera tests.
 - Support new object "stag_cube" in `pybullet_backend`.
+- `TriFingerPlatform*FrontendCameraSynced`: Very similar to `TriFingerPlatform*Frontend`
+  but uses camera time steps as base and provides for a given time step t the robot
+  observation that is closest in time to the timestamp of the images in the camera
+  observation t (i.e. the images and the robot observation are more or less from the
+  same moment).
 
 ### Changed
 - Upgrade to robot_interfaces v2 (not yet released).
@@ -34,6 +39,8 @@
 - Camera frame rate is not hard-coded anymore in `trifinger_data_backend` and
   `trifinger_backend`.  Instead it is fetched from the camera settings
   (`trifinger_data_backend`) or the camera driver directly (`trifinger_backend`).
+- `TriFingerPlatform*Frontend::get_timestamp_ms` is deprecated, use
+  `...::get_robot_timestamp_ms` instead.
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.

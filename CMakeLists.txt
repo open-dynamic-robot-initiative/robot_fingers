@@ -216,18 +216,25 @@ if (BUILD_TESTING)
 
     # Create a usefull macro to build different unit tests suits.
     macro(add_cpp_test test_name)
+      cmake_parse_arguments(ADD_CPP_TEST "" "" "LINK_LIBRARIES" ${ARGN})
 
       set(test_target_name test_${test_name})
 
       # create the executable
       ament_add_gtest(${test_target_name} test/${test_target_name}.cpp)
+
       # Add the include dependencies.
       target_include_directories(
         ${test_target_name}
         PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
                $<INSTALL_INTERFACE:include>)
+
       # link the dependecies to it
       target_link_libraries(${test_target_name} ${PROJECT_NAME})
+      if (ADD_CPP_TEST_LINK_LIBRARIES)
+        target_link_libraries(${test_target_name} ${ADD_CPP_TEST_LINK_LIBRARIES})
+      endif()
+
       install(TARGETS ${test_target_name} DESTINATION lib/${PROJECT_NAME})
 
     endmacro()
@@ -235,6 +242,9 @@ if (BUILD_TESTING)
     add_cpp_test(process_action)
     add_cpp_test(n_joint_blmc_robot_driver)
     add_cpp_test(clamp)
+    add_cpp_test(trifinger_platform_frontend_camera_synced
+      LINK_LIBRARIES trifinger_platform_frontend
+    )
 
 endif()
 
