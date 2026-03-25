@@ -24,7 +24,7 @@ jobs:
         uses: open-dynamic-robot-initiative/trifinger-build-action/setup_apptainer@v2
 
       - name: Build
-        uses: open-dynamic-robot-initiative/trifinger-build-action/build@v2
+        uses: open-dynamic-robot-initiative/trifinger-build-action/build@fkloss/fix-pwsh-issue
 
       - name: Tests
-        uses: open-dynamic-robot-initiative/trifinger-build-action/run_tests@v2
+        uses: open-dynamic-robot-initiative/trifinger-build-action/run_tests@fkloss/fix-pwsh-issue
