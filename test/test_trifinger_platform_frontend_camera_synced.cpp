@@ -41,11 +41,11 @@ TEST(TriFingerPlatformFrontendCameraSynced, PicksClosestRobotTimestamp)
 
     Frontend frontend(robot_data, camera_data);
 
+    robot_data->observation->append(make_observation(0.0));
+    real_time_tools::Timer::sleep_ms(2);
     robot_data->observation->append(make_observation(1.0));
     real_time_tools::Timer::sleep_ms(2);
     robot_data->observation->append(make_observation(2.0));
-    real_time_tools::Timer::sleep_ms(2);
-    robot_data->observation->append(make_observation(3.0));
 
     const auto t1 = robot_data->observation->timestamp_ms(1);
     const auto t2 = robot_data->observation->timestamp_ms(2);
@@ -58,20 +58,20 @@ TEST(TriFingerPlatformFrontendCameraSynced, PicksClosestRobotTimestamp)
     camera_data->observation->append(make_camera_observation(avg_close_to_t2));
     camera_data->observation->append(make_camera_observation(avg_after_t2));
 
-    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(0).position[0], 2.0);
-    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(1).position[0], 3.0);
-    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(2).position[0], 3.0);
+    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(0).position[0], 1.0);
+    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(1).position[0], 2.0);
+    EXPECT_DOUBLE_EQ(frontend.get_robot_observation(2).position[0], 2.0);
 
     // also test direct access to robot observations
     EXPECT_DOUBLE_EQ(
         frontend.robot_get_robot_observation(RobotTimeIndex(0)).position[0],
-        1.0);
+        0.0);
     EXPECT_DOUBLE_EQ(
         frontend.robot_get_robot_observation(RobotTimeIndex(1)).position[0],
-        2.0);
+        1.0);
     EXPECT_DOUBLE_EQ(
         frontend.robot_get_robot_observation(RobotTimeIndex(2)).position[0],
-        3.0);
+        2.0);
 
     // check timestamps
     EXPECT_DOUBLE_EQ(frontend.get_robot_timestamp_ms(0), t1);
