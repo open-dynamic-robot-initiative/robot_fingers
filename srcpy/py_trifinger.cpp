@@ -215,7 +215,7 @@ void pybind_trifinger_platform_frontend_camera_synced(pybind11::module &m,
              pybind11::call_guard<pybind11::gil_scoped_release>(),
              "desired_action"_a,
              R"XXX(
-             append_desired_action(action: robot_interfaces.trifinger.Action)
+             append_desired_action(action: robot_interfaces.trifinger.Action) -> RobotTimeIndex
 
              Append a desired action to the action time series.
 
@@ -230,6 +230,13 @@ void pybind_trifinger_platform_frontend_camera_synced(pybind11::module &m,
                  desired_action:  The action that shall be applied on the
                      robot.  Note that the actually applied action might be
                      different (see :meth:`get_applied_action`).
+
+             Returns:
+                 Robot time step at wich the action will be applied.
+                 **Important:** The regular getter methods of this class (e.g.
+                 :meth:`get_robot_observation`) are expecting the *camera* time
+                 steps.  Do not call them with the *robot* time step!  The robot
+                 time step may be used with the "robot_" getter methods (e.g. :meth:`robot_get_robot_observation`) for analysis purposes.
 )XXX")
         .def("get_robot_observation",
              &T::get_robot_observation,
@@ -347,6 +354,60 @@ void pybind_trifinger_platform_frontend_camera_synced(pybind11::module &m,
                 get_current_timeindex() -> int
 
                 Get the current camera time index.
+)XXX")
+        .def("robot_get_robot_observation",
+             &T::robot_get_robot_observation,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                robot_get_robot_observation(t_robot: RobotTimeIndex) -> robot_interfaces.trifinger.Observation
+
+                Get robot observation of robot time step t_robot.
+
+                If t_robot is in the future, this method will block and wait.
+
+                Raises:
+                    Exception: if t_robot is too old and not in the time series buffer
+                        anymore.
+)XXX")
+        .def("robot_get_desired_action",
+             &T::robot_get_desired_action,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                robot_get_desired_action(t_robot: RobotTimeIndex) -> robot_interfaces.trifinger.Action
+
+                Get desired action of robot time step t_robot.
+)XXX")
+        .def("robot_get_applied_action",
+             &T::robot_get_applied_action,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                robot_get_applied_action(t_robot: RobotTimeIndex) -> robot_interfaces.trifinger.Action
+
+                Get actually applied action of robot time step t_robot.
+)XXX")
+        .def("robot_get_robot_status",
+             &T::robot_get_robot_status,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                robot_get_robot_status(t_robot: RobotTimeIndex) -> robot_interfaces.Status
+
+                Get robot status of robot time step t_robot.
+)XXX")
+        .def("robot_get_robot_timestamp_ms",
+             &T::robot_get_robot_timestamp_ms,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                robot_get_robot_timestamp_ms(t_robot: RobotTimeIndex) -> float
+
+                Get timestamp in milliseconds of robot time step t_robot.
+)XXX")
+        .def("robot_get_current_timeindex",
+             &T::robot_get_current_timeindex,
+             pybind11::call_guard<pybind11::gil_scoped_release>(),
+             R"XXX(
+                robot_get_current_timeindex() -> RobotTimeIndex
+
+                Get the current robot time index.
 )XXX");
 }
 
@@ -476,6 +537,14 @@ PYBIND11_MODULE(py_trifinger, m)
     pybind_trifinger_platform_frontend<TriFingerPlatformWithObjectFrontend>(
         m, "TriFingerPlatformWithObjectFrontend");
 
+    pybind11::class_<RobotTimeIndex, std::shared_ptr<RobotTimeIndex>>(
+        m, "RobotTimeIndex")
+        .def(pybind11::init<int>(), "value"_a)
+        .def_readonly("value", &RobotTimeIndex::value)
+        .def("__repr__",
+             [](const RobotTimeIndex &index)
+             { return "RobotTimeIndex(" + std::to_string(index.value) + ")"; });
+    ;
     pybind_trifinger_platform_frontend_camera_synced<
         TriFingerPlatformFrontendCameraSynced>(
         m, "TriFingerPlatformFrontendCameraSynced");
