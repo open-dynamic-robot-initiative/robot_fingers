@@ -270,10 +270,22 @@ typedef T_TriFingerPlatformFrontend<trifinger_cameras::TriCameraObservation>
 ///////////////////////////////////////////////////////////////
 
 /**
+ * @brief Wrapper around time_series::Index for explicitly representing a
+ * _robot_ time index (as opposed to _camera_ time index).
+ */
+struct RobotTimeIndex
+{
+    time_series::Index value;
+    explicit RobotTimeIndex(int v) : value(v)
+    {
+    }
+};
+
+/**
  * @brief Combined front end for the TriFinger Platform, synchronizing robot
  * observations with the camera.
  *
- * This class combines the frontends for robot and cameras in one class using
+ * This class combines the front ends for robot and cameras in one class using
  * unified time indices.
  *
  * It is similar to @ref T_TriFingerPlatformFrontend but uses the camera time
@@ -284,6 +296,16 @@ typedef T_TriFingerPlatformFrontend<trifinger_cameras::TriCameraObservation>
  * is closest to the moment when the images where fetched from the cameras (i.e.
  * it uses the _image timestamps_ for synchronizing, not the timestamp of the
  * _camera observation_).
+ *
+ * @ref append_desired_action still returns the _robot_ time index when the
+ * action will be applied and getter methods prefixed with "robot_" are provided
+ * to access data of the corresponding steps (e.g. @ref
+ * robot_get_robot_observation, @ref robot_get_robot_timestamp_ms, ...).  Those
+ * may be useful for better analysis, e.g. to check intermediate robot states
+ * or get exact timestamps of robot actions. However, this robot time index
+ * must not be used with the regular getter methods (@ref get_robot_observation,
+ * ...) and is wrapped in a struct @ref RobotTimeIndex to avoid accidental
+ * mix-up.
  */
 template <typename CameraObservation_t>
 class T_TriFingerPlatformFrontendCameraSynced
@@ -336,15 +358,21 @@ public:
      * @brief Append a desired robot action to the action queue.
      * @see robot_interfaces::TriFingerTypes::Frontend::append_desired_action
      *
-     * Different to
-     * robot_interfaces::TriFingerTypes::Frontend::append_desired_action, this
-     * method does not return a time index.  This is because it is not so easy
-     * to determine the _camera_ time step in which this action will be applied
-     * (or if it even aligns with a specific camera step).
+     * **Notice:** The returned time index refers to the robot time series, not
+     * the camera time series.  This is because it is not so easy to determine
+     * the _camera_ time step in which this action will be applied (or if it
+     * even aligns with a specific camera step). The returned value might still
+     * be useful in some situations but it should not (and cannot) be used with
+     * functions like @ref get_robot_observation.
+     *
+     * @return Robot time step when the action will be applied.  See notice
+     * above!
      */
-    void append_desired_action(const Action &desired_action)
+    RobotTimeIndex append_desired_action(const Action &desired_action)
     {
-        robot_frontend_.append_desired_action(desired_action);
+        time_series::Index t =
+            robot_frontend_.append_desired_action(desired_action);
+        return RobotTimeIndex(t);
     }
 
     /**
@@ -441,6 +469,55 @@ public:
         const time_series::Index t_camera) const
     {
         return camera_frontend_.get_observation(t_camera);
+    }
+
+    /**
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_observation
+     */
+    RobotObservation robot_get_robot_observation(RobotTimeIndex t_robot) const
+    {
+        return robot_frontend_.get_observation(t_robot.value);
+    }
+
+    /**
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_desired_action
+     */
+    Action robot_get_desired_action(RobotTimeIndex t_robot) const
+    {
+        return robot_frontend_.get_desired_action(t_robot.value);
+    }
+
+    /**
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_applied_action
+     */
+    Action robot_get_applied_action(RobotTimeIndex t_robot) const
+    {
+        return robot_frontend_.get_applied_action(t_robot.value);
+    }
+
+    /**
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_status
+     */
+    RobotStatus robot_get_robot_status(RobotTimeIndex t_robot) const
+    {
+        return robot_frontend_.get_status(t_robot.value);
+    }
+
+    /**
+     * @see robot_interfaces::TriFingerTypes::Frontend::get_timestamp_ms
+     */
+    time_series::Timestamp robot_get_robot_timestamp_ms(
+        RobotTimeIndex t_robot) const
+    {
+        return robot_frontend_.get_timestamp_ms(t_robot.value);
+    }
+
+    /**
+     * @brief Get the current robot time index.
+     */
+    RobotTimeIndex robot_get_current_timeindex() const
+    {
+        return RobotTimeIndex(robot_frontend_.get_current_timeindex());
     }
 
 private:
