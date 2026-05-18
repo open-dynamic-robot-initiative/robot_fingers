@@ -35,8 +35,6 @@ public:
     typedef robot_interfaces::TriFingerTypes::Action Action;
     typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
     typedef robot_interfaces::Status RobotStatus;
-    // typedef trifinger_object_tracking::TriCameraObjectObservation
-    //    CameraObservation;
     typedef CameraObservation_t CameraObservation;
 
     /**
@@ -315,8 +313,6 @@ public:
     typedef robot_interfaces::TriFingerTypes::Action Action;
     typedef robot_interfaces::TriFingerTypes::Observation RobotObservation;
     typedef robot_interfaces::Status RobotStatus;
-    // typedef trifinger_object_tracking::TriCameraObjectObservation
-    //    CameraObservation;
     typedef CameraObservation_t CameraObservation;
 
     /**
