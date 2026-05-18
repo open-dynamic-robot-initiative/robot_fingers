@@ -242,7 +242,7 @@ private:
         const FrontendType &other_frontend,
         const time_series::Index t_robot) const
     {
-        time_series::Timestamp stamp_robot = get_timestamp_ms(t_robot);
+        time_series::Timestamp stamp_robot = get_robot_timestamp_ms(t_robot);
 
         time_series::Index t_other = other_frontend.get_current_timeindex();
         time_series::Timestamp stamp_other =
