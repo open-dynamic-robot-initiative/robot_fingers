@@ -41,6 +41,7 @@
   (`trifinger_data_backend`) or the camera driver directly (`trifinger_backend`).
 - `TriFingerPlatform*Frontend::get_timestamp_ms` is deprecated, use
   `...::get_robot_timestamp_ms` instead.
+- Self-test: Lowered edge threshold for camera sharpness (got false positives).
 
 ### Fixed
 - Update demo_data_logging to changed interface of the RobotLogger class.
