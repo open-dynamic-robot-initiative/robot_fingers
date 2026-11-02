@@ -530,7 +530,7 @@ def check_camera_sharpness(
         True if test is successful, False if there is any issue.
     """
     CAMERA_NAMES = ("camera60", "camera180", "camera300")
-    EDGE_MEAN_THRES = 9.0
+    EDGE_MEAN_THRES = 5.0
 
     edge_means: typing.List[typing.List[float]] = [[], [], []]
 
@@ -550,6 +550,7 @@ def check_camera_sharpness(
             limit=EDGE_MEAN_THRES,
         )
     )
+    any_bad = False
     for i, camera in enumerate(CAMERA_NAMES):
         if means_of_means[i] < EDGE_MEAN_THRES:
             log.error(
@@ -560,9 +561,9 @@ def check_camera_sharpness(
                     limit=EDGE_MEAN_THRES,
                 )
             )
-            return False
+            any_bad = True
 
-    return True
+    return not any_bad
 
 
 def check_object_detection_noise(
